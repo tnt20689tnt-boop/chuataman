@@ -364,8 +364,13 @@ function AuthPanel() {
     });
     setBusy(false);
     if (error) setMessage("Chưa đăng ký được: " + error.message);
-    else if (!data.session) setMessage("Đã tạo tài khoản. Hãy mở email để xác nhận, sau đó đăng nhập.");
-    else setMessage("Đăng ký thành công. Chào mừng bạn đến Chùa Tâm An!");
+    else {
+      setDisplayName("");
+      setMode("login");
+      setMessage(!data.session
+        ? "Đã tạo tài khoản. Hãy mở email để xác nhận, sau đó đăng nhập."
+        : "Đăng ký thành công. Chào mừng bạn đến Chùa Tâm An! Bạn có thể đăng nhập ngay.");
+    }
   };
 
   const signOut = async () => {
