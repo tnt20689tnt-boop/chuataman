@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { HAIR_COLORS, OUTFIT_COLORS, OUTFIT_LABEL, HAIR_LABEL } from "./sim";
 import { useMultiplayer, type RemotePlayer } from "./multiplayer";
 
-function RemoteAvatar({ player }: { player: RemotePlayer }) {
+function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePlayer[] }) {
   const group = useRef<THREE.Group>(null);
   const leftArm = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
@@ -45,7 +45,11 @@ function RemoteAvatar({ player }: { player: RemotePlayer }) {
       const distance = camera.position.distanceTo(group.current.position);
       const opacity = THREE.MathUtils.clamp((58 - distance) / 18, 0, 1);
       label.current.style.opacity = String(opacity);
-      label.current.style.transform = `scale(${THREE.MathUtils.clamp(1.05 - distance / 100, 0.58, 1)})`;
+      const nearby = peers
+        .filter((peer) => peer.id !== player.id && Math.hypot(peer.x - player.x, peer.z - player.z) < 3.5)
+        .sort((a, b) => a.id.localeCompare(b.id));
+      const stack = nearby.filter((peer) => peer.id < player.id).length;
+      label.current.style.transform = `translateY(-${stack * 14}px) scale(${THREE.MathUtils.clamp(1.05 - distance / 100, 0.58, 1)})`;
       label.current.style.pointerEvents = distance < 42 ? "auto" : "none";
     }
   });
@@ -160,7 +164,7 @@ export function RemotePlayers() {
   const { players } = useMultiplayer();
   return (
     <group>
-      {players.map((player) => <RemoteAvatar key={player.id} player={player} />)}
+      {players.map((player) => <RemoteAvatar key={player.id} player={player} peers={players} />)}
     </group>
   );
 }
