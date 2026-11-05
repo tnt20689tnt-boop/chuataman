@@ -139,7 +139,7 @@ export function connectMultiplayer() {
     // Ignore a late session response if the user signed out or auth changed
     // while the request was still in flight.
     if (attempt !== connectionAttempt || channel) return;
-    startMultiplayer(authClient, data.session?.user.id ?? getGuestId());
+    startMultiplayer(authClient, data.session?.user.id ?? getGuestId(), attempt);
   }).catch((error: unknown) => {
     if (attempt !== connectionAttempt) return;
     publish(empty);
@@ -173,7 +173,7 @@ export function switchMultiplayerRoom(roomId: string) {
   connectMultiplayer();
 }
 
-function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUserId: string) {
+function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUserId: string, attempt: number) {
   if (channel) return;
   clientId = authenticatedUserId;
 
@@ -216,6 +216,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
       publish({ connected: snapshot.connected, players, roomId: currentRoomId });
     })
     .subscribe(async (status) => {
+      if (attempt !== connectionAttempt) return;
       if (status === "SUBSCRIBED" && channel) {
         const avatar = getUI().avatar;
         await channel.track({
