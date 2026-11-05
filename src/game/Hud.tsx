@@ -146,20 +146,45 @@ function Panel({ title, children, onClose, wide }: { title: string; children: Re
   );
 }
 
+const ZONE_GUIDES: Record<string, string> = {
+  cong: "Bắt đầu hành trình từ cổng tam quan. Dừng lại một chút, gác lại những vội vàng bên ngoài và bước vào chùa với tâm an lành.",
+  san: "Khoảng sân rộng là nơi Phật tử gặp gỡ, đi dạo và hướng lòng về điều thiện. Bạn có thể đi bộ quanh sân và ngắm toàn cảnh ngôi chùa.",
+  dien: "Đại điện là nơi trang nghiêm để lễ Phật, chắp tay và lắng lòng. Hãy giữ bước chân nhẹ nhàng và dành một phút tĩnh tâm.",
+  thien: "Khu thiền định yên tĩnh bên tượng Phật. Chọn nút Ngồi thiền phía dưới để thực tập hơi thở trong 1, 5, 10 hoặc 20 phút.",
+  phap: "Giảng đường là nơi lắng nghe lời Phật dạy và những câu chuyện thiện lành. Mở mục Phật pháp để nghe bài thuyết pháp.",
+  ho: "Hồ sen và vườn hoa là góc thư thái, nơi bạn có thể ngắm cảnh và nghỉ chân giữa hành trình.",
+  chuong: "Tháp chuông nhắc ta quay về với hiện tại. Bạn có thể thỉnh chuông bằng nút Chuông ở cạnh phải màn hình.",
+  kinh: "Tháp kinh tượng trưng cho kho tàng lời Phật dạy. Tại đây, bạn có thể đọc và nghe Bát Nhã Tâm Kinh.",
+  giaoluu: "Khu giao lưu dành cho các Phật tử gặp gỡ. Mở mục Giao lưu để gửi lời chào tới những người đang cùng online.",
+  phongsinh: "Khu phóng sinh mang ý nghĩa nuôi dưỡng lòng từ bi và trân trọng sự sống. Đây là điểm dừng để quán niệm về tình thương.",
+};
+
 function TourPanel() {
+  const [selected, setSelected] = useState(0);
+  const zone = ZONES[selected];
+  const visit = () => {
+    teleport(zone.x, zone.z, zone.rot);
+    setUI({ panel: null, action: "none", pose: "stand" });
+  };
   return (
-    <Panel title="Tham quan chùa" onClose={() => setUI({ panel: null })}>
-      <div className="grid grid-cols-2 gap-2">
-        {ZONES.map((z) => (
-          <button
-            key={z.id}
-            className="hud-tile"
-            onClick={() => {
-              teleport(z.x, z.z, z.rot);
-              setUI({ panel: null, action: "none", pose: "stand" });
-            }}
-          >
-            {z.name}
+    <Panel title="Hành trình tham quan" onClose={() => setUI({ panel: null })} wide>
+      <div className="mb-4 rounded-xl border border-border bg-card p-4">
+        <div className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">
+          Điểm {selected + 1} / {ZONES.length}
+        </div>
+        <h3 className="mb-2 font-display text-xl text-foreground">{zone.name}</h3>
+        <p className="text-sm leading-relaxed text-muted-foreground">{ZONE_GUIDES[zone.id]}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button className="hud-primary" onClick={visit}>📍 Đến địa điểm này</button>
+          <button className="hud-swatch" onClick={() => setSelected((i) => (i + ZONES.length - 1) % ZONES.length)}>← Trước</button>
+          <button className="hud-swatch" onClick={() => setSelected((i) => (i + 1) % ZONES.length)}>Tiếp theo →</button>
+        </div>
+      </div>
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Chọn nhanh địa điểm</div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {ZONES.map((z, i) => (
+          <button key={z.id} className="hud-tile" data-active={selected === i} onClick={() => setSelected(i)}>
+            <span className="mr-1 text-primary">{String(i + 1).padStart(2, "0")}.</span>{z.name}
           </button>
         ))}
       </div>
