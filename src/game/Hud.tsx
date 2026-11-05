@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { ringBell, speak, stopSpeak } from "./audio";
-import { connectMultiplayer, useMultiplayer } from "./multiplayer";
+import { connectMultiplayer, sendTempleChat, useMultiplayer, useTempleChat } from "./multiplayer";
 
 function Lotus({ className }: { className?: string }) {
   return (
@@ -256,42 +256,36 @@ function PrayPanel() {
   );
 }
 
-const CHAT_KEY = "tam-an-chat";
 function ChatPanel({ name }: { name: string }) {
-  const [msgs, setMsgs] = useState<{ n: string; t: string; at: number }[]>([]);
+  const msgs = useTempleChat();
   const [text, setText] = useState("");
+  const multiplayer = useMultiplayer();
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    try {
-      setMsgs(JSON.parse(localStorage.getItem(CHAT_KEY) || "[]"));
-    } catch {
-      /* empty */
-    }
-  }, []);
   useEffect(() => end.current?.scrollIntoView(), [msgs]);
   const send = () => {
     const t = text.trim();
     if (!t) return;
-    const next = [...msgs, { n: name, t: t.slice(0, 300), at: Date.now() }].slice(-100);
-    setMsgs(next);
-    localStorage.setItem(CHAT_KEY, JSON.stringify(next));
-    setText("");
+    if (sendTempleChat(name, t)) setText("");
   };
   return (
     <Panel title="Giao lưu Phật tử" onClose={() => setUI({ panel: null })}>
-      <p className="hud-note mb-3">Chưa kết nối máy chủ: tin nhắn hiện chỉ lưu trên máy bạn. Trò chuyện nhiều người sẽ có ở giai đoạn tiếp theo.</p>
+      <p className="hud-note mb-3">
+        {multiplayer.connected
+          ? "Tin nhắn đang được gửi trực tiếp tới những Phật tử cùng online. Nội dung không lưu sau khi rời phiên."
+          : "Chưa kết nối máy chủ. Khi kết nối online hoạt động, bạn có thể trò chuyện với mọi người trong chùa."}
+      </p>
       <div className="mb-3 h-56 space-y-1.5 overflow-y-auto rounded-lg bg-muted/50 p-3 text-sm">
         {msgs.length === 0 && <div className="text-muted-foreground">A Di Đà Phật! Hãy gửi lời chào đầu tiên.</div>}
         {msgs.map((m) => (
-          <div key={m.at}>
-            <b className="text-primary">{m.n}:</b> <span className="text-foreground">{m.t}</span>
+          <div key={m.id}>
+            <b className="text-primary">{m.name}:</b> <span className="text-foreground">{m.text}</span>
           </div>
         ))}
         <div ref={end} />
       </div>
       <div className="flex gap-2">
-        <input className="hud-input flex-1" value={text} maxLength={300} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Nhập lời chào…" />
-        <button className="hud-primary" onClick={send}>Gửi</button>
+        <input className="hud-input flex-1" value={text} maxLength={300} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Nhập lời chào…" disabled={!multiplayer.connected} />
+        <button className="hud-primary" onClick={send} disabled={!multiplayer.connected || !text.trim()}>Gửi</button>
       </div>
     </Panel>
   );
