@@ -134,17 +134,27 @@ export function PlayerAvatar() {
   const action = useUI((s) => s.action);
   const g = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Group>(null);
+  const leftArmRef = useRef<THREE.Group>(null);
+  const rightArmRef = useRef<THREE.Group>(null);
+  const leftLegRef = useRef<THREE.Group>(null);
+  const rightLegRef = useRef<THREE.Group>(null);
   const [sy, sxz, hy] = layout(pose);
   const color = OUTFIT_COLORS[avatar?.outfit ?? "lam"];
   const hair = avatar?.hair ?? "ngan";
   const handsJoined = action === "chap" || action === "le" || action === "thien" || action === "kinh";
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (!g.current) return;
     g.current.position.set(player.x, 0, player.z);
     g.current.rotation.y = player.rot;
+    const t = clock.elapsedTime;
+    const gait = pose === "walk" ? Math.sin(t * 10) * 0.48 : 0;
+    const smooth = Math.min(delta * 12, 1);
+    if (leftArmRef.current) leftArmRef.current.rotation.x += (gait - leftArmRef.current.rotation.x) * smooth;
+    if (rightArmRef.current) rightArmRef.current.rotation.x += (-gait - rightArmRef.current.rotation.x) * smooth;
+    if (leftLegRef.current) leftLegRef.current.rotation.x += (-gait * 0.8 - leftLegRef.current.rotation.x) * smooth;
+    if (rightLegRef.current) rightLegRef.current.rotation.x += (gait * 0.8 - rightLegRef.current.rotation.x) * smooth;
     if (headRef.current) {
-      const t = clock.elapsedTime;
       const bow = action === "le" ? Math.max(0, Math.sin(t * 1.2)) * 0.4 : 0;
       headRef.current.position.set(0, hy - bow * 0.6, bow);
     }
@@ -161,6 +171,48 @@ export function PlayerAvatar() {
         <torusGeometry args={[0.2, 0.05, 8, 20]} />
         <meshStandardMaterial color="#e9dcc0" />
       </mesh>
+      {/* arms */}
+      <group ref={leftArmRef} position={[-0.34 * sxz, 0.88 * sy, 0]}>
+        <mesh position={[0, -0.22, 0]} rotation-z={-0.12} castShadow>
+          <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
+          <meshStandardMaterial color={color} roughness={0.85} />
+        </mesh>
+        <mesh position={[0, -0.42, 0.02]}>
+          <sphereGeometry args={[0.07, 10, 8]} />
+          <meshStandardMaterial color={SKIN} />
+        </mesh>
+      </group>
+      <group ref={rightArmRef} position={[0.34 * sxz, 0.88 * sy, 0]}>
+        <mesh position={[0, -0.22, 0]} rotation-z={0.12} castShadow>
+          <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
+          <meshStandardMaterial color={color} roughness={0.85} />
+        </mesh>
+        <mesh position={[0, -0.42, 0.02]}>
+          <sphereGeometry args={[0.07, 10, 8]} />
+          <meshStandardMaterial color={SKIN} />
+        </mesh>
+      </group>
+      {/* legs */}
+      <group ref={leftLegRef} position={[-0.14, 0.42, 0]}>
+        <mesh position={[0, -0.2, 0]} castShadow>
+          <capsuleGeometry args={[0.105, 0.3, 4, 8]} />
+          <meshStandardMaterial color={color} roughness={0.9} />
+        </mesh>
+        <mesh position={[0, -0.39, 0.06]} scale={[1, 0.55, 1.3]}>
+          <sphereGeometry args={[0.105, 10, 8]} />
+          <meshStandardMaterial color="#5b5149" />
+        </mesh>
+      </group>
+      <group ref={rightLegRef} position={[0.14, 0.42, 0]}>
+        <mesh position={[0, -0.2, 0]} castShadow>
+          <capsuleGeometry args={[0.105, 0.3, 4, 8]} />
+          <meshStandardMaterial color={color} roughness={0.9} />
+        </mesh>
+        <mesh position={[0, -0.39, 0.06]} scale={[1, 0.55, 1.3]}>
+          <sphereGeometry args={[0.105, 10, 8]} />
+          <meshStandardMaterial color="#5b5149" />
+        </mesh>
+      </group>
       <group ref={headRef}>
         <mesh castShadow>
           <sphereGeometry args={[0.24, 20, 16]} />

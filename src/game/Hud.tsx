@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { ringBell, speak, stopSpeak } from "./audio";
-import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
+import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
 
 function Lotus({ className }: { className?: string }) {
@@ -81,9 +81,9 @@ export function Hud() {
       <div className="absolute right-3 top-3 flex flex-col items-end gap-2 sm:right-5 sm:top-5">
         <div className="hud-glass pointer-events-auto flex items-center gap-2 px-3 py-1.5 text-xs text-foreground">
           <span className={`h-2 w-2 rounded-full ${multiplayer.connected ? "bg-success" : "bg-muted-foreground"}`} />
-          <span>Phật tử đang hiện diện: <b>{multiplayer.connected ? multiplayer.players.length + 1 : 0}</b>{multiplayer.connected ? " người" : " · đăng nhập để hiện diện"}</span>
+          <span>Phật tử đang hiện diện: <b>{multiplayer.connected ? multiplayer.players.length + 1 : 0}</b>{multiplayer.connected ? " người" : " · đang kết nối"}</span>
         </div>
-        <div className="hud-chip">📍 {zone}</div>
+        <div className="hud-chip">🪷 Phòng: {multiplayer.roomId} · 📍 {zone}</div>
       </div>
 
       {/* side tools */}
@@ -93,6 +93,7 @@ export function Hud() {
         <SideBtn label="Giao lưu" icon="💬" onClick={() => setUI({ panel: panel === "chat" ? null : "chat" })} />
         <SideBtn label="Chuông" icon="🔔" onClick={() => ringBell(0.6)} />
         <SideBtn label="Avatar" icon="🧘" onClick={() => setUI({ panel: "avatar" })} />
+        <SideBtn label="Phòng" icon="🏯" onClick={() => setUI({ panel: panel === "rooms" ? null : "rooms" })} />
       </nav>
 
       {/* action bar */}
@@ -116,6 +117,7 @@ export function Hud() {
       {panel === "phap" && <PhapPanel />}
       {panel === "pray" && <PrayPanel />}
       {panel === "chat" && <ChatPanel name={avatar?.name ?? "Phật tử"} />}
+      {panel === "rooms" && <RoomsPanel currentRoom={multiplayer.roomId} />}
       {panel === "avatar" && <AvatarPanel initial={avatar} />}
       {panel === "auth" && <AuthPanel />}
     </div>
@@ -292,6 +294,28 @@ function PrayPanel() {
     </Panel>
   );
 }
+function RoomsPanel({ currentRoom }: { currentRoom: string }) {
+  const [roomName, setRoomName] = useState(currentRoom);
+  const join = (name: string) => {
+    switchMultiplayerRoom(name);
+    setUI({ panel: null });
+  };
+  return (
+    <Panel title="Phòng sinh hoạt" onClose={() => setUI({ panel: null })}>
+      <p className="mb-3 text-sm text-muted-foreground">Mọi người mặc định gặp nhau tại phòng chung. Chọn phòng thiền, tụng kinh hoặc nhập tên để tạo một phòng riêng. Ai nhập cùng tên phòng sẽ gặp nhau.</p>
+      <div className="mb-3 grid grid-cols-1 gap-2">
+        <button className="hud-tile text-left" data-active={currentRoom === "chung"} onClick={() => join("chung")}>🏯 Phòng chung</button>
+        <button className="hud-tile text-left" data-active={currentRoom === "thien"} onClick={() => join("thien")}>🧘 Phòng thiền</button>
+        <button className="hud-tile text-left" data-active={currentRoom === "tung-kinh"} onClick={() => join("tung-kinh")}>📿 Phòng tụng kinh</button>
+      </div>
+      <label className="mb-1 block text-sm font-semibold">Tạo hoặc tham gia phòng riêng</label>
+      <input className="hud-input mb-3 w-full" value={roomName} maxLength={32} onChange={(e) => setRoomName(e.target.value)} placeholder="Ví dụ: gia-dinh-toan" />
+      <button className="hud-primary w-full justify-center" disabled={!roomName.trim()} onClick={() => join(roomName)}>Vào phòng này</button>
+      <p className="mt-3 text-xs text-muted-foreground">Mã phòng không dấu, tối đa 32 ký tự. Chia sẻ cùng một mã phòng cho người muốn gặp nhau.</p>
+    </Panel>
+  );
+}
+
 function ChatPanel({ name }: { name: string }) {
   const msgs = useTempleChat();
   const [text, setText] = useState("");

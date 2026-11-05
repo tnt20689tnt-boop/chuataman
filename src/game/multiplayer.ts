@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { getUI, player } from "./store";
+import { type Hair, type Outfit } from "./sim";
 import { getAuthClient } from "./auth";
 
 export interface TempleChatMessage { id: string; name: string; text: string; at: number; }
@@ -17,14 +18,23 @@ export interface RemotePlayer {
   z: number;
   rot: number;
   updatedAt: number;
+  outfit?: Outfit;
+  hair?: Hair;
+  hairColor?: string;
 }
 
 interface MultiplayerSnapshot {
   connected: boolean;
   players: RemotePlayer[];
+  roomId: string;
 }
 
-const empty: MultiplayerSnapshot = { connected: false, players: [] };
+const DEFAULT_ROOM = "chung";
+let currentRoomId = DEFAULT_ROOM;
+if (typeof window !== "undefined") {
+  try { currentRoomId = localStorage.getItem("tam-an-room") || DEFAULT_ROOM; } catch { /* storage may be unavailable */ }
+}
+const empty: MultiplayerSnapshot = { connected: false, players: [], roomId: DEFAULT_ROOM };
 let snapshot = empty;
 const listeners = new Set<() => void>();
 let client: SupabaseClient | null = null;
@@ -32,6 +42,7 @@ let channel: RealtimeChannel | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let clientId = "";
 let connectionAttempt = 0;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 function publish(next: MultiplayerSnapshot) {
   snapshot = next;
@@ -105,16 +116,15 @@ export function useMultiplayer() {
 
 function readPresence(channelRef: RealtimeChannel) {
   const state = channelRef.presenceState<RemotePlayer>();
-  // Supabase may return several presence metas for one account (for example,
-  // when the same person opens the temple in multiple tabs). Count each
-  // authenticated account once and never include the current account.
-  const uniquePlayers = new Map<string, RemotePlayer>();
+  // Several tabs may publish metas for one identity. Count each identity once
+  // and never include the current client.
+  const uniquePlayers = new Map<string, RemotePlayer>(snapshot.players.map((p) => [p.id, p]));
   for (const presenceKey in state) {
     for (const meta of state[presenceKey] ?? []) {
       if (meta.id && meta.id !== clientId) uniquePlayers.set(meta.id, meta);
     }
   }
-  publish({ connected: true, players: [...uniquePlayers.values()] });
+  publish({ connected: true, players: [...uniquePlayers.values()], roomId: currentRoomId });
 }
 
 export function connectMultiplayer() {
@@ -122,7 +132,7 @@ export function connectMultiplayer() {
 
   const authClient = getAuthClient();
   if (!authClient) {
-    publish(empty);
+    publish({ ...empty, roomId: currentRoomId });
     console.warn("Chùa Tâm An: chưa cấu hình xác thực Supabase.");
     return () => {};
   }
@@ -132,26 +142,48 @@ export function connectMultiplayer() {
     // Ignore a late session response if the user signed out or auth changed
     // while the request was still in flight.
     if (attempt !== connectionAttempt || channel) return;
-    if (!data.session?.user) {
-      publish(empty);
-      return;
-    }
-    startAuthenticatedMultiplayer(authClient, data.session.user.id);
+    startMultiplayer(authClient, data.session?.user.id ?? getGuestId(), attempt);
   }).catch((error: unknown) => {
     if (attempt !== connectionAttempt) return;
-    publish(empty);
+    publish({ ...empty, roomId: currentRoomId });
     console.warn("Chùa Tâm An: không thể kiểm tra phiên đăng nhập.", error);
   });
   return () => disconnectMultiplayer();
 }
 
-function startAuthenticatedMultiplayer(authenticatedClient: SupabaseClient, authenticatedUserId: string) {
+function getGuestId() {
+  try {
+    const key = "tam-an-guest-id";
+    let id = sessionStorage.getItem(key);
+    if (!id) {
+      id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      sessionStorage.setItem(key, id);
+    }
+    return id;
+  } catch {
+    return `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+}
+
+export function getMultiplayerRoom() { return currentRoomId; }
+
+export function switchMultiplayerRoom(roomId: string) {
+  const safeRoom = roomId.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 32) || DEFAULT_ROOM;
+  if (safeRoom === currentRoomId) return;
+  disconnectMultiplayer();
+  currentRoomId = safeRoom;
+  try { localStorage.setItem("tam-an-room", currentRoomId); } catch { /* storage may be unavailable */ }
+  publish({ connected: false, players: [], roomId: currentRoomId });
+  connectMultiplayer();
+}
+
+function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUserId: string, attempt: number) {
   if (channel) return;
   clientId = authenticatedUserId;
 
   client = authenticatedClient;
 
-  channel = client.channel("tam-an-world", {
+  channel = client.channel(`tam-an-world:${currentRoomId}`, {
     config: {
       presence: { key: clientId },
       broadcast: { self: false },
@@ -184,10 +216,11 @@ function startAuthenticatedMultiplayer(authenticatedClient: SupabaseClient, auth
       const incoming = payload as RemotePlayer;
       if (!incoming || incoming.id === clientId || typeof incoming.x !== "number" || typeof incoming.z !== "number") return;
       const players = snapshot.players.filter((p) => p.id !== incoming.id);
-      players.push(incoming);
-      publish({ connected: snapshot.connected, players });
+      players.push({ ...incoming, name: incoming.name.slice(0, 24), updatedAt: Date.now() });
+      publish({ connected: snapshot.connected, players, roomId: currentRoomId });
     })
     .subscribe(async (status) => {
+      if (attempt !== connectionAttempt) return;
       if (status === "SUBSCRIBED" && channel) {
         const avatar = getUI().avatar;
         await channel.track({
@@ -197,36 +230,68 @@ function startAuthenticatedMultiplayer(authenticatedClient: SupabaseClient, auth
           z: player.z,
           rot: player.rot,
           updatedAt: Date.now(),
+          outfit: avatar?.outfit ?? "lam",
+          hair: avatar?.hair ?? "ngan",
+          hairColor: avatar?.hairColor ?? "#1b1410",
         } satisfies RemotePlayer);
-        publish({ connected: true, players: snapshot.players });
+        publish({ connected: true, players: snapshot.players, roomId: currentRoomId });
         if (timer) clearInterval(timer);
+        let lastX = player.x;
+        let lastZ = player.z;
+        let lastRot = player.rot;
+        let lastHeartbeat = 0;
         timer = setInterval(() => {
           if (!channel) return;
+          const now = Date.now();
           const currentAvatar = getUI().avatar;
+          const moved = Math.abs(player.x - lastX) > 0.035 || Math.abs(player.z - lastZ) > 0.035 || Math.abs(player.rot - lastRot) > 0.035;
+          if (!moved && now - lastHeartbeat < 1800) return;
+          lastX = player.x; lastZ = player.z; lastRot = player.rot; lastHeartbeat = now;
           const payload: RemotePlayer = {
             id: authenticatedUserId,
             name: currentAvatar?.name || "Phật tử",
-            x: player.x,
-            z: player.z,
-            rot: player.rot,
-            updatedAt: Date.now(),
+            x: player.x, z: player.z, rot: player.rot, updatedAt: now,
+            outfit: currentAvatar?.outfit ?? "lam",
+            hair: currentAvatar?.hair ?? "ngan",
+            hairColor: currentAvatar?.hairColor ?? "#1b1410",
           };
           void channel.send({ type: "broadcast", event: "player_move", payload });
-        }, 150);
+        }, 120);
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-        publish(empty);
+        publish({ ...empty, roomId: currentRoomId });
+        if (status === "CLOSED" && !reconnectTimer) {
+          reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            const closedChannel = channel;
+            channel = null;
+            if (closedChannel && client) void client.removeChannel(closedChannel);
+            client = null;
+            connectMultiplayer();
+          }, 2500);
+        }
       }
     });
 }
 
 export function disconnectMultiplayer() {
   connectionAttempt += 1;
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  reconnectTimer = null;
   if (timer) clearInterval(timer);
   timer = null;
   const oldChannel = channel;
   channel = null;
   clientId = "";
-  publish(empty);
+  publish({ ...empty, roomId: currentRoomId });
   if (oldChannel && client) void client.removeChannel(oldChannel);
   client = null;
+}
+
+// Remove peers whose heartbeat stopped (for example after a browser crash).
+if (typeof window !== "undefined") {
+  window.setInterval(() => {
+    const cutoff = Date.now() - 8000;
+    const fresh = snapshot.players.filter((p) => p.updatedAt > cutoff);
+    if (fresh.length !== snapshot.players.length) publish({ ...snapshot, players: fresh });
+  }, 2000);
 }
