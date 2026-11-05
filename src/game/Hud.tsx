@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
-import { ringBell, speak, stopSpeak } from "./audio";
+import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, subscribeAudioSettings, updateAudioSettings } from "./audio";
 import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
 
@@ -92,6 +92,7 @@ export function Hud() {
         <SideBtn label="Cầu nguyện" icon="🪷" onClick={() => setUI({ panel: panel === "pray" ? null : "pray" })} />
         <SideBtn label="Giao lưu" icon="💬" onClick={() => setUI({ panel: panel === "chat" ? null : "chat" })} />
         <SideBtn label="Chuông" icon="🔔" onClick={() => ringBell(0.6)} />
+        <SideBtn label="Âm thanh" icon="🔊" onClick={() => setUI({ panel: panel === "audio" ? null : "audio" })} />
         <SideBtn label="Avatar" icon="🧘" onClick={() => setUI({ panel: "avatar" })} />
         <SideBtn label="Phòng" icon="🏯" onClick={() => setUI({ panel: panel === "rooms" ? null : "rooms" })} />
       </nav>
@@ -118,6 +119,7 @@ export function Hud() {
       {panel === "pray" && <PrayPanel />}
       {panel === "chat" && <ChatPanel name={avatar?.name ?? "Phật tử"} />}
       {panel === "rooms" && <RoomsPanel currentRoom={multiplayer.roomId} />}
+      {panel === "audio" && <AudioPanel />}
       {panel === "avatar" && <AvatarPanel initial={avatar} />}
       {panel === "auth" && <AuthPanel />}
     </div>
@@ -347,6 +349,62 @@ function ChatPanel({ name }: { name: string }) {
         <input className="hud-input flex-1" value={text} maxLength={300} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Nhập lời chào…" disabled={!multiplayer.connected} />
         <button className="hud-primary" onClick={send} disabled={!multiplayer.connected || !text.trim()}>Gửi</button>
       </div>
+    </Panel>
+  );
+}
+
+
+function AudioPanel() {
+  const [settings, setSettings] = useState(getAudioSettings());
+  const [checks, setChecks] = useState<Record<string, string> | null>(null);
+  const [checking, setChecking] = useState(false);
+  useEffect(() => subscribeAudioSettings(() => setSettings(getAudioSettings())), []);
+  const toggle = async () => settings.enabled ? disableAudio() : void await enableAudio();
+  const test = async (id: "bell" | "mokugyo" | "footsteps" | "water") => {
+    if (!settings.enabled) await enableAudio();
+    await playSound(id);
+  };
+  const checkFiles = async () => {
+    setChecking(true);
+    const result = await checkAudioFiles();
+    setChecks(result);
+    setChecking(false);
+  };
+  const volume = (label: string, value: number, onChange: (n: number) => void) => (
+    <label className="block">
+      <div className="mb-1 flex justify-between text-sm"><span>{label}</span><b>{Math.round(value * 100)}%</b></div>
+      <input className="w-full accent-primary" type="range" min="0" max="1" step="0.01" value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </label>
+  );
+  const labels: Record<string, string> = { music: "Nhạc thiền", birds: "Chim và gió", water: "Nước chảy", bell: "Chuông", mokugyo: "Mõ", footsteps: "Bước chân" };
+  return (
+    <Panel title="Âm thanh Chùa Tâm An" onClose={() => setUI({ panel: null })} wide>
+      <div className="mb-4 flex items-center justify-between rounded-xl border border-border bg-card p-3">
+        <div><div className="font-semibold text-foreground">Âm thanh tổng</div><div className="text-xs text-muted-foreground">Chỉ phát sau khi bạn bật</div></div>
+        <button className="hud-primary" onClick={() => void toggle()}>{settings.enabled ? "🔊 Đang bật" : "🔇 Đang tắt"}</button>
+      </div>
+      <div className="space-y-4">
+        {volume("Nhạc thiền nền", settings.music, (music) => updateAudioSettings({ music }))}
+        {volume("Thiên nhiên: chim, gió, nước", settings.nature, (nature) => updateAudioSettings({ nature }))}
+        {volume("Chuông, mõ, bước chân", settings.effects, (effects) => updateAudioSettings({ effects }))}
+      </div>
+      <div className="mt-5">
+        <div className="mb-2 text-sm font-semibold">Thử âm thanh</div>
+        <div className="grid grid-cols-2 gap-2">
+          <button className="hud-tile" onClick={() => void test("bell")}>🔔 Thử chuông</button>
+          <button className="hud-tile" onClick={() => void test("mokugyo")}>🥁 Thử tiếng mõ</button>
+          <button className="hud-tile" onClick={() => void test("footsteps")}>👣 Thử bước chân</button>
+          <button className="hud-tile" onClick={() => void test("water")}>💧 Thử tiếng nước</button>
+        </div>
+      </div>
+      <div className="mt-4 rounded-xl border border-border bg-card p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="text-sm font-semibold">Kiểm tra tệp âm thanh</div>
+          <button className="hud-swatch" disabled={checking} onClick={() => void checkFiles()}>{checking ? "Đang kiểm tra…" : "Kiểm tra ngay"}</button>
+        </div>
+        {checks ? <div className="space-y-1 text-xs">{Object.entries(checks).map(([name, status]) => <div key={name} className="flex justify-between gap-2"><span>{labels[name] ?? name}</span><b className={status === "Đã tải được" ? "text-green-600" : "text-destructive"}>{status}</b></div>)}</div> : <p className="text-xs text-muted-foreground">Kiểm tra khả năng tải và giải mã từng tệp âm thanh.</p>}
+      </div>
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Âm thanh nền được giữ ở mức nhỏ. Hiệu ứng nghi lễ dùng chung một kênh để tránh chồng tiếng. Trên điện thoại, cần chạm Bật âm thanh lần đầu.</p>
     </Panel>
   );
 }
