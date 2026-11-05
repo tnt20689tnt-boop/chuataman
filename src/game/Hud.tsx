@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { ringBell, speak, stopSpeak } from "./audio";
-import { connectMultiplayer, sendTempleChat, sendTemplePrayer, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
+import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
 
 function Lotus({ className }: { className?: string }) {
@@ -32,8 +32,16 @@ export function Hud() {
     const a = loadAvatar();
     if (a) setUI({ avatar: a });
     else setUI({ panel: "avatar" });
-    const disconnect = connectMultiplayer();
-    return disconnect;
+    connectMultiplayer();
+    const auth = getAuthClient();
+    const authListener = auth?.auth.onAuthStateChange(() => {
+      disconnectMultiplayer();
+      connectMultiplayer();
+    });
+    return () => {
+      authListener?.data.subscription.unsubscribe();
+      disconnectMultiplayer();
+    };
   }, []);
 
   const doAction = (a: "le" | "chap" | "thien" | "kinh") => {
@@ -73,10 +81,7 @@ export function Hud() {
       <div className="absolute right-3 top-3 flex flex-col items-end gap-2 sm:right-5 sm:top-5">
         <div className="hud-glass pointer-events-auto flex items-center gap-2 px-3 py-1.5 text-xs text-foreground">
           <span className={`h-2 w-2 rounded-full ${multiplayer.connected ? "bg-success" : "bg-muted-foreground"}`} />
-          <span>Đang trực tuyến: <b>{multiplayer.connected ? multiplayer.players.length + 1 : "—"}</b>{multiplayer.connected ? " (có bạn)" : " · chưa kết nối"}</span>
-        </div>
-        <div className="hud-glass px-3 py-1.5 text-xs text-muted-foreground">
-          1.000 Phật tử trình diễn · không tính trực tuyến
+          <span>Phật tử đang hiện diện: <b>{multiplayer.connected ? multiplayer.players.length + 1 : 0}</b>{multiplayer.connected ? " người" : " · đăng nhập để hiện diện"}</span>
         </div>
         <div className="hud-chip">📍 {zone}</div>
       </div>
