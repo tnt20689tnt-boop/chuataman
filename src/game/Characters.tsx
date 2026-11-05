@@ -40,7 +40,7 @@ export function Crowd({ count = 1000 }: { count?: number }) {
     if (n.pose === "kneel") bow = Math.max(0, Math.sin(t * 0.8 + n.phase)) * 0.35;
     const fx = Math.sin(rot);
     const fz = Math.cos(rot);
-    tmp.position.set(x, 0.55 * sy, z);
+    tmp.position.set(x, 0, z);
     tmp.rotation.set(0, rot, 0);
     const female = n.gender === "nu";
     tmp.scale.set(sxz * (female ? 0.88 : 1.08), sy, sxz * (female ? 0.94 : 1.04));
@@ -201,6 +201,12 @@ export function PlayerAvatar() {
   const [sy, sxz, hy] = layout(pose);
   const color = OUTFIT_COLORS[avatar?.outfit ?? "lam"];
   const female = avatar?.gender === "nu";
+  const robeGeometry = useMemo(() => new THREE.LatheGeometry(
+    female
+      ? [new THREE.Vector2(0.31, 0), new THREE.Vector2(0.36, 0.08), new THREE.Vector2(0.30, 0.25), new THREE.Vector2(0.19, 0.50), new THREE.Vector2(0.205, 0.70), new THREE.Vector2(0.26, 0.88), new THREE.Vector2(0.23, 1.10)]
+      : [new THREE.Vector2(0.29, 0), new THREE.Vector2(0.32, 0.08), new THREE.Vector2(0.27, 0.25), new THREE.Vector2(0.235, 0.50), new THREE.Vector2(0.25, 0.70), new THREE.Vector2(0.31, 0.88), new THREE.Vector2(0.29, 1.10)],
+    16,
+  ), [female]);
   const hair = avatar?.hair ?? "ngan";
   const handsJoined = action === "chap" || action === "le" || action === "thien" || action === "kinh";
 
@@ -228,7 +234,7 @@ export function PlayerAvatar() {
         <meshStandardMaterial color={color} roughness={0.8} />
       </mesh>
       {/* collar sash */}
-      <mesh position={[0, 1.05 * sy, 0]} scale={[sxz, 1, sxz]}>
+      <mesh position={[0, 0.98 * sy, 0]} scale={[sxz, 1, sxz]}>
         <torusGeometry args={[0.2, 0.05, 8, 20]} />
         <meshStandardMaterial color="#e9dcc0" />
       </mesh>
