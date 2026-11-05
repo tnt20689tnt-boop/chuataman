@@ -70,8 +70,8 @@ export function Hud() {
 
       <div className="absolute right-3 top-3 flex flex-col items-end gap-2 sm:right-5 sm:top-5">
         <div className="hud-glass pointer-events-auto flex items-center gap-2 px-3 py-1.5 text-xs text-foreground">
-          <span className="h-2 w-2 rounded-full bg-success" />
-          <span>Đang trực tuyến: <b>{multiplayer.connected ? multiplayer.players.length + 1 : 1}</b> (bạn)</span>
+          <span className={`h-2 w-2 rounded-full ${multiplayer.connected ? "bg-success" : "bg-muted-foreground"}`} />
+          <span>Đang trực tuyến: <b>{multiplayer.connected ? multiplayer.players.length + 1 : "—"}</b>{multiplayer.connected ? " (có bạn)" : " · chưa kết nối"}</span>
         </div>
         <div className="hud-glass px-3 py-1.5 text-xs text-muted-foreground">
           1.000 Phật tử trình diễn · không tính trực tuyến
