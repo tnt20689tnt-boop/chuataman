@@ -229,8 +229,8 @@ export function PlayerAvatar() {
 
   return (
     <group ref={g}>
-      <mesh position={[0, 0.55 * sy, 0]} scale={[sxz, sy, sxz]} castShadow>
-        <cylinderGeometry args={[0.22, 0.42, 1.1, 16]} />
+      <mesh position={[0, 0, 0]} scale={[sxz, sy, sxz]} castShadow>
+        <primitive object={robeGeometry} attach="geometry" />
         <meshStandardMaterial color={color} roughness={0.8} />
       </mesh>
       {/* collar sash */}
@@ -309,17 +309,62 @@ export function PlayerAvatar() {
           </mesh>
         ))}
         {hair !== "troc" && (
-          <mesh position={[0, 0.05, -0.01]} scale={hair === "dai" ? [1.05, 1.5, 1.08] : hair === "bui" ? [1, 1.18, 1] : [1, 1, 1]}>
-            <sphereGeometry args={[0.258, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <mesh position={[0, 0.05, -0.01]} scale={hair === "dai" ? [1.04, 1.25, 1.08] : hair === "bui" ? [1, 1.18, 1] : [1, 1, 1]}>
+            <sphereGeometry args={[0.258, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.88} />
+          </mesh>
+        )}
+        {hair === "dai" && (
+          <group>
+            <mesh position={[0, -0.16, -0.12]} scale={[0.78, 1.75, 0.55]}>
+              <sphereGeometry args={[0.19, 16, 12]} />
+              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+            </mesh>
+            {[-1, 1].map((side) => (
+              <mesh key={side} position={[side * 0.19, -0.08, 0.02]} rotation-z={side * -0.08}>
+                <capsuleGeometry args={[0.055, 0.34, 5, 8]} />
+                <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+              </mesh>
+            ))}
+          </group>
+        )}
+        {hair === "ngan" && !female && (
+          <mesh position={[0, 0.13, -0.015]} scale={[1.02, 0.6, 1.02]}>
+            <sphereGeometry args={[0.245, 18, 12]} />
             <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
           </mesh>
         )}
         {hair === "bui" && (
           <mesh position={[0, 0.2, -0.18]}>
-            <sphereGeometry args={[0.12, 12, 10]} />
+            <sphereGeometry args={[0.12, 14, 12]} />
             <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
           </mesh>
         )}
+        {/* Soft, balanced facial features for a more expressive human face. */}
+        {[-1, 1].map((side) => (
+          <group key={side}>
+            <mesh position={[side * 0.085, 0.035, 0.213]} scale={[1, 0.72, 0.55]}>
+              <sphereGeometry args={[0.035, 12, 10]} />
+              <meshStandardMaterial color="#fff8ed" />
+            </mesh>
+            <mesh position={[side * 0.085, 0.035, 0.242]} scale={[0.72, 0.9, 0.5]}>
+              <sphereGeometry args={[0.021, 10, 8]} />
+              <meshStandardMaterial color="#302019" />
+            </mesh>
+            <mesh position={[side * 0.085, 0.092, 0.205]} rotation-z={side * -0.12}>
+              <capsuleGeometry args={[0.012, 0.055, 3, 6]} />
+              <meshStandardMaterial color="#39251d" />
+            </mesh>
+          </group>
+        ))}
+        <mesh position={[0, -0.015, 0.238]} rotation-x={0.18}>
+          <coneGeometry args={[0.035, 0.085, 8]} />
+          <meshStandardMaterial color="#d8a98c" roughness={0.75} />
+        </mesh>
+        <mesh position={[0, -0.105, 0.222]} scale={[1, 0.45, 0.45]}>
+          <sphereGeometry args={[0.035, 10, 8]} />
+          <meshStandardMaterial color="#a85f5b" roughness={0.8} />
+        </mesh>
       </group>
       {/* Prayer hands are positioned clearly in front of the chest. */}
       {handsJoined && (
