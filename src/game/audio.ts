@@ -16,7 +16,6 @@ const listeners = new Set<() => void>();
 let settings: AudioSettings = (() => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return { ...DEFAULTS }; } })();
 let speechTimer: number | null = null;
 let speechActive = false;
-let lastStepAt = 0;
 let activeEffect: HTMLAudioElement | null = null;
 function save() { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch {} listeners.forEach((fn) => fn()); }
 export function getAudioSettings() { return { ...settings }; }
