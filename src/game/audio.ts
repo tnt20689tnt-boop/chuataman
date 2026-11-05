@@ -46,14 +46,25 @@ function syncLoops() {
     else if (el.paused) void el.play().catch(() => undefined);
   });
 }
-export async function enableAudio() { settings.enabled = true; save(); await play("music"); await play("birds"); return true; }
+export async function enableAudio() { settings.enabled = true; save(); await play("music"); await play("birds"); await play("water"); return true; }
 export function disableAudio() { settings.enabled = false; save(); elements.forEach((el) => el.pause()); stopSpeak(); }
 export async function playSound(id: SoundId) {
   if (loops.has(id)) { const el = getAudio(id); if (el.paused) return play(id); el.pause(); return false; }
   if (activeEffect && activeEffect !== elements.get(id)) { activeEffect.pause(); activeEffect.currentTime = 0; }
   activeEffect = getAudio(id); return play(id, true);
 }
-export function ringBell(volume = 0.5) { if (!settings.enabled) return; const el = getAudio("bell"); el.volume = Math.min(1, volume); void playSound("bell"); }
+let bellTimer: number | null = null;
+export function ringBell(volume = 0.5) {
+  if (!settings.enabled) return;
+  const el = getAudio("bell");
+  if (activeEffect && activeEffect !== el) { activeEffect.pause(); activeEffect.currentTime = 0; }
+  activeEffect = el;
+  if (bellTimer !== null) window.clearTimeout(bellTimer);
+  el.volume = Math.max(0, Math.min(1, volume));
+  el.pause(); el.currentTime = 0;
+  void el.play().catch((error) => console.warn("[Chùa Tâm An] Không phát được chuông:", error));
+  bellTimer = window.setTimeout(() => { el.pause(); el.currentTime = 0; bellTimer = null; }, 9000);
+}
 export function woodBlock() { void playSound("mokugyo"); }
 export function playFootstep() { if (!settings.enabled || performance.now() - lastStepAt < 420) return; lastStepAt = performance.now(); void playSound("footsteps"); }
 export function speak(text: string, onEnd?: () => void) {
