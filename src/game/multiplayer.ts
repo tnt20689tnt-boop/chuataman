@@ -39,6 +39,7 @@ let channel: RealtimeChannel | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let clientId = "";
 let connectionAttempt = 0;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 function publish(next: MultiplayerSnapshot) {
   snapshot = next;
@@ -112,9 +113,8 @@ export function useMultiplayer() {
 
 function readPresence(channelRef: RealtimeChannel) {
   const state = channelRef.presenceState<RemotePlayer>();
-  // Supabase may return several presence metas for one account (for example,
-  // when the same person opens the temple in multiple tabs). Count each
-  // authenticated account once and never include the current account.
+  // Several tabs may publish metas for one identity. Count each identity once
+  // and never include the current client.
   const uniquePlayers = new Map<string, RemotePlayer>(snapshot.players.map((p) => [p.id, p]));
   for (const presenceKey in state) {
     for (const meta of state[presenceKey] ?? []) {
@@ -254,12 +254,24 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
         }, 120);
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
         publish({ ...empty, roomId: currentRoomId });
+        if (status === "CLOSED" && !reconnectTimer) {
+          reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            const closedChannel = channel;
+            channel = null;
+            if (closedChannel && client) void client.removeChannel(closedChannel);
+            client = null;
+            connectMultiplayer();
+          }, 2500);
+        }
       }
     });
 }
 
 export function disconnectMultiplayer() {
   connectionAttempt += 1;
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  reconnectTimer = null;
   if (timer) clearInterval(timer);
   timer = null;
   const oldChannel = channel;
