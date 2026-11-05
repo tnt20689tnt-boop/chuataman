@@ -2,8 +2,8 @@ import { useSyncExternalStore } from "react";
 import type { Hair, Outfit, Pose } from "./sim";
 
 // Per-frame mutable state (never put in React state)
-export const player = { x: 0, z: 34, rot: Math.PI };
-export const cam = { yaw: 0, pitch: 0.35, dist: 11 };
+export const player = { x: 0, z: 21, rot: Math.PI };
+export const cam = { yaw: 0, pitch: 0.42, dist: 14 };
 export const input = { fwd: 0, right: 0, run: false, joyF: 0, joyR: 0 };
 
 export type Action = "none" | "le" | "chap" | "thien" | "kinh";
