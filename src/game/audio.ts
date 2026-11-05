@@ -8,7 +8,7 @@ const SOURCES: Record<SoundId, string> = {
   water: "https://upload.wikimedia.org/wikipedia/commons/transcoded/2/26/Flowing-water-100019.ogg/Flowing-water-100019.ogg.mp3",
   bell: "https://upload.wikimedia.org/wikipedia/commons/transcoded/f/fa/Gong_or_bell_vibrant.ogg/Gong_or_bell_vibrant.ogg.mp3",
   mokugyo: "https://www.pdsounds.org/audio/download/260/hitting_a_wooden_pole2.mp3",
-  footsteps: "https://www.pdsounds.org/audio/download/295/church_walla_and_people_walking.mp3"
+  footsteps: "https://www.pdsounds.org/audio/download/770/thud.mp3"
 };
 const loops = new Set<SoundId>(["music", "birds", "water"]);
 const elements = new Map<SoundId, HTMLAudioElement>();
