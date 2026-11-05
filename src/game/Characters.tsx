@@ -213,7 +213,7 @@ export function PlayerAvatar() {
 
   useFrame(({ clock }, delta) => {
     if (!g.current) return;
-    g.current.position.set(player.x, 0, player.z);
+    g.current.position.set(player.x, player.y, player.z);
     g.current.rotation.y = player.rot;
     const t = clock.elapsedTime;
     const walking = pose === "walk";
@@ -227,7 +227,7 @@ export function PlayerAvatar() {
       robeRef.current.rotation.z = Math.sin(t * 1.35) * (walking ? 0.035 : 0.012);
       robeRef.current.scale.y = sy * (1 + breath * 0.006);
     }
-    g.current.position.y = walking ? Math.abs(Math.sin(t * 8.5)) * 0.025 : Math.sin(t * 1.8) * 0.008;
+    g.current.position.y = player.y + (walking ? Math.abs(Math.sin(t * 8.5)) * 0.025 : Math.sin(t * 1.8) * 0.008);
     if (leftArmRef.current) leftArmRef.current.rotation.x += (gait - leftArmRef.current.rotation.x) * smooth;
     if (rightArmRef.current) rightArmRef.current.rotation.x += (-gait - rightArmRef.current.rotation.x) * smooth;
     if (leftArmRef.current) leftArmRef.current.rotation.z += ((walking ? -0.10 : Math.sin(t * 1.1) * 0.025) - leftArmRef.current.rotation.z) * smooth;

@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { Hair, Outfit, Pose } from "./sim";
 
 // Per-frame mutable state (never put in React state)
-export const player = { x: 0, z: 21, rot: Math.PI };
+export const player = { x: 0, y: 0, z: 21, rot: Math.PI };
 export const cam = { yaw: 0, pitch: 0.42, dist: 14 };
 export const input = { fwd: 0, right: 0, run: false, joyF: 0, joyR: 0 };
 
@@ -68,6 +68,7 @@ export function saveAvatar(a: Avatar) {
 
 export function teleport(x: number, z: number, rot: number) {
   player.x = x;
+  player.y = z <= -47 ? 1.2 : 0;
   player.z = z;
   player.rot = rot;
   cam.yaw = rot + Math.PI;
