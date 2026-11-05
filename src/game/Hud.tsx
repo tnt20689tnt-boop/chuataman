@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { ringBell, speak, stopSpeak } from "./audio";
-import { connectMultiplayer, sendTempleChat, useMultiplayer, useTempleChat } from "./multiplayer";
+import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
+import { getAuthClient, type User } from "./auth";
 
 function Lotus({ className }: { className?: string }) {
   return (
@@ -31,8 +32,16 @@ export function Hud() {
     const a = loadAvatar();
     if (a) setUI({ avatar: a });
     else setUI({ panel: "avatar" });
-    const disconnect = connectMultiplayer();
-    return disconnect;
+    connectMultiplayer();
+    const auth = getAuthClient();
+    const authListener = auth?.auth.onAuthStateChange(() => {
+      disconnectMultiplayer();
+      connectMultiplayer();
+    });
+    return () => {
+      authListener?.data.subscription.unsubscribe();
+      disconnectMultiplayer();
+    };
   }, []);
 
   const doAction = (a: "le" | "chap" | "thien" | "kinh") => {
@@ -65,16 +74,14 @@ export function Hud() {
         <div>
           <div className="font-display text-lg leading-tight tracking-wide text-foreground sm:text-xl">CHÙA TÂM AN</div>
           <div className="hidden text-xs italic text-muted-foreground sm:block">An yên trong tâm – Hạnh phúc trong đời</div>
+          <button className="hud-swatch mt-2" onClick={() => setUI({ panel: "auth" })}>👤 Đăng nhập / Tài khoản</button>
         </div>
       </header>
 
       <div className="absolute right-3 top-3 flex flex-col items-end gap-2 sm:right-5 sm:top-5">
         <div className="hud-glass pointer-events-auto flex items-center gap-2 px-3 py-1.5 text-xs text-foreground">
           <span className={`h-2 w-2 rounded-full ${multiplayer.connected ? "bg-success" : "bg-muted-foreground"}`} />
-          <span>Đang trực tuyến: <b>{multiplayer.connected ? multiplayer.players.length + 1 : "—"}</b>{multiplayer.connected ? " (có bạn)" : " · chưa kết nối"}</span>
-        </div>
-        <div className="hud-glass px-3 py-1.5 text-xs text-muted-foreground">
-          1.000 Phật tử trình diễn · không tính trực tuyến
+          <span>Phật tử đang hiện diện: <b>{multiplayer.connected ? multiplayer.players.length + 1 : 0}</b>{multiplayer.connected ? " người" : " · đăng nhập để hiện diện"}</span>
         </div>
         <div className="hud-chip">📍 {zone}</div>
       </div>
@@ -110,6 +117,7 @@ export function Hud() {
       {panel === "pray" && <PrayPanel />}
       {panel === "chat" && <ChatPanel name={avatar?.name ?? "Phật tử"} />}
       {panel === "avatar" && <AvatarPanel initial={avatar} />}
+      {panel === "auth" && <AuthPanel />}
     </div>
   );
 }
@@ -146,20 +154,45 @@ function Panel({ title, children, onClose, wide }: { title: string; children: Re
   );
 }
 
+const ZONE_GUIDES: Record<string, string> = {
+  cong: "Bắt đầu hành trình từ cổng tam quan. Dừng lại một chút, gác lại những vội vàng bên ngoài và bước vào chùa với tâm an lành.",
+  san: "Khoảng sân rộng là nơi Phật tử gặp gỡ, đi dạo và hướng lòng về điều thiện. Bạn có thể đi bộ quanh sân và ngắm toàn cảnh ngôi chùa.",
+  dien: "Đại điện là nơi trang nghiêm để lễ Phật, chắp tay và lắng lòng. Hãy giữ bước chân nhẹ nhàng và dành một phút tĩnh tâm.",
+  thien: "Khu thiền định yên tĩnh bên tượng Phật. Chọn nút Ngồi thiền phía dưới để thực tập hơi thở trong 1, 5, 10 hoặc 20 phút.",
+  phap: "Giảng đường là nơi lắng nghe lời Phật dạy và những câu chuyện thiện lành. Mở mục Phật pháp để nghe bài thuyết pháp.",
+  ho: "Hồ sen và vườn hoa là góc thư thái, nơi bạn có thể ngắm cảnh và nghỉ chân giữa hành trình.",
+  chuong: "Tháp chuông nhắc ta quay về với hiện tại. Bạn có thể thỉnh chuông bằng nút Chuông ở cạnh phải màn hình.",
+  kinh: "Tháp kinh tượng trưng cho kho tàng lời Phật dạy. Tại đây, bạn có thể đọc và nghe Bát Nhã Tâm Kinh.",
+  giaoluu: "Khu giao lưu dành cho các Phật tử gặp gỡ. Mở mục Giao lưu để gửi lời chào tới những người đang cùng online.",
+  phongsinh: "Khu phóng sinh mang ý nghĩa nuôi dưỡng lòng từ bi và trân trọng sự sống. Đây là điểm dừng để quán niệm về tình thương.",
+};
+
 function TourPanel() {
+  const [selected, setSelected] = useState(0);
+  const zone = ZONES[selected];
+  const visit = () => {
+    teleport(zone.x, zone.z, zone.rot);
+    setUI({ panel: null, action: "none", pose: "stand" });
+  };
   return (
-    <Panel title="Tham quan chùa" onClose={() => setUI({ panel: null })}>
-      <div className="grid grid-cols-2 gap-2">
-        {ZONES.map((z) => (
-          <button
-            key={z.id}
-            className="hud-tile"
-            onClick={() => {
-              teleport(z.x, z.z, z.rot);
-              setUI({ panel: null, action: "none", pose: "stand" });
-            }}
-          >
-            {z.name}
+    <Panel title="Hành trình tham quan" onClose={() => setUI({ panel: null })} wide>
+      <div className="mb-4 rounded-xl border border-border bg-card p-4">
+        <div className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">
+          Điểm {selected + 1} / {ZONES.length}
+        </div>
+        <h3 className="mb-2 font-display text-xl text-foreground">{zone.name}</h3>
+        <p className="text-sm leading-relaxed text-muted-foreground">{ZONE_GUIDES[zone.id]}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button className="hud-primary" onClick={visit}>📍 Đến địa điểm này</button>
+          <button className="hud-swatch" onClick={() => setSelected((i) => (i + ZONES.length - 1) % ZONES.length)}>← Trước</button>
+          <button className="hud-swatch" onClick={() => setSelected((i) => (i + 1) % ZONES.length)}>Tiếp theo →</button>
+        </div>
+      </div>
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Chọn nhanh địa điểm</div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {ZONES.map((z, i) => (
+          <button key={z.id} className="hud-tile" data-active={selected === i} onClick={() => setSelected(i)}>
+            <span className="mr-1 text-primary">{String(i + 1).padStart(2, "0")}.</span>{z.name}
           </button>
         ))}
       </div>
@@ -219,43 +252,46 @@ function PhapPanel() {
   );
 }
 
-const PRAY_KEY = "tam-an-prayers";
 function PrayPanel() {
-  const [list, setList] = useState<{ text: string; at: number }[]>([]);
   const [text, setText] = useState("");
-  useEffect(() => {
-    try {
-      setList(JSON.parse(localStorage.getItem(PRAY_KEY) || "[]"));
-    } catch {
-      /* empty */
-    }
-  }, []);
+  const prayers = useTemplePrayers();
+  const multiplayer = useMultiplayer();
+  const avatar = useUI((s) => s.avatar);
   const add = () => {
     const t = text.trim();
-    if (!t) return;
-    const next = [{ text: t.slice(0, 200), at: Date.now() }, ...list].slice(0, 50);
-    setList(next);
-    localStorage.setItem(PRAY_KEY, JSON.stringify(next));
-    setText("");
-    ringBell(0.3);
+    if (!t || !multiplayer.connected) return;
+    if (sendTemplePrayer(avatar?.name || "Phật tử", t)) {
+      setText("");
+      ringBell(0.3);
+    }
   };
   return (
-    <Panel title="Góc cầu nguyện" onClose={() => setUI({ panel: null })}>
-      <p className="mb-3 text-sm text-muted-foreground">Gửi lời chúc bình an. Lời nguyện được lưu trên máy của bạn.</p>
+    <Panel title="Góc cầu nguyện chung" onClose={() => setUI({ panel: null })}>
+      <p className="mb-3 text-sm text-muted-foreground">
+        {multiplayer.connected
+          ? "Gửi lời cầu an để mọi Phật tử đang online cùng đọc và hồi hướng điều lành."
+          : "Chùa đang kết nối máy chủ. Khi online, bạn có thể gửi lời nguyện để mọi người cùng đọc."}
+      </p>
       <div className="mb-4 flex gap-2">
-        <input className="hud-input flex-1" value={text} maxLength={200} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="Nguyện cho gia đình được an lành…" />
-        <button className="hud-primary" onClick={add}>Gửi</button>
+        <input className="hud-input min-w-0 flex-1" value={text} maxLength={200} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="Nguyện cho gia đình được an lành…" disabled={!multiplayer.connected} />
+        <button className="hud-primary" onClick={add} disabled={!multiplayer.connected || !text.trim()}>Gửi lời nguyện</button>
+      </div>
+      <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+        <span>🪷 Lời nguyện từ Phật tử đang hiện diện</span>
+        <span>{prayers.length} lời</span>
       </div>
       <ul className="space-y-2">
-        {list.map((p) => (
-          <li key={p.at} className="hud-tile text-left text-sm">🪷 {p.text}</li>
+        {prayers.map((p) => (
+          <li key={p.id} className="hud-tile text-left text-sm">
+            <div>🪷 {p.text}</div>
+            <div className="mt-1 text-xs text-muted-foreground">— {p.name}</div>
+          </li>
         ))}
-        {list.length === 0 && <li className="text-sm text-muted-foreground">Chưa có lời nguyện nào.</li>}
+        {prayers.length === 0 && <li className="hud-tile text-sm text-muted-foreground">Chưa có lời nguyện nào. Hãy là người gửi lời cầu an đầu tiên.</li>}
       </ul>
     </Panel>
   );
 }
-
 function ChatPanel({ name }: { name: string }) {
   const msgs = useTempleChat();
   const [text, setText] = useState("");
@@ -287,6 +323,87 @@ function ChatPanel({ name }: { name: string }) {
         <input className="hud-input flex-1" value={text} maxLength={300} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Nhập lời chào…" disabled={!multiplayer.connected} />
         <button className="hud-primary" onClick={send} disabled={!multiplayer.connected || !text.trim()}>Gửi</button>
       </div>
+    </Panel>
+  );
+}
+
+function AuthPanel() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const client = getAuthClient();
+
+  useEffect(() => {
+    if (!client) return;
+    void client.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    const { data } = client.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  const signIn = async () => {
+    if (!client) return setMessage("Chưa cấu hình máy chủ đăng nhập. Vui lòng thử lại sau.");
+    if (!email.trim() || !password) return setMessage("Vui lòng nhập email và mật khẩu.");
+    setBusy(true); setMessage("");
+    const { error } = await client.auth.signInWithPassword({ email: email.trim(), password });
+    setBusy(false);
+    setMessage(error ? "Đăng nhập chưa thành công: " + error.message : "Đăng nhập thành công. A Di Đà Phật!");
+  };
+
+  const signUp = async () => {
+    if (!client) return setMessage("Chưa cấu hình máy chủ đăng nhập. Vui lòng thử lại sau.");
+    if (!displayName.trim() || !email.trim() || password.length < 6) return setMessage("Nhập tên, email và mật khẩu ít nhất 6 ký tự.");
+    setBusy(true); setMessage("");
+    const { data, error } = await client.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { data: { display_name: displayName.trim().slice(0, 24) } },
+    });
+    setBusy(false);
+    if (error) setMessage("Chưa đăng ký được: " + error.message);
+    else if (!data.session) setMessage("Đã tạo tài khoản. Hãy mở email để xác nhận, sau đó đăng nhập.");
+    else setMessage("Đăng ký thành công. Chào mừng bạn đến Chùa Tâm An!");
+  };
+
+  const signOut = async () => {
+    if (!client) return;
+    setBusy(true);
+    const { error } = await client.auth.signOut();
+    setBusy(false);
+    setMessage(error ? "Chưa đăng xuất được: " + error.message : "Bạn đã đăng xuất.");
+  };
+
+  return (
+    <Panel title="Tài khoản Phật tử" onClose={() => setUI({ panel: null })}>
+      {!client && <p className="hud-note mb-3">Máy chủ đăng nhập chưa được cấu hình. Chức năng tham quan chùa vẫn dùng bình thường.</p>}
+      {user ? (
+        <>
+          <div className="hud-tile mb-3">
+            <div className="text-xs text-muted-foreground">Đang đăng nhập</div>
+            <div className="mt-1 font-semibold text-foreground">{String(user.user_metadata?.display_name || "Phật tử")}</div>
+            <div className="text-sm text-muted-foreground">{user.email}</div>
+          </div>
+          <button className="hud-primary w-full" disabled={busy} onClick={() => void signOut()}>{busy ? "Đang xử lý…" : "Đăng xuất"}</button>
+        </>
+      ) : (
+        <>
+          <p className="mb-3 text-sm text-muted-foreground">Tạo tài khoản miễn phí để lưu danh tính Phật tử và sử dụng các tiện ích cá nhân.</p>
+          <label className="mb-1 block text-sm font-semibold">Tên hiển thị / pháp danh</label>
+          <input className="hud-input mb-3 w-full" value={displayName} maxLength={24} onChange={(e) => setDisplayName(e.target.value)} placeholder="Ví dụ: Diệu An" autoComplete="nickname" />
+          <label className="mb-1 block text-sm font-semibold">Email</label>
+          <input className="hud-input mb-3 w-full" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ban@email.com" autoComplete="email" />
+          <label className="mb-1 block text-sm font-semibold">Mật khẩu</label>
+          <input className="hud-input mb-3 w-full" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Ít nhất 6 ký tự" autoComplete="current-password" />
+          <div className="grid grid-cols-2 gap-2">
+            <button className="hud-primary" disabled={busy || !client} onClick={() => void signIn()}>{busy ? "Đang xử lý…" : "Đăng nhập"}</button>
+            <button className="hud-swatch justify-center" disabled={busy || !client} onClick={() => void signUp()}>Đăng ký miễn phí</button>
+          </div>
+        </>
+      )}
+      {message && <p role="status" className="mt-3 text-sm text-muted-foreground">{message}</p>}
+      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">Không thu phí. Chùa không yêu cầu thông tin thanh toán. Hãy giữ mật khẩu riêng tư và không chia sẻ cho người khác.</p>
     </Panel>
   );
 }

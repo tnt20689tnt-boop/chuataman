@@ -1,10 +1,14 @@
 import { useSyncExternalStore } from "react";
-import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
+import { type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { getUI, player } from "./store";
+import { getAuthClient } from "./auth";
 
 export interface TempleChatMessage { id: string; name: string; text: string; at: number; }
 
 let chatMessages: TempleChatMessage[] = [];
+
+export interface TemplePrayer { id: string; name: string; text: string; at: number; }
+let sharedPrayers: TemplePrayer[] = [];
 
 export interface RemotePlayer {
   id: string;
@@ -27,6 +31,7 @@ let client: SupabaseClient | null = null;
 let channel: RealtimeChannel | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let clientId = "";
+let connectionAttempt = 0;
 
 function publish(next: MultiplayerSnapshot) {
   snapshot = next;
@@ -39,6 +44,33 @@ export function useTempleChat() {
     () => chatMessages,
     () => [],
   );
+}
+
+export function useTemplePrayers() {
+  return useSyncExternalStore(
+    (listener) => { listeners.add(listener); return () => listeners.delete(listener); },
+    () => sharedPrayers,
+    () => [],
+  );
+}
+
+function addPrayer(prayer: TemplePrayer) {
+  if (sharedPrayers.some((item) => item.id === prayer.id)) return;
+  sharedPrayers = [prayer, ...sharedPrayers].slice(0, 100);
+  listeners.forEach((listener) => listener());
+}
+
+export function sendTemplePrayer(name: string, text: string) {
+  const prayer: TemplePrayer = {
+    id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "prayer-" + Date.now() + "-" + Math.random(),
+    name: name.slice(0, 24),
+    text: text.trim().slice(0, 200),
+    at: Date.now(),
+  };
+  if (!prayer.text || !channel || !snapshot.connected) return false;
+  addPrayer(prayer);
+  void channel.send({ type: "broadcast", event: "prayer_message", payload: prayer });
+  return true;
 }
 
 function addChatMessage(message: TempleChatMessage) {
@@ -73,35 +105,51 @@ export function useMultiplayer() {
 
 function readPresence(channelRef: RealtimeChannel) {
   const state = channelRef.presenceState<RemotePlayer>();
-  const players: RemotePlayer[] = [];
-  for (const constKey in state) {
-    for (const meta of state[constKey] ?? []) {
-      if (meta.id !== clientId) players.push(meta);
+  // Supabase may return several presence metas for one account (for example,
+  // when the same person opens the temple in multiple tabs). Count each
+  // authenticated account once and never include the current account.
+  const uniquePlayers = new Map<string, RemotePlayer>();
+  for (const presenceKey in state) {
+    for (const meta of state[presenceKey] ?? []) {
+      if (meta.id && meta.id !== clientId) uniquePlayers.set(meta.id, meta);
     }
   }
-  publish({ connected: true, players });
+  publish({ connected: true, players: [...uniquePlayers.values()] });
 }
 
 export function connectMultiplayer() {
   if (channel) return () => disconnectMultiplayer();
 
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const key = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
-
-  if (!url || !key) {
+  const authClient = getAuthClient();
+  if (!authClient) {
     publish(empty);
-    console.warn("Chùa Tâm An: thiếu VITE_SUPABASE_URL hoặc VITE_SUPABASE_PUBLISHABLE_KEY.");
+    console.warn("Chùa Tâm An: chưa cấu hình xác thực Supabase.");
     return () => {};
   }
 
-  clientId = typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-  client = createClient(url, key, {
-    realtime: { params: { eventsPerSecond: 10 } },
+  const attempt = ++connectionAttempt;
+  void authClient.auth.getSession().then(({ data }) => {
+    // Ignore a late session response if the user signed out or auth changed
+    // while the request was still in flight.
+    if (attempt !== connectionAttempt || channel) return;
+    if (!data.session?.user) {
+      publish(empty);
+      return;
+    }
+    startAuthenticatedMultiplayer(authClient, data.session.user.id);
+  }).catch((error: unknown) => {
+    if (attempt !== connectionAttempt) return;
+    publish(empty);
+    console.warn("Chùa Tâm An: không thể kiểm tra phiên đăng nhập.", error);
   });
+  return () => disconnectMultiplayer();
+}
+
+function startAuthenticatedMultiplayer(authenticatedClient: SupabaseClient, authenticatedUserId: string) {
+  if (channel) return;
+  clientId = authenticatedUserId;
+
+  client = authenticatedClient;
 
   channel = client.channel("tam-an-world", {
     config: {
@@ -126,6 +174,12 @@ export function connectMultiplayer() {
         addChatMessage({ id: message.id, name: message.name.slice(0, 24), text: message.text.slice(0, 300), at: message.at });
       }
     })
+    .on("broadcast", { event: "prayer_message" }, ({ payload }) => {
+      const prayer = payload as TemplePrayer;
+      if (prayer && typeof prayer.id === "string" && typeof prayer.name === "string" && typeof prayer.text === "string" && typeof prayer.at === "number") {
+        addPrayer({ id: prayer.id, name: prayer.name.slice(0, 24), text: prayer.text.slice(0, 200), at: prayer.at });
+      }
+    })
     .on("broadcast", { event: "player_move" }, ({ payload }) => {
       const incoming = payload as RemotePlayer;
       if (!incoming || incoming.id === clientId || typeof incoming.x !== "number" || typeof incoming.z !== "number") return;
@@ -137,7 +191,7 @@ export function connectMultiplayer() {
       if (status === "SUBSCRIBED" && channel) {
         const avatar = getUI().avatar;
         await channel.track({
-          id: clientId,
+          id: authenticatedUserId,
           name: avatar?.name || "Phật tử",
           x: player.x,
           z: player.z,
@@ -150,7 +204,7 @@ export function connectMultiplayer() {
           if (!channel) return;
           const currentAvatar = getUI().avatar;
           const payload: RemotePlayer = {
-            id: clientId,
+            id: authenticatedUserId,
             name: currentAvatar?.name || "Phật tử",
             x: player.x,
             z: player.z,
@@ -163,11 +217,10 @@ export function connectMultiplayer() {
         publish(empty);
       }
     });
-
-  return () => disconnectMultiplayer();
 }
 
 export function disconnectMultiplayer() {
+  connectionAttempt += 1;
   if (timer) clearInterval(timer);
   timer = null;
   const oldChannel = channel;

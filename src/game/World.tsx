@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, Sky, Cloud, Clouds } from "@react-three/drei";
@@ -16,7 +16,7 @@ import {
   Waterfall,
   Buddha,
 } from "./Architecture";
-import { Crowd, PlayerAvatar } from "./Characters";
+import { PlayerAvatar } from "./Characters";
 import { RemotePlayers } from "./RemotePlayers";
 import { ZONES, clamp, rng, stepPlayer } from "./sim";
 import { cam, getUI, input, player, setUI } from "./store";
@@ -256,7 +256,6 @@ export default function World() {
       <Pavilion position={[70, 0, 52]} rot={0} />
       <Pavilion position={[-70, 0, 70]} rot={0} />
       <StoneLanterns points={lanterns} />
-      <Crowd count={1000} />
       <PlayerAvatar />
       <RemotePlayers />
       <Controller />
