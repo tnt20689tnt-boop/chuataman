@@ -361,7 +361,10 @@ function AudioPanel() {
   useEffect(() => subscribeAudioSettings(() => setSettings(getAudioSettings())), []);
   const toggle = async () => settings.enabled ? disableAudio() : void await enableAudio();
   const test = async (id: "music" | "birds" | "bell" | "mokugyo" | "footsteps" | "water") => {
-    if (!settings.enabled) await enableAudio();
+    if (!settings.enabled) {
+      await enableAudio();
+      if (id === "music" || id === "birds" || id === "water") return;
+    }
     await playSound(id);
   };
   const checkFiles = async () => {
@@ -396,7 +399,6 @@ function AudioPanel() {
           <button className="hud-tile" onClick={() => void test("water")}>💧 Bật/tắt nước chảy</button>
           <button className="hud-tile" onClick={() => void test("bell")}>🔔 Thử chuông</button>
           <button className="hud-tile" onClick={() => void test("mokugyo")}>🥁 Thử tiếng mõ</button>
-          <button className="hud-tile" onClick={() => void test("footsteps")}>👣 Thử bước chân</button>
           <button className="hud-tile" onClick={() => void test("footsteps")}>👣 Thử bước chân</button>
         </div>
       </div>
