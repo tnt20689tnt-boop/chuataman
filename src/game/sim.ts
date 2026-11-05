@@ -117,7 +117,7 @@ export const MOVE = { SPEED: 7, RUN: 13, TURN: 12 };
 export const WORLD_LIMIT = 140;
 
 export function stepPlayer(
-  p: { x: number; z: number; rot: number },
+  p: { x: number; y: number; z: number; rot: number },
   input: { fwd: number; right: number; run: boolean },
   camYaw: number,
   dt: number,
@@ -142,7 +142,6 @@ export function stepPlayer(
   const inHallDepth = nextZ < -47 && nextZ > -77;
   const inStairLane = Math.abs(nextX) < 6.8 && nextZ >= -49.2 && nextZ <= -42.8;
   const crossingFront = p.z >= -47 && nextZ < -47;
-  const leavingFront = p.z < -47 && nextZ >= -47;
   const blockedByFront = crossingFront && !inStairLane;
   const blockedBySide = inHallDepth && Math.abs(nextX) > 19.2;
   const blockedByBack = nextZ < -77 && Math.abs(nextX) < 19.2;
