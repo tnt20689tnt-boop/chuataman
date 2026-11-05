@@ -136,9 +136,7 @@ export function connectMultiplayer() {
 
 function startAuthenticatedMultiplayer(authenticatedClient: SupabaseClient, authenticatedUserId: string) {
   if (channel) return;
-  clientId = typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  clientId = authenticatedUserId;
 
   client = authenticatedClient;
 
