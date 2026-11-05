@@ -13,7 +13,8 @@ export function ringBell(volume = 0.5) {
   master.gain.value = volume;
   master.connect(a.destination);
   // inharmonic partials of a large bronze bell
-  [[110, 1], [220, 0.6], [264, 0.4], [330, 0.35], [440, 0.2], [587, 0.12]].forEach(([f, g]) => {
+  const partials: [number, number][] = [[110, 1], [220, 0.6], [264, 0.4], [330, 0.35], [440, 0.2], [587, 0.12]];
+  partials.forEach(([f, g]) => {
     const o = a.createOscillator();
     const gn = a.createGain();
     o.type = "sine";
