@@ -328,6 +328,7 @@ function ChatPanel({ name }: { name: string }) {
 }
 
 function AuthPanel() {
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -389,17 +390,34 @@ function AuthPanel() {
         </>
       ) : (
         <>
-          <p className="mb-3 text-sm text-muted-foreground">Tạo tài khoản miễn phí để lưu danh tính Phật tử và sử dụng các tiện ích cá nhân.</p>
-          <label className="mb-1 block text-sm font-semibold">Tên hiển thị / pháp danh</label>
-          <input className="hud-input mb-3 w-full" value={displayName} maxLength={24} onChange={(e) => setDisplayName(e.target.value)} placeholder="Ví dụ: Diệu An" autoComplete="nickname" />
+          <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-muted/60 p-1">
+            <button type="button" className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${mode === "login" ? "bg-card text-foreground shadow" : "text-muted-foreground"}`} onClick={() => { setMode("login"); setMessage(""); }}>Đăng nhập</button>
+            <button type="button" className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${mode === "signup" ? "bg-card text-foreground shadow" : "text-muted-foreground"}`} onClick={() => { setMode("signup"); setMessage(""); }}>Đăng ký</button>
+          </div>
+          <p className="mb-4 text-sm text-muted-foreground">
+            {mode === "login"
+              ? "Chào mừng bạn trở lại Chùa Tâm An. Đăng nhập để tiếp tục hành trình an yên."
+              : "Tạo tài khoản miễn phí để lưu danh tính Phật tử và kết nối cùng cộng đồng."}
+          </p>
+          {mode === "signup" && (
+            <>
+              <label className="mb-1 block text-sm font-semibold">Tên hiển thị / pháp danh</label>
+              <input className="hud-input mb-3 w-full" value={displayName} maxLength={24} onChange={(e) => setDisplayName(e.target.value)} placeholder="Ví dụ: Diệu An" autoComplete="nickname" />
+            </>
+          )}
           <label className="mb-1 block text-sm font-semibold">Email</label>
           <input className="hud-input mb-3 w-full" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ban@email.com" autoComplete="email" />
           <label className="mb-1 block text-sm font-semibold">Mật khẩu</label>
-          <input className="hud-input mb-3 w-full" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Ít nhất 6 ký tự" autoComplete="current-password" />
-          <div className="grid grid-cols-2 gap-2">
-            <button className="hud-primary" disabled={busy || !client} onClick={() => void signIn()}>{busy ? "Đang xử lý…" : "Đăng nhập"}</button>
-            <button className="hud-swatch justify-center" disabled={busy || !client} onClick={() => void signUp()}>Đăng ký miễn phí</button>
-          </div>
+          <input className="hud-input mb-4 w-full" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Ít nhất 6 ký tự" autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+          <button className="hud-primary w-full justify-center" disabled={busy || !client} onClick={() => void (mode === "login" ? signIn() : signUp())}>
+            {busy ? "Đang xử lý…" : mode === "login" ? "Đăng nhập vào chùa" : "Tạo tài khoản miễn phí"}
+          </button>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            {mode === "login" ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
+            <button type="button" className="font-semibold text-primary underline underline-offset-2" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setMessage(""); }}>
+              {mode === "login" ? "Đăng ký ngay" : "Đăng nhập"}
+            </button>
+          </p>
         </>
       )}
       {message && <p role="status" className="mt-3 text-sm text-muted-foreground">{message}</p>}
