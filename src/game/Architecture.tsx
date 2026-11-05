@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Sparkles } from "@react-three/drei";
@@ -282,8 +282,8 @@ export function Pond({ position, w, d }: { position: [number, number, number]; w
   }, [w, d]);
   const padRef = useRef<THREE.InstancedMesh>(null);
   const flowerRef = useRef<THREE.InstancedMesh>(null);
-  useMemo(() => {
-    queueMicrotask(() => {
+  useLayoutEffect(() => {
+    (() => {
       const m = new THREE.Object3D();
       lotus.forEach(([x, z, r], i) => {
         m.position.set(x, 0.05, z);
@@ -298,7 +298,7 @@ export function Pond({ position, w, d }: { position: [number, number, number]; w
       });
       if (padRef.current) padRef.current.instanceMatrix.needsUpdate = true;
       if (flowerRef.current) flowerRef.current.instanceMatrix.needsUpdate = true;
-    });
+    })();
   }, [lotus]);
   useFrame((_, dt) => {
     tex.offset.x += dt * 0.01;
@@ -373,8 +373,8 @@ export function Waterfall({ position }: { position: [number, number, number] }) 
 export function Forest({ points }: { points: [number, number, number][] }) {
   const trunk = useRef<THREE.InstancedMesh>(null);
   const crown = useRef<THREE.InstancedMesh>(null);
-  useMemo(() => {
-    queueMicrotask(() => {
+  useLayoutEffect(() => {
+    (() => {
       const m = new THREE.Object3D();
       const col = new THREE.Color();
       points.forEach(([x, z, s], i) => {
@@ -395,7 +395,7 @@ export function Forest({ points }: { points: [number, number, number][] }) {
         crown.current.instanceMatrix.needsUpdate = true;
         if (crown.current.instanceColor) crown.current.instanceColor.needsUpdate = true;
       }
-    });
+    })();
   }, [points]);
   return (
     <>
