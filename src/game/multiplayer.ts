@@ -31,6 +31,9 @@ interface MultiplayerSnapshot {
 
 const DEFAULT_ROOM = "chung";
 let currentRoomId = DEFAULT_ROOM;
+if (typeof window !== "undefined") {
+  try { currentRoomId = localStorage.getItem("tam-an-room") || DEFAULT_ROOM; } catch { /* storage may be unavailable */ }
+}
 const empty: MultiplayerSnapshot = { connected: false, players: [], roomId: DEFAULT_ROOM };
 let snapshot = empty;
 const listeners = new Set<() => void>();
@@ -129,7 +132,7 @@ export function connectMultiplayer() {
 
   const authClient = getAuthClient();
   if (!authClient) {
-    publish(empty);
+    publish({ ...empty, roomId: currentRoomId });
     console.warn("Chùa Tâm An: chưa cấu hình xác thực Supabase.");
     return () => {};
   }
@@ -142,7 +145,7 @@ export function connectMultiplayer() {
     startMultiplayer(authClient, data.session?.user.id ?? getGuestId(), attempt);
   }).catch((error: unknown) => {
     if (attempt !== connectionAttempt) return;
-    publish(empty);
+    publish({ ...empty, roomId: currentRoomId });
     console.warn("Chùa Tâm An: không thể kiểm tra phiên đăng nhập.", error);
   });
   return () => disconnectMultiplayer();
@@ -169,6 +172,7 @@ export function switchMultiplayerRoom(roomId: string) {
   if (safeRoom === currentRoomId) return;
   disconnectMultiplayer();
   currentRoomId = safeRoom;
+  try { localStorage.setItem("tam-an-room", currentRoomId); } catch { /* storage may be unavailable */ }
   publish({ connected: false, players: [], roomId: currentRoomId });
   connectMultiplayer();
 }
