@@ -6,6 +6,9 @@ export interface TempleChatMessage { id: string; name: string; text: string; at:
 
 let chatMessages: TempleChatMessage[] = [];
 
+export interface TemplePrayer { id: string; name: string; text: string; at: number; }
+let sharedPrayers: TemplePrayer[] = [];
+
 export interface RemotePlayer {
   id: string;
   name: string;
@@ -39,6 +42,33 @@ export function useTempleChat() {
     () => chatMessages,
     () => [],
   );
+}
+
+export function useTemplePrayers() {
+  return useSyncExternalStore(
+    (listener) => { listeners.add(listener); return () => listeners.delete(listener); },
+    () => sharedPrayers,
+    () => [],
+  );
+}
+
+function addPrayer(prayer: TemplePrayer) {
+  if (sharedPrayers.some((item) => item.id === prayer.id)) return;
+  sharedPrayers = [prayer, ...sharedPrayers].slice(0, 100);
+  listeners.forEach((listener) => listener());
+}
+
+export function sendTemplePrayer(name: string, text: string) {
+  const prayer: TemplePrayer = {
+    id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "prayer-" + Date.now() + "-" + Math.random(),
+    name: name.slice(0, 24),
+    text: text.trim().slice(0, 200),
+    at: Date.now(),
+  };
+  if (!prayer.text || !channel || !snapshot.connected) return false;
+  addPrayer(prayer);
+  void channel.send({ type: "broadcast", event: "prayer_message", payload: prayer });
+  return true;
 }
 
 function addChatMessage(message: TempleChatMessage) {
@@ -124,6 +154,12 @@ export function connectMultiplayer() {
       const message = payload as TempleChatMessage;
       if (message && typeof message.id === "string" && typeof message.name === "string" && typeof message.text === "string" && typeof message.at === "number") {
         addChatMessage({ id: message.id, name: message.name.slice(0, 24), text: message.text.slice(0, 300), at: message.at });
+      }
+    })
+    .on("broadcast", { event: "prayer_message" }, ({ payload }) => {
+      const prayer = payload as TemplePrayer;
+      if (prayer && typeof prayer.id === "string" && typeof prayer.name === "string" && typeof prayer.text === "string" && typeof prayer.at === "number") {
+        addPrayer({ id: prayer.id, name: prayer.name.slice(0, 24), text: prayer.text.slice(0, 200), at: prayer.at });
       }
     })
     .on("broadcast", { event: "player_move" }, ({ payload }) => {
