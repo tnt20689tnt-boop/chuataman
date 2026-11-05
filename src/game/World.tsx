@@ -17,6 +17,7 @@ import {
   Buddha,
 } from "./Architecture";
 import { Crowd, PlayerAvatar } from "./Characters";
+import { RemotePlayers } from "./RemotePlayers";
 import { ZONES, clamp, rng, stepPlayer } from "./sim";
 import { cam, getUI, input, player, setUI } from "./store";
 
@@ -257,6 +258,7 @@ export default function World() {
       <StoneLanterns points={lanterns} />
       <Crowd count={1000} />
       <PlayerAvatar />
+      <RemotePlayers />
       <Controller />
     </Canvas>
   );
