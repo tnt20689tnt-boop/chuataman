@@ -2,6 +2,7 @@
 
 export type Pose = "stand" | "walk" | "sit" | "kneel" | "pray";
 export type Outfit = "lam" | "trang" | "nau" | "tusi" | "vang";
+export type Gender = "nam" | "nu";
 
 export const OUTFIT_COLORS: Record<Outfit, string> = {
   lam: "#6f8fa8", // áo lam
@@ -35,6 +36,7 @@ export interface Npc {
   pose: Pose;
   outfit: Outfit;
   hair: Hair;
+  gender: Gender;
   // walkers circle around a center
   cx: number;
   cz: number;
@@ -77,8 +79,9 @@ export function makeCrowd(count = 1000, seed = 7): Npc[] {
     else pose = p < 0.35 ? "walk" : p < 0.7 ? "stand" : "pray";
     const o = r();
     const outfit: Outfit = o < 0.08 ? "tusi" : o < 0.45 ? "lam" : o < 0.7 ? "trang" : o < 0.9 ? "nau" : "vang";
+    const gender: Gender = r() < 0.5 ? "nam" : "nu";
     const h = r();
-    const hair: Hair = outfit === "tusi" ? "troc" : h < 0.35 ? "ngan" : h < 0.7 ? "bui" : "dai";
+    const hair: Hair = outfit === "tusi" ? "troc" : gender === "nam" ? (h < 0.72 ? "ngan" : "bui") : (h < 0.48 ? "bui" : "dai");
     const name = outfit === "tusi" ? `Thầy ${PHAP[Math.floor(r() * PHAP.length)]}` : `${HO[Math.floor(r() * HO.length)]} ${PHAP[Math.floor(r() * PHAP.length)]}`;
     out.push({
       id: i,
@@ -89,6 +92,7 @@ export function makeCrowd(count = 1000, seed = 7): Npc[] {
       pose,
       outfit,
       hair,
+      gender,
       cx: x,
       cz: z,
       r: 1.5 + r() * 3,
