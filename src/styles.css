@@ -135,3 +135,116 @@
 }
 @keyframes breathe { 0%,100% { transform: scale(.7); opacity:.7 } 50% { transform: scale(1.15); opacity:1 } }
 @keyframes hud-pop { from { opacity:0; transform: translate(-50%,-46%) } to { opacity:1; transform: translate(-50%,-50%) } }
+
+
+/* Chùa Tâm An — visual refresh */
+:root {
+  --background: oklch(0.97 0.025 88);
+  --foreground: oklch(0.24 0.045 155);
+  --card: oklch(0.985 0.018 88);
+  --card-foreground: oklch(0.24 0.045 155);
+  --popover: oklch(0.985 0.018 88);
+  --popover-foreground: oklch(0.24 0.045 155);
+  --primary: oklch(0.43 0.105 153);
+  --primary-foreground: oklch(0.985 0.012 88);
+  --secondary: oklch(0.91 0.045 105);
+  --secondary-foreground: oklch(0.28 0.06 150);
+  --muted: oklch(0.93 0.025 95);
+  --muted-foreground: oklch(0.46 0.035 145);
+  --accent: oklch(0.79 0.12 83);
+  --accent-foreground: oklch(0.25 0.05 145);
+  --border: oklch(0.84 0.045 105);
+  --input: oklch(0.84 0.045 105);
+  --ring: oklch(0.48 0.11 150);
+  --glass: oklch(0.985 0.018 88 / 0.9);
+  --glass-border: oklch(0.99 0.02 90 / 0.8);
+  --shadow-soft: 0 16px 42px -18px oklch(0.2 0.06 145 / 0.4);
+  --gradient-gold: linear-gradient(145deg, oklch(0.91 0.11 91), oklch(0.78 0.12 78));
+  --gradient-vermilion: linear-gradient(145deg, oklch(0.49 0.12 151), oklch(0.34 0.09 155));
+}
+.hud-glass {
+  border: 1px solid oklch(0.99 0.02 90 / .82);
+  border-radius: 1.2rem;
+  box-shadow: 0 14px 38px -18px oklch(0.18 0.06 150 / .55);
+  backdrop-filter: blur(18px) saturate(1.25);
+}
+header.hud-glass {
+  padding: .8rem 1.15rem;
+  border-radius: 1.35rem;
+  box-shadow: 0 12px 34px -18px oklch(0.18 0.06 150 / .6);
+}
+header.hud-glass > div > div:first-child {
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+.hud-panel {
+  border: 1px solid oklch(0.99 0.02 90 / .9);
+  border-radius: 1.6rem;
+  background: oklch(0.985 0.018 88 / .96);
+  box-shadow: 0 28px 80px -28px oklch(0.16 0.06 145 / .58);
+  backdrop-filter: blur(24px) saturate(1.2);
+}
+.hud-panel h2 { color: oklch(0.3 0.075 150); letter-spacing: -.025em; }
+.hud-chip {
+  background: oklch(0.22 0.055 150 / .82);
+  color: oklch(0.98 0.015 90);
+  border: 1px solid oklch(0.95 0.04 95 / .22);
+  padding: .42rem .9rem;
+}
+.hud-action {
+  min-width: 4.65rem;
+  padding: .65rem .7rem;
+  border-radius: 1.1rem;
+  border: 1px solid oklch(0.99 0.02 90 / .8);
+  background: oklch(0.985 0.018 88 / .92);
+  box-shadow: 0 12px 30px -15px oklch(0.18 0.06 150 / .58);
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.hud-action:hover { transform: translateY(-4px); box-shadow: 0 18px 34px -15px oklch(0.18 0.06 150 / .55); }
+.hud-action[data-active="true"] {
+  background: var(--gradient-vermilion);
+  color: white;
+  border-color: oklch(0.75 0.1 100 / .7);
+}
+.hud-side {
+  width: 3.8rem;
+  min-height: 3.65rem;
+  border-radius: 1.1rem;
+  background: oklch(0.985 0.018 88 / .93);
+  border: 1px solid oklch(0.99 0.02 90 / .82);
+  box-shadow: 0 10px 28px -15px oklch(0.18 0.06 150 / .6);
+}
+.hud-side:hover { transform: translateX(-4px); background: white; }
+.hud-tile {
+  border-radius: 1rem;
+  padding: .85rem 1rem;
+  background: oklch(0.96 0.025 95);
+  border: 1px solid oklch(0.86 0.045 105);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.hud-tile:hover { transform: translateY(-2px); border-color: var(--primary); background: oklch(0.93 0.045 105); }
+.hud-primary {
+  border-radius: 999px;
+  padding: .72rem 1.35rem;
+  background: var(--gradient-vermilion);
+  color: white;
+  box-shadow: 0 9px 22px -10px oklch(0.2 0.07 150 / .7);
+}
+.hud-input { border-radius: .9rem; background: white; }
+.hud-quote { border: 1px solid oklch(0.8 0.11 88 / .65); }
+.name-tag { background: oklch(0.2 0.06 150 / .82); }
+.loading-screen { background: linear-gradient(145deg, oklch(0.96 0.04 100), oklch(0.86 0.1 90)); }
+@media (max-width: 639px) {
+  header.hud-glass { left: .65rem; top: .65rem; gap: .55rem; padding: .55rem .7rem; border-radius: 1rem; }
+  header.hud-glass svg { width: 2rem; height: 2rem; }
+  header.hud-glass > div > div:first-child { font-size: .9rem; letter-spacing: .08em; }
+  .hud-side { width: 2.8rem; min-height: 2.8rem; padding: .25rem 0; border-radius: .85rem; }
+  .hud-side > span:first-child { font-size: 1rem; }
+  .hud-action { min-width: 3.6rem; padding: .45rem .35rem; border-radius: .9rem; gap: .1rem; }
+  .joystick { width: 6rem; height: 6rem; }
+  .joystick-knob { width: 2.5rem; height: 2.5rem; }
+  .hud-panel { max-height: 74vh; padding: 1rem; border-radius: 1.25rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-panel, .hud-action, .hud-tile, .hud-side { animation: none; transition: none; }
+}
