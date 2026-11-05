@@ -353,6 +353,26 @@ function AuthPanel() {
     setMessage(error ? "Đăng nhập chưa thành công: " + error.message : "Đăng nhập thành công. A Di Đà Phật!");
   };
 
+  const resendConfirmation = async () => {
+    if (!client) return setMessage("Chưa cấu hình máy chủ đăng nhập. Vui lòng thử lại sau.");
+    if (!email.trim()) return setMessage("Nhập email đã đăng ký để gửi lại thư xác nhận.");
+    setBusy(true); setMessage("");
+    try {
+      const { error } = await client.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: { emailRedirectTo: window.location.origin },
+      });
+      setMessage(error
+        ? "Chưa gửi lại được email: " + error.message
+        : "Đã gửi yêu cầu gửi lại email xác nhận. Hãy kiểm tra hộp thư và thư rác.");
+    } catch (error) {
+      setMessage("Không thể gửi email lúc này. Vui lòng thử lại.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const signUp = async () => {
     if (!client) return setMessage("Chưa cấu hình máy chủ đăng nhập. Vui lòng thử lại sau.");
     if (!displayName.trim() || !email.trim() || password.length < 6) return setMessage("Nhập tên, email và mật khẩu ít nhất 6 ký tự.");
@@ -360,7 +380,10 @@ function AuthPanel() {
     const { data, error } = await client.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { display_name: displayName.trim().slice(0, 24) } },
+      options: {
+        data: { display_name: displayName.trim().slice(0, 24) },
+        emailRedirectTo: window.location.origin,
+      },
     });
     setBusy(false);
     if (error) setMessage("Chưa đăng ký được: " + error.message);
@@ -417,6 +440,11 @@ function AuthPanel() {
           <button className="hud-primary w-full justify-center" disabled={busy || !client} onClick={() => void (mode === "login" ? signIn() : signUp())}>
             {busy ? "Đang xử lý…" : mode === "login" ? "Đăng nhập vào chùa" : "Tạo tài khoản miễn phí"}
           </button>
+          {mode === "login" && (
+            <button type="button" className="mt-3 block w-full text-center text-xs text-primary underline underline-offset-2" disabled={busy || !client} onClick={() => void resendConfirmation()}>
+              Chưa nhận được email xác nhận? Gửi lại
+            </button>
+          )}
           <p className="mt-3 text-center text-xs text-muted-foreground">
             {mode === "login" ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
             <button type="button" className="font-semibold text-primary underline underline-offset-2" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setMessage(""); }}>
