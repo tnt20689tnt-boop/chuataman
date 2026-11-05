@@ -10,6 +10,7 @@ export type Action = "none" | "le" | "chap" | "thien" | "kinh";
 
 export interface Avatar {
   name: string;
+  gender?: "nam" | "nu";
   outfit: Outfit;
   hair: Hair;
   hairColor: string;
