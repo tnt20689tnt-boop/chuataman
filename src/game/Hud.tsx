@@ -360,7 +360,7 @@ function AudioPanel() {
   const [checking, setChecking] = useState(false);
   useEffect(() => subscribeAudioSettings(() => setSettings(getAudioSettings())), []);
   const toggle = async () => settings.enabled ? disableAudio() : void await enableAudio();
-  const test = async (id: "bell" | "mokugyo" | "footsteps" | "water") => {
+  const test = async (id: "music" | "birds" | "bell" | "mokugyo" | "footsteps" | "water") => {
     if (!settings.enabled) await enableAudio();
     await playSound(id);
   };
@@ -391,10 +391,13 @@ function AudioPanel() {
       <div className="mt-5">
         <div className="mb-2 text-sm font-semibold">Thử âm thanh</div>
         <div className="grid grid-cols-2 gap-2">
+          <button className="hud-tile" onClick={() => void test("music")}>🎵 Bật/tắt nhạc thiền</button>
+          <button className="hud-tile" onClick={() => void test("birds")}>🐦 Bật/tắt chim, gió</button>
+          <button className="hud-tile" onClick={() => void test("water")}>💧 Bật/tắt nước chảy</button>
           <button className="hud-tile" onClick={() => void test("bell")}>🔔 Thử chuông</button>
           <button className="hud-tile" onClick={() => void test("mokugyo")}>🥁 Thử tiếng mõ</button>
           <button className="hud-tile" onClick={() => void test("footsteps")}>👣 Thử bước chân</button>
-          <button className="hud-tile" onClick={() => void test("water")}>💧 Thử tiếng nước</button>
+          <button className="hud-tile" onClick={() => void test("footsteps")}>👣 Thử bước chân</button>
         </div>
       </div>
       <div className="mt-4 rounded-xl border border-border bg-card p-3">
@@ -404,7 +407,7 @@ function AudioPanel() {
         </div>
         {checks ? <div className="space-y-1 text-xs">{Object.entries(checks).map(([name, status]) => <div key={name} className="flex justify-between gap-2"><span>{labels[name] ?? name}</span><b className={status === "Đã tải được" ? "text-green-600" : "text-destructive"}>{status}</b></div>)}</div> : <p className="text-xs text-muted-foreground">Kiểm tra khả năng tải và giải mã từng tệp âm thanh.</p>}
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Âm thanh nền được giữ ở mức nhỏ. Hiệu ứng nghi lễ dùng chung một kênh để tránh chồng tiếng. Trên điện thoại, cần chạm Bật âm thanh lần đầu.</p>
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Âm thanh nền được giữ ở mức nhỏ. Nhạc, thiên nhiên có thể bật/tắt riêng; chuông, mõ và bước chân dùng chung một kênh để tránh chồng tiếng. Nhạc thiền: Jason Shaw (CC BY 3.0). Trên điện thoại, cần chạm Bật âm thanh lần đầu.</p>
     </Panel>
   );
 }
