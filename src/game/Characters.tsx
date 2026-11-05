@@ -17,6 +17,12 @@ function layout(p: Pose): [number, number, number] {
 export function Crowd({ count = 1000 }: { count?: number }) {
   const npcs = useMemo(() => makeCrowd(count), [count]);
   const body = useRef<THREE.InstancedMesh>(null);
+  const robeGeometry = useMemo(() => new THREE.LatheGeometry([
+    new THREE.Vector2(0.29, 0), new THREE.Vector2(0.34, 0.08),
+    new THREE.Vector2(0.28, 0.25), new THREE.Vector2(0.205, 0.48),
+    new THREE.Vector2(0.22, 0.70), new THREE.Vector2(0.30, 0.88),
+    new THREE.Vector2(0.255, 1.10),
+  ], 12), []);
   const head = useRef<THREE.InstancedMesh>(null);
   const hair = useRef<THREE.InstancedMesh>(null);
   const arms = useRef<THREE.InstancedMesh>(null);
@@ -36,26 +42,27 @@ export function Crowd({ count = 1000 }: { count?: number }) {
     const fz = Math.cos(rot);
     tmp.position.set(x, 0.55 * sy, z);
     tmp.rotation.set(0, rot, 0);
-    tmp.scale.set(sxz, sy, sxz);
+    const female = n.gender === "nu";
+    tmp.scale.set(sxz * (female ? 0.88 : 1.08), sy, sxz * (female ? 0.94 : 1.04));
     tmp.updateMatrix();
     body.current!.setMatrixAt(n.id, tmp.matrix);
     // Separate articulated-looking limbs keep the crowd silhouette readable.
     const swing = n.pose === "walk" ? Math.sin(t * 6 + n.phase) * 0.32 : 0;
     for (const side of [-1, 1]) {
-      tmp.position.set(x + side * 0.31 * sxz, 0.56 * sy, z);
+      tmp.position.set(x + side * (female ? 0.285 : 0.34) * sxz, 0.56 * sy, z);
       tmp.rotation.set(side * swing, rot, side * -0.10);
       tmp.scale.set(1, 1, 1);
       tmp.updateMatrix();
       arms.current!.setMatrixAt(n.id * 2 + (side === 1 ? 1 : 0), tmp.matrix);
-      tmp.position.set(x + side * 0.13 * sxz, 0.20 * sy, z);
+      tmp.position.set(x + side * (female ? 0.15 : 0.17) * sxz, 0.20 * sy, z);
       tmp.rotation.set(-side * swing * 1.25, rot, 0);
       tmp.updateMatrix();
       legs.current!.setMatrixAt(n.id * 2 + (side === 1 ? 1 : 0), tmp.matrix);
-      tmp.position.set(x + side * 0.31 * sxz, 0.20 * sy, z + 0.015);
+      tmp.position.set(x + side * (female ? 0.285 : 0.34) * sxz, 0.20 * sy, z + 0.015);
       tmp.rotation.set(0, rot, 0);
       tmp.updateMatrix();
       hands.current!.setMatrixAt(n.id * 2 + (side === 1 ? 1 : 0), tmp.matrix);
-      tmp.position.set(x + side * 0.13 * sxz, 0.045 * sy, z + 0.10);
+      tmp.position.set(x + side * (female ? 0.15 : 0.17) * sxz, 0.045 * sy, z + 0.10);
       tmp.rotation.set(0, rot, 0);
       tmp.updateMatrix();
       feet.current!.setMatrixAt(n.id * 2 + (side === 1 ? 1 : 0), tmp.matrix);
@@ -133,7 +140,7 @@ export function Crowd({ count = 1000 }: { count?: number }) {
   return (
     <group>
       <instancedMesh ref={body} args={[undefined, undefined, npcs.length]} castShadow frustumCulled>
-        <cylinderGeometry args={[0.22, 0.42, 1.1, 10]} />
+        <primitive object={robeGeometry} attach="geometry" />
         <meshStandardMaterial roughness={0.85} />
       </instancedMesh>
       <instancedMesh ref={head} args={[undefined, undefined, npcs.length]} castShadow>
@@ -193,6 +200,7 @@ export function PlayerAvatar() {
   const rightLegRef = useRef<THREE.Group>(null);
   const [sy, sxz, hy] = layout(pose);
   const color = OUTFIT_COLORS[avatar?.outfit ?? "lam"];
+  const female = avatar?.gender === "nu";
   const hair = avatar?.hair ?? "ngan";
   const handsJoined = action === "chap" || action === "le" || action === "thien" || action === "kinh";
 
@@ -225,7 +233,7 @@ export function PlayerAvatar() {
         <meshStandardMaterial color="#e9dcc0" />
       </mesh>
       {/* arms: upper arm, forearm and visible hand */}
-      <group ref={leftArmRef} position={[-0.37 * sxz, 0.91 * sy, 0]}>
+      <group ref={leftArmRef} position={[-(female ? 0.31 : 0.37) * sxz, 0.91 * sy, 0]}>
         <mesh position={[0, -0.16, 0]} rotation-z={-0.10} castShadow>
           <capsuleGeometry args={[0.082, 0.25, 5, 10]} />
           <meshStandardMaterial color={color} roughness={0.82} />
@@ -239,7 +247,7 @@ export function PlayerAvatar() {
           <meshStandardMaterial color={SKIN} roughness={0.75} />
         </mesh>
       </group>
-      <group ref={rightArmRef} position={[0.37 * sxz, 0.91 * sy, 0]}>
+      <group ref={rightArmRef} position={[(female ? 0.31 : 0.37) * sxz, 0.91 * sy, 0]}>
         <mesh position={[0, -0.16, 0]} rotation-z={0.10} castShadow>
           <capsuleGeometry args={[0.082, 0.25, 5, 10]} />
           <meshStandardMaterial color={color} roughness={0.82} />
@@ -254,7 +262,7 @@ export function PlayerAvatar() {
         </mesh>
       </group>
       {/* separated legs with visible shoes */}
-      <group ref={leftLegRef} position={[-0.16, 0.43, 0]}>
+      <group ref={leftLegRef} position={[-(female ? 0.14 : 0.17), 0.43, 0]}>
         <mesh position={[0, -0.17, 0]} castShadow>
           <capsuleGeometry args={[0.105, 0.25, 5, 10]} />
           <meshStandardMaterial color={color} roughness={0.9} />
@@ -268,7 +276,7 @@ export function PlayerAvatar() {
           <meshStandardMaterial color="#51463e" roughness={0.95} />
         </mesh>
       </group>
-      <group ref={rightLegRef} position={[0.16, 0.43, 0]}>
+      <group ref={rightLegRef} position={[(female ? 0.14 : 0.17), 0.43, 0]}>
         <mesh position={[0, -0.17, 0]} castShadow>
           <capsuleGeometry args={[0.105, 0.25, 5, 10]} />
           <meshStandardMaterial color={color} roughness={0.9} />
@@ -295,7 +303,7 @@ export function PlayerAvatar() {
           </mesh>
         ))}
         {hair !== "troc" && (
-          <mesh position={[0, 0.05, -0.01]} scale={hair === "dai" ? [1.05, 1.5, 1.08] : [1, 1, 1]}>
+          <mesh position={[0, 0.05, -0.01]} scale={hair === "dai" ? [1.05, 1.5, 1.08] : hair === "bui" ? [1, 1.18, 1] : [1, 1, 1]}>
             <sphereGeometry args={[0.258, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
             <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
           </mesh>
