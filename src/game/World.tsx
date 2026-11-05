@@ -16,7 +16,7 @@ import {
   Waterfall,
   Buddha,
 } from "./Architecture";
-import { Crowd, PlayerAvatar } from "./Characters";
+import { PlayerAvatar } from "./Characters";
 import { RemotePlayers } from "./RemotePlayers";
 import { ZONES, clamp, rng, stepPlayer } from "./sim";
 import { cam, getUI, input, player, setUI } from "./store";
@@ -184,13 +184,6 @@ function Controller() {
 }
 
 export default function World() {
-  const [crowdCount, setCrowdCount] = useState(700);
-  useEffect(() => {
-    const updateCrowd = () => setCrowdCount(window.innerWidth < 768 ? 220 : 850);
-    updateCrowd();
-    window.addEventListener("resize", updateCrowd);
-    return () => window.removeEventListener("resize", updateCrowd);
-  }, []);
   const trees = useMemo(() => treePoints(), []);
   const lanterns = useMemo(() => {
     const p: [number, number][] = [];
@@ -263,7 +256,6 @@ export default function World() {
       <Pavilion position={[70, 0, 52]} rot={0} />
       <Pavilion position={[-70, 0, 70]} rot={0} />
       <StoneLanterns points={lanterns} />
-      <Crowd count={crowdCount} />
       <PlayerAvatar />
       <RemotePlayers />
       <Controller />
