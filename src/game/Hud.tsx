@@ -353,6 +353,22 @@ function AuthPanel() {
     setMessage(error ? "Đăng nhập chưa thành công: " + error.message : "Đăng nhập thành công. A Di Đà Phật!");
   };
 
+  const signInWithGoogle = async () => {
+    if (!client) return setMessage("Chưa cấu hình máy chủ đăng nhập. Vui lòng thử lại sau.");
+    setBusy(true); setMessage("");
+    try {
+      const { error } = await client.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) setMessage("Chưa đăng nhập Google được: " + error.message);
+    } catch {
+      setMessage("Không thể kết nối Google lúc này. Vui lòng thử lại.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const resendConfirmation = async () => {
     if (!client) return setMessage("Chưa cấu hình máy chủ đăng nhập. Vui lòng thử lại sau.");
     if (!email.trim()) return setMessage("Nhập email đã đăng ký để gửi lại thư xác nhận.");
@@ -439,6 +455,14 @@ function AuthPanel() {
           <input className="hud-input mb-4 w-full" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Ít nhất 6 ký tự" autoComplete={mode === "signup" ? "new-password" : "current-password"} />
           <button className="hud-primary w-full justify-center" disabled={busy || !client} onClick={() => void (mode === "login" ? signIn() : signUp())}>
             {busy ? "Đang xử lý…" : mode === "login" ? "Đăng nhập vào chùa" : "Tạo tài khoản miễn phí"}
+          </button>
+          <div className="my-3 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            <span>HOẶC</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <button type="button" className="hud-swatch w-full justify-center" disabled={busy || !client} onClick={() => void signInWithGoogle()}>
+            <span className="mr-2 font-bold">G</span> Tiếp tục với Google
           </button>
           {mode === "login" && (
             <button type="button" className="mt-3 block w-full text-center text-xs text-primary underline underline-offset-2" disabled={busy || !client} onClick={() => void resendConfirmation()}>
