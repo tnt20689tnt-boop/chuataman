@@ -79,7 +79,7 @@ export function makeCrowd(count = 1000, seed = 7): Npc[] {
     else pose = p < 0.35 ? "walk" : p < 0.7 ? "stand" : "pray";
     const o = r();
     const outfit: Outfit = o < 0.08 ? "tusi" : o < 0.45 ? "lam" : o < 0.7 ? "trang" : o < 0.9 ? "nau" : "vang";
-    const gender: Gender = r() < 0.5 ? "nam" : "nu";
+    const gender: Gender = outfit === "tusi" || r() < 0.5 ? "nam" : "nu";
     const h = r();
     const hair: Hair = outfit === "tusi" ? "troc" : gender === "nam" ? (h < 0.72 ? "ngan" : "bui") : (h < 0.48 ? "bui" : "dai");
     const name = outfit === "tusi" ? `Thầy ${PHAP[Math.floor(r() * PHAP.length)]}` : `${HO[Math.floor(r() * HO.length)]} ${PHAP[Math.floor(r() * PHAP.length)]}`;
