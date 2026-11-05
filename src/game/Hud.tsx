@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { ringBell, speak, stopSpeak } from "./audio";
-import { connectMultiplayer, disconnectMultiplayer, getMultiplayerRoom, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
+import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
 
 function Lotus({ className }: { className?: string }) {
