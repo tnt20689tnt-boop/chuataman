@@ -19,7 +19,7 @@ interface UIState {
   avatar: Avatar | null;
   action: Action;
   pose: Pose;
-  panel: null | "tour" | "chat" | "phap" | "avatar" | "pray";
+  panel: null | "tour" | "chat" | "phap" | "avatar" | "pray" | "auth";
   zoneLabel: string;
   sceneReady: boolean;
 }
