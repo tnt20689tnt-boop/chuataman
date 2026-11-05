@@ -2,6 +2,10 @@ import { useSyncExternalStore } from "react";
 import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { getUI, player } from "./store";
 
+export interface TempleChatMessage { id: string; name: string; text: string; at: number; }
+
+let chatMessages: TempleChatMessage[] = [];
+
 export interface RemotePlayer {
   id: string;
   name: string;
@@ -27,6 +31,33 @@ let clientId = "";
 function publish(next: MultiplayerSnapshot) {
   snapshot = next;
   listeners.forEach((listener) => listener());
+}
+
+export function useTempleChat() {
+  return useSyncExternalStore(
+    (listener) => { listeners.add(listener); return () => listeners.delete(listener); },
+    () => chatMessages,
+    () => [],
+  );
+}
+
+function addChatMessage(message: TempleChatMessage) {
+  if (chatMessages.some((item) => item.id === message.id)) return;
+  chatMessages = [...chatMessages, message].slice(-100);
+  listeners.forEach((listener) => listener());
+}
+
+export function sendTempleChat(name: string, text: string) {
+  const message: TempleChatMessage = {
+    id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `msg-${Date.now()}-${Math.random()}`,
+    name: name.slice(0, 24),
+    text: text.trim().slice(0, 300),
+    at: Date.now(),
+  };
+  if (!message.text || !channel || !snapshot.connected) return false;
+  addChatMessage(message);
+  void channel.send({ type: "broadcast", event: "chat_message", payload: message });
+  return true;
 }
 
 export function useMultiplayer() {
@@ -88,6 +119,12 @@ export function connectMultiplayer() {
     })
     .on("presence", { event: "leave" }, () => {
       if (channel) readPresence(channel);
+    })
+    .on("broadcast", { event: "chat_message" }, ({ payload }) => {
+      const message = payload as TempleChatMessage;
+      if (message && typeof message.id === "string" && typeof message.name === "string" && typeof message.text === "string" && typeof message.at === "number") {
+        addChatMessage({ id: message.id, name: message.name.slice(0, 24), text: message.text.slice(0, 300), at: message.at });
+      }
     })
     .on("broadcast", { event: "player_move" }, ({ payload }) => {
       const incoming = payload as RemotePlayer;
