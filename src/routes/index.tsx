@@ -1,23 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
+import { Hud } from "@/game/Hud";
 
-// The home route ships no og:image, so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+const World = lazy(() => import("@/game/World"));
+
 export const Route = createFileRoute("/")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Chùa Tâm An – Thế giới tâm linh 3D" },
+      { name: "description", content: "Bước vào ngôi chùa ảo 3D: lễ Phật, ngồi thiền, nghe kinh cùng hàng ngàn Phật tử. An yên trong tâm – Hạnh phúc trong đời." },
+      { property: "og:title", content: "Chùa Tâm An – Thế giới tâm linh 3D" },
+      { property: "og:description", content: "Ngôi chùa ảo 3D để lễ Phật, thiền định và nghe pháp trực tuyến." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="fixed inset-0 overflow-hidden bg-background">
+      <h1 className="sr-only">Chùa Tâm An – Thế giới tâm linh 3D</h1>
+      <Suspense fallback={<div className="loading-screen">Đang mở cổng chùa…</div>}>
+        <World />
+      </Suspense>
+      <Hud />
+    </main>
   );
 }
