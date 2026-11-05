@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { getUI, player } from "./store";
-import { OUTFIT_COLORS, type Hair, type Outfit } from "./sim";
+import { type Hair, type Outfit } from "./sim";
 import { getAuthClient } from "./auth";
 
 export interface TempleChatMessage { id: string; name: string; text: string; at: number; }
@@ -121,7 +121,7 @@ function readPresence(channelRef: RealtimeChannel) {
       if (meta.id && meta.id !== clientId) uniquePlayers.set(meta.id, meta);
     }
   }
-  publish({ connected: true, players: [...uniquePlayers.values()] });
+  publish({ connected: true, players: [...uniquePlayers.values()], roomId: currentRoomId });
 }
 
 export function connectMultiplayer() {
@@ -165,7 +165,7 @@ function getGuestId() {
 export function getMultiplayerRoom() { return currentRoomId; }
 
 export function switchMultiplayerRoom(roomId: string) {
-  const safeRoom = roomId.trim().toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 32) || DEFAULT_ROOM;
+  const safeRoom = roomId.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 32) || DEFAULT_ROOM;
   if (safeRoom === currentRoomId) return;
   disconnectMultiplayer();
   currentRoomId = safeRoom;
@@ -265,7 +265,7 @@ export function disconnectMultiplayer() {
   const oldChannel = channel;
   channel = null;
   clientId = "";
-  publish(empty);
+  publish({ ...empty, roomId: currentRoomId });
   if (oldChannel && client) void client.removeChannel(oldChannel);
   client = null;
 }
