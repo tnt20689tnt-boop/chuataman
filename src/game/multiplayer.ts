@@ -31,6 +31,7 @@ let client: SupabaseClient | null = null;
 let channel: RealtimeChannel | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let clientId = "";
+let connectionAttempt = 0;
 
 function publish(next: MultiplayerSnapshot) {
   snapshot = next;
@@ -126,13 +127,20 @@ export function connectMultiplayer() {
     return () => {};
   }
 
+  const attempt = ++connectionAttempt;
   void authClient.auth.getSession().then(({ data }) => {
-    if (channel) return;
+    // Ignore a late session response if the user signed out or auth changed
+    // while the request was still in flight.
+    if (attempt !== connectionAttempt || channel) return;
     if (!data.session?.user) {
       publish(empty);
       return;
     }
     startAuthenticatedMultiplayer(authClient, data.session.user.id);
+  }).catch((error: unknown) => {
+    if (attempt !== connectionAttempt) return;
+    publish(empty);
+    console.warn("Chùa Tâm An: không thể kiểm tra phiên đăng nhập.", error);
   });
   return () => disconnectMultiplayer();
 }
@@ -212,6 +220,7 @@ function startAuthenticatedMultiplayer(authenticatedClient: SupabaseClient, auth
 }
 
 export function disconnectMultiplayer() {
+  connectionAttempt += 1;
   if (timer) clearInterval(timer);
   timer = null;
   const oldChannel = channel;
