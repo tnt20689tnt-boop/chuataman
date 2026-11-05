@@ -357,10 +357,38 @@ export function PlayerAvatar() {
           </group>
         )}
         {hair === "ngan" && !female && (
-          <mesh position={[0, 0.13, -0.015]} scale={[1.02, 0.6, 1.02]}>
-            <sphereGeometry args={[0.245, 18, 12]} />
-            <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
-          </mesh>
+          <group>
+            <mesh position={[0, 0.13, -0.015]} scale={[1.02, 0.6, 1.02]}>
+              <sphereGeometry args={[0.245, 18, 12]} />
+              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
+            </mesh>
+            {/* A swept fringe and tapered side hair create a clearly masculine haircut. */}
+            <mesh position={[0, 0.205, 0.155]} rotation-x={-0.24} scale={[0.76, 0.34, 0.48]}>
+              <sphereGeometry args={[0.16, 16, 10]} />
+              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.82} />
+            </mesh>
+            {[-1, 1].map((side) => (
+              <mesh key={side} position={[side * 0.215, -0.015, 0.015]} rotation-z={side * -0.08}>
+                <capsuleGeometry args={[0.045, 0.12, 5, 8]} />
+                <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
+              </mesh>
+            ))}
+          </group>
+        )}
+        {/* Female styles get soft face-framing locks and a curved fringe, distinct from the men's cut. */}
+        {female && hair !== "troc" && (
+          <group>
+            <mesh position={[0, 0.105, 0.19]} rotation-x={-0.18} scale={[0.92, 0.28, 0.42]}>
+              <sphereGeometry args={[0.16, 18, 12]} />
+              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+            </mesh>
+            {[-1, 1].map((side) => (
+              <mesh key={side} position={[side * 0.205, -0.13, 0.115]} rotation-z={side * -0.12}>
+                <capsuleGeometry args={[0.052, hair === "dai" ? 0.48 : 0.25, 6, 10]} />
+                <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+              </mesh>
+            ))}
+          </group>
         )}
         {hair === "bui" && (
           <group>
@@ -385,10 +413,16 @@ export function PlayerAvatar() {
               <sphereGeometry args={[0.021, 10, 8]} />
               <meshStandardMaterial color="#302019" />
             </mesh>
-            <mesh position={[side * 0.085, 0.092, 0.205]} rotation-z={side * -0.12}>
+            <mesh position={[side * 0.085, 0.092, 0.205]} rotation-z={side * -0.12} scale={[1, female ? 0.72 : 1.18, 1]}>
               <capsuleGeometry args={[0.012, 0.055, 3, 6]} />
               <meshStandardMaterial color="#39251d" />
             </mesh>
+            {female && (
+              <mesh position={[side * 0.09, -0.005, 0.205]} scale={[1.1, 0.48, 0.25]}>
+                <sphereGeometry args={[0.035, 10, 8]} />
+                <meshStandardMaterial color="#e9a6a0" transparent opacity={0.28} />
+              </mesh>
+            )}
           </group>
         ))}
         <mesh position={[0, -0.015, 0.238]} rotation-x={0.18}>
