@@ -193,6 +193,7 @@ export function PlayerAvatar() {
   const pose = useUI((s) => s.pose);
   const action = useUI((s) => s.action);
   const g = useRef<THREE.Group>(null);
+  const robeRef = useRef<THREE.Mesh>(null);
   const headRef = useRef<THREE.Group>(null);
   const leftArmRef = useRef<THREE.Group>(null);
   const rightArmRef = useRef<THREE.Group>(null);
@@ -215,23 +216,50 @@ export function PlayerAvatar() {
     g.current.position.set(player.x, 0, player.z);
     g.current.rotation.y = player.rot;
     const t = clock.elapsedTime;
-    const gait = pose === "walk" ? Math.sin(t * 10) * 0.48 : 0;
-    const smooth = Math.min(delta * 12, 1);
+    const walking = pose === "walk";
+    const gait = walking ? Math.sin(t * 8.5) * 0.58 : 0;
+    const breath = Math.sin(t * 2.15);
+    const smooth = 1 - Math.exp(-delta * 10);
+    // Subtle breathing and weight shifts keep the character alive while standing.
+    if (robeRef.current) {
+      const stepBounce = walking ? Math.abs(Math.sin(t * 8.5)) * 0.035 : 0;
+      robeRef.current.position.y = stepBounce + breath * 0.009;
+      robeRef.current.rotation.z = Math.sin(t * 1.35) * (walking ? 0.035 : 0.012);
+      robeRef.current.scale.y = sy * (1 + breath * 0.006);
+    }
+    g.current.position.y = walking ? Math.abs(Math.sin(t * 8.5)) * 0.025 : Math.sin(t * 1.8) * 0.008;
     if (leftArmRef.current) leftArmRef.current.rotation.x += (gait - leftArmRef.current.rotation.x) * smooth;
     if (rightArmRef.current) rightArmRef.current.rotation.x += (-gait - rightArmRef.current.rotation.x) * smooth;
+    if (leftArmRef.current) leftArmRef.current.rotation.z += ((walking ? -0.10 : Math.sin(t * 1.1) * 0.025) - leftArmRef.current.rotation.z) * smooth;
+    if (rightArmRef.current) rightArmRef.current.rotation.z += ((walking ? 0.10 : -Math.sin(t * 1.1) * 0.025) - rightArmRef.current.rotation.z) * smooth;
     if (leftLegRef.current) leftLegRef.current.rotation.x += (-gait * 0.8 - leftLegRef.current.rotation.x) * smooth;
     if (rightLegRef.current) rightLegRef.current.rotation.x += (gait * 0.8 - rightLegRef.current.rotation.x) * smooth;
     if (headRef.current) {
       const bow = action === "le" ? Math.max(0, Math.sin(t * 1.2)) * 0.4 : 0;
-      headRef.current.position.set(0, hy - bow * 0.6, bow);
+      headRef.current.position.set(0, hy - bow * 0.6 + breath * 0.006, bow);
+      headRef.current.rotation.y = Math.sin(t * 0.72) * 0.045;
+      headRef.current.rotation.z = Math.sin(t * 1.05) * 0.012;
     }
   });
 
   return (
     <group ref={g}>
-      <mesh position={[0, 0, 0]} scale={[sxz, sy, sxz]} castShadow>
+      <mesh ref={robeRef} position={[0, 0, 0]} scale={[sxz, sy, sxz]} castShadow>
         <primitive object={robeGeometry} attach="geometry" />
         <meshStandardMaterial color={color} roughness={0.8} />
+      </mesh>
+      {/* Waist sash and layered front panels give the robe a tailored, flowing silhouette. */}
+      <mesh position={[0, 0.57 * sy, 0]} rotation-x={Math.PI / 2} scale={[sxz, sxz, 1]}>
+        <torusGeometry args={[0.245, 0.035, 8, 28]} />
+        <meshStandardMaterial color={female ? "#c9a56d" : "#b99a68"} metalness={0.18} roughness={0.62} />
+      </mesh>
+      <mesh position={[-0.085, 0.58 * sy, 0.255]} rotation-z={-0.10} scale={[0.09, 0.49, 0.025]}>
+        <capsuleGeometry args={[0.5, 1, 5, 8]} />
+        <meshStandardMaterial color={female ? "#ead8bd" : "#d9c7a8"} roughness={0.8} />
+      </mesh>
+      <mesh position={[0.085, 0.58 * sy, 0.255]} rotation-z={0.10} scale={[0.09, 0.49, 0.025]}>
+        <capsuleGeometry args={[0.5, 1, 5, 8]} />
+        <meshStandardMaterial color={female ? "#ead8bd" : "#d9c7a8"} roughness={0.8} />
       </mesh>
       {/* collar sash */}
       <mesh position={[0, 0.98 * sy, 0]} scale={[sxz, 1, sxz]}>
@@ -329,16 +357,50 @@ export function PlayerAvatar() {
           </group>
         )}
         {hair === "ngan" && !female && (
-          <mesh position={[0, 0.13, -0.015]} scale={[1.02, 0.6, 1.02]}>
-            <sphereGeometry args={[0.245, 18, 12]} />
-            <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
-          </mesh>
+          <group>
+            <mesh position={[0, 0.13, -0.015]} scale={[1.02, 0.6, 1.02]}>
+              <sphereGeometry args={[0.245, 18, 12]} />
+              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
+            </mesh>
+            {/* A swept fringe and tapered side hair create a clearly masculine haircut. */}
+            <mesh position={[0, 0.205, 0.155]} rotation-x={-0.24} scale={[0.76, 0.34, 0.48]}>
+              <sphereGeometry args={[0.16, 16, 10]} />
+              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.82} />
+            </mesh>
+            {[-1, 1].map((side) => (
+              <mesh key={side} position={[side * 0.215, -0.015, 0.015]} rotation-z={side * -0.08}>
+                <capsuleGeometry args={[0.045, 0.12, 5, 8]} />
+                <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
+              </mesh>
+            ))}
+          </group>
+        )}
+        {/* Female styles get soft face-framing locks and a curved fringe, distinct from the men's cut. */}
+        {female && hair !== "troc" && (
+          <group>
+            <mesh position={[0, 0.105, 0.19]} rotation-x={-0.18} scale={[0.92, 0.28, 0.42]}>
+              <sphereGeometry args={[0.16, 18, 12]} />
+              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+            </mesh>
+            {[-1, 1].map((side) => (
+              <mesh key={side} position={[side * 0.205, -0.13, 0.115]} rotation-z={side * -0.12}>
+                <capsuleGeometry args={[0.052, hair === "dai" ? 0.48 : 0.25, 6, 10]} />
+                <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+              </mesh>
+            ))}
+          </group>
         )}
         {hair === "bui" && (
+          <group>
           <mesh position={[0, 0.2, -0.18]}>
             <sphereGeometry args={[0.12, 14, 12]} />
             <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
           </mesh>
+          <mesh position={[0, 0.29, -0.18]}>
+            <torusGeometry args={[0.105, 0.018, 6, 18]} />
+            <meshStandardMaterial color={female ? "#d7b36b" : "#8c7554"} metalness={0.35} roughness={0.45} />
+          </mesh>
+          </group>
         )}
         {/* Soft, balanced facial features for a more expressive human face. */}
         {[-1, 1].map((side) => (
@@ -351,10 +413,16 @@ export function PlayerAvatar() {
               <sphereGeometry args={[0.021, 10, 8]} />
               <meshStandardMaterial color="#302019" />
             </mesh>
-            <mesh position={[side * 0.085, 0.092, 0.205]} rotation-z={side * -0.12}>
+            <mesh position={[side * 0.085, 0.092, 0.205]} rotation-z={side * -0.12} scale={[1, female ? 0.72 : 1.18, 1]}>
               <capsuleGeometry args={[0.012, 0.055, 3, 6]} />
               <meshStandardMaterial color="#39251d" />
             </mesh>
+            {female && (
+              <mesh position={[side * 0.09, -0.005, 0.205]} scale={[1.1, 0.48, 0.25]}>
+                <sphereGeometry args={[0.035, 10, 8]} />
+                <meshStandardMaterial color="#e9a6a0" transparent opacity={0.28} />
+              </mesh>
+            )}
           </group>
         ))}
         <mesh position={[0, -0.015, 0.238]} rotation-x={0.18}>
