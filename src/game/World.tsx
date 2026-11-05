@@ -155,12 +155,12 @@ function Controller() {
     if (moved && ui.pose !== "walk") setUI({ pose: "walk", action: "none" });
     if (!moved && ui.pose === "walk") setUI({ pose: "stand" });
 
-    target.set(player.x, 1.6, player.z);
+    target.set(player.x, player.y + 1.6, player.z);
     const cp = Math.cos(cam.pitch);
     camera.position.lerp(
       new THREE.Vector3(
         player.x + Math.sin(cam.yaw) * cam.dist * cp,
-        1.6 + Math.sin(cam.pitch) * cam.dist,
+        player.y + 1.6 + Math.sin(cam.pitch) * cam.dist,
         player.z + Math.cos(cam.yaw) * cam.dist * cp,
       ),
       1 - Math.exp(-8 * dt),
