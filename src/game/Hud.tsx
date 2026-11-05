@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { ringBell, speak, stopSpeak } from "./audio";
-import { connectMultiplayer, sendTempleChat, useMultiplayer, useTempleChat } from "./multiplayer";
+import { connectMultiplayer, sendTempleChat, sendTemplePrayer, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
 
 function Lotus({ className }: { className?: string }) {
   return (
@@ -219,43 +219,46 @@ function PhapPanel() {
   );
 }
 
-const PRAY_KEY = "tam-an-prayers";
 function PrayPanel() {
-  const [list, setList] = useState<{ text: string; at: number }[]>([]);
   const [text, setText] = useState("");
-  useEffect(() => {
-    try {
-      setList(JSON.parse(localStorage.getItem(PRAY_KEY) || "[]"));
-    } catch {
-      /* empty */
-    }
-  }, []);
+  const prayers = useTemplePrayers();
+  const multiplayer = useMultiplayer();
+  const avatar = useUI((s) => s.avatar);
   const add = () => {
     const t = text.trim();
-    if (!t) return;
-    const next = [{ text: t.slice(0, 200), at: Date.now() }, ...list].slice(0, 50);
-    setList(next);
-    localStorage.setItem(PRAY_KEY, JSON.stringify(next));
-    setText("");
-    ringBell(0.3);
+    if (!t || !multiplayer.connected) return;
+    if (sendTemplePrayer(avatar?.name || "Phật tử", t)) {
+      setText("");
+      ringBell(0.3);
+    }
   };
   return (
-    <Panel title="Góc cầu nguyện" onClose={() => setUI({ panel: null })}>
-      <p className="mb-3 text-sm text-muted-foreground">Gửi lời chúc bình an. Lời nguyện được lưu trên máy của bạn.</p>
+    <Panel title="Góc cầu nguyện chung" onClose={() => setUI({ panel: null })}>
+      <p className="mb-3 text-sm text-muted-foreground">
+        {multiplayer.connected
+          ? "Gửi lời cầu an để mọi Phật tử đang online cùng đọc và hồi hướng điều lành."
+          : "Chùa đang kết nối máy chủ. Khi online, bạn có thể gửi lời nguyện để mọi người cùng đọc."}
+      </p>
       <div className="mb-4 flex gap-2">
-        <input className="hud-input flex-1" value={text} maxLength={200} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="Nguyện cho gia đình được an lành…" />
-        <button className="hud-primary" onClick={add}>Gửi</button>
+        <input className="hud-input min-w-0 flex-1" value={text} maxLength={200} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="Nguyện cho gia đình được an lành…" disabled={!multiplayer.connected} />
+        <button className="hud-primary" onClick={add} disabled={!multiplayer.connected || !text.trim()}>Gửi lời nguyện</button>
+      </div>
+      <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+        <span>🪷 Lời nguyện từ Phật tử đang hiện diện</span>
+        <span>{prayers.length} lời</span>
       </div>
       <ul className="space-y-2">
-        {list.map((p) => (
-          <li key={p.at} className="hud-tile text-left text-sm">🪷 {p.text}</li>
+        {prayers.map((p) => (
+          <li key={p.id} className="hud-tile text-left text-sm">
+            <div>🪷 {p.text}</div>
+            <div className="mt-1 text-xs text-muted-foreground">— {p.name}</div>
+          </li>
         ))}
-        {list.length === 0 && <li className="text-sm text-muted-foreground">Chưa có lời nguyện nào.</li>}
+        {prayers.length === 0 && <li className="hud-tile text-sm text-muted-foreground">Chưa có lời nguyện nào. Hãy là người gửi lời cầu an đầu tiên.</li>}
       </ul>
     </Panel>
   );
 }
-
 function ChatPanel({ name }: { name: string }) {
   const msgs = useTempleChat();
   const [text, setText] = useState("");
