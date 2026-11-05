@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { getUI, player } from "./store";
+import { getAuthClient } from "./auth";
 
 export interface TempleChatMessage { id: string; name: string; text: string; at: number; }
 
@@ -115,23 +116,31 @@ function readPresence(channelRef: RealtimeChannel) {
 export function connectMultiplayer() {
   if (channel) return () => disconnectMultiplayer();
 
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const key = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
-
-  if (!url || !key) {
+  const authClient = getAuthClient();
+  if (!authClient) {
     publish(empty);
-    console.warn("Chùa Tâm An: thiếu VITE_SUPABASE_URL hoặc VITE_SUPABASE_PUBLISHABLE_KEY.");
+    console.warn("Chùa Tâm An: chưa cấu hình xác thực Supabase.");
     return () => {};
   }
 
+  void authClient.auth.getSession().then(({ data }) => {
+    if (channel) return;
+    if (!data.session?.user) {
+      publish(empty);
+      return;
+    }
+    startAuthenticatedMultiplayer(authClient, data.session.user.id);
+  });
+  return () => disconnectMultiplayer();
+}
+
+function startAuthenticatedMultiplayer(authenticatedClient: SupabaseClient, authenticatedUserId: string) {
+  if (channel) return;
   clientId = typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-  client = createClient(url, key, {
-    realtime: { params: { eventsPerSecond: 10 } },
-  });
+  client = authenticatedClient;
 
   channel = client.channel("tam-an-world", {
     config: {
@@ -173,7 +182,7 @@ export function connectMultiplayer() {
       if (status === "SUBSCRIBED" && channel) {
         const avatar = getUI().avatar;
         await channel.track({
-          id: clientId,
+          id: authenticatedUserId,
           name: avatar?.name || "Phật tử",
           x: player.x,
           z: player.z,
@@ -186,7 +195,7 @@ export function connectMultiplayer() {
           if (!channel) return;
           const currentAvatar = getUI().avatar;
           const payload: RemotePlayer = {
-            id: clientId,
+            id: authenticatedUserId,
             name: currentAvatar?.name || "Phật tử",
             x: player.x,
             z: player.z,
@@ -199,8 +208,6 @@ export function connectMultiplayer() {
         publish(empty);
       }
     });
-
-  return () => disconnectMultiplayer();
 }
 
 export function disconnectMultiplayer() {
