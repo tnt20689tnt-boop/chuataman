@@ -24,17 +24,13 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
     const dt = Math.min(delta, 0.05);
     group.current.position.x = THREE.MathUtils.damp(group.current.position.x, player.x, 11, dt);
     group.current.position.z = THREE.MathUtils.damp(group.current.position.z, player.z, 11, dt);
-    group.current.rotation.y = THREE.MathUtils.damp(
-      group.current.rotation.y,
-      player.rot,
-      12,
-      dt,
-    );
-    const dx = player.x - previous.current.x;
-    const dz = player.z - previous.current.z;
+    const angleDelta = THREE.MathUtils.euclideanModulo(player.rot - group.current.rotation.y + Math.PI, Math.PI * 2) - Math.PI;
+    group.current.rotation.y += angleDelta * (1 - Math.exp(-12 * dt));
+    const dx = group.current.position.x - previous.current.x;
+    const dz = group.current.position.z - previous.current.z;
     const moving = Math.hypot(dx, dz) > 0.002;
     if (moving) phase.current += dt * 10;
-    previous.current = { x: player.x, z: player.z };
+    previous.current = { x: group.current.position.x, z: group.current.position.z };
     const swing = moving ? Math.sin(phase.current) * 0.48 : 0;
     if (leftArm.current) leftArm.current.rotation.x = THREE.MathUtils.damp(leftArm.current.rotation.x, swing, 10, dt);
     if (rightArm.current) rightArm.current.rotation.x = THREE.MathUtils.damp(rightArm.current.rotation.x, -swing, 10, dt);
