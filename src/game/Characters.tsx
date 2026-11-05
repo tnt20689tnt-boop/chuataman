@@ -19,6 +19,10 @@ export function Crowd({ count = 1000 }: { count?: number }) {
   const body = useRef<THREE.InstancedMesh>(null);
   const head = useRef<THREE.InstancedMesh>(null);
   const hair = useRef<THREE.InstancedMesh>(null);
+  const arms = useRef<THREE.InstancedMesh>(null);
+  const legs = useRef<THREE.InstancedMesh>(null);
+  const hands = useRef<THREE.InstancedMesh>(null);
+  const feet = useRef<THREE.InstancedMesh>(null);
   const tmp = useMemo(() => new THREE.Object3D(), []);
   const [near, setNear] = useState<Npc[]>([]);
   const walkers = useMemo(() => npcs.filter((n) => n.pose === "walk"), [npcs]);
@@ -35,6 +39,27 @@ export function Crowd({ count = 1000 }: { count?: number }) {
     tmp.scale.set(sxz, sy, sxz);
     tmp.updateMatrix();
     body.current!.setMatrixAt(n.id, tmp.matrix);
+    // Separate articulated-looking limbs keep the crowd silhouette readable.
+    const swing = n.pose === "walk" ? Math.sin(t * 6 + n.phase) * 0.32 : 0;
+    for (const side of [-1, 1]) {
+      tmp.position.set(x + side * 0.31 * sxz, 0.56 * sy, z);
+      tmp.rotation.set(side * swing, rot, side * -0.10);
+      tmp.scale.set(1, 1, 1);
+      tmp.updateMatrix();
+      arms.current!.setMatrixAt(n.id * 2 + (side === 1 ? 1 : 0), tmp.matrix);
+      tmp.position.set(x + side * 0.13 * sxz, 0.20 * sy, z);
+      tmp.rotation.set(-side * swing * 1.25, rot, 0);
+      tmp.updateMatrix();
+      legs.current!.setMatrixAt(n.id * 2 + (side === 1 ? 1 : 0), tmp.matrix);
+      tmp.position.set(x + side * 0.31 * sxz, 0.20 * sy, z + 0.015);
+      tmp.rotation.set(0, rot, 0);
+      tmp.updateMatrix();
+      hands.current!.setMatrixAt(n.id * 2 + (side === 1 ? 1 : 0), tmp.matrix);
+      tmp.position.set(x + side * 0.13 * sxz, 0.045 * sy, z + 0.10);
+      tmp.rotation.set(0, rot, 0);
+      tmp.updateMatrix();
+      feet.current!.setMatrixAt(n.id * 2 + (side === 1 ? 1 : 0), tmp.matrix);
+    }
     const bob = n.pose === "walk" ? Math.abs(Math.sin(t * 6 + n.phase)) * 0.05 : 0;
     tmp.position.set(x + fx * bow, hy - bow * 0.6 + bob, z + fz * bow);
     tmp.scale.setScalar(1);
@@ -54,10 +79,14 @@ export function Crowd({ count = 1000 }: { count?: number }) {
       place(n, n.x, n.z, n.rot, 0);
       c.set(OUTFIT_COLORS[n.outfit]).offsetHSL(0, 0, (Math.sin(i) * 0.04));
       body.current!.setColorAt(i, c);
+      arms.current!.setColorAt(i * 2, c);
+      arms.current!.setColorAt(i * 2 + 1, c);
+      legs.current!.setColorAt(i * 2, c);
+      legs.current!.setColorAt(i * 2 + 1, c);
       c.set(HAIR_COLORS[i % HAIR_COLORS.length] ?? "#1b1410");
       hair.current!.setColorAt(i, c);
     });
-    [body, head, hair].forEach((r) => {
+    [body, head, hair, arms, legs, hands, feet].forEach((r) => {
       r.current!.instanceMatrix.needsUpdate = true;
       if (r.current!.instanceColor) r.current!.instanceColor.needsUpdate = true;
       r.current!.computeBoundingSphere();
@@ -65,6 +94,10 @@ export function Crowd({ count = 1000 }: { count?: number }) {
     body.current!.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, -11), 60);
     head.current!.boundingSphere = body.current!.boundingSphere;
     hair.current!.boundingSphere = body.current!.boundingSphere;
+    arms.current!.boundingSphere = body.current!.boundingSphere;
+    legs.current!.boundingSphere = body.current!.boundingSphere;
+    hands.current!.boundingSphere = body.current!.boundingSphere;
+    feet.current!.boundingSphere = body.current!.boundingSphere;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [npcs]);
 
@@ -80,6 +113,10 @@ export function Crowd({ count = 1000 }: { count?: number }) {
     body.current!.instanceMatrix.needsUpdate = true;
     head.current!.instanceMatrix.needsUpdate = true;
     hair.current!.instanceMatrix.needsUpdate = true;
+    arms.current!.instanceMatrix.needsUpdate = true;
+    legs.current!.instanceMatrix.needsUpdate = true;
+    hands.current!.instanceMatrix.needsUpdate = true;
+    feet.current!.instanceMatrix.needsUpdate = true;
     // refresh nearest name tags twice a second
     if (t - lastNear.current > 0.5) {
       lastNear.current = t;
@@ -106,6 +143,22 @@ export function Crowd({ count = 1000 }: { count?: number }) {
       <instancedMesh ref={hair} args={[undefined, undefined, npcs.length]}>
         <sphereGeometry args={[0.255, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial roughness={0.9} />
+      </instancedMesh>
+      <instancedMesh ref={arms} args={[undefined, undefined, npcs.length * 2]} castShadow>
+        <capsuleGeometry args={[0.075, 0.38, 4, 7]} />
+        <meshStandardMaterial roughness={0.85} />
+      </instancedMesh>
+      <instancedMesh ref={legs} args={[undefined, undefined, npcs.length * 2]} castShadow>
+        <capsuleGeometry args={[0.09, 0.34, 4, 7]} />
+        <meshStandardMaterial roughness={0.9} />
+      </instancedMesh>
+      <instancedMesh ref={hands} args={[undefined, undefined, npcs.length * 2]}>
+        <sphereGeometry args={[0.065, 7, 6]} />
+        <meshStandardMaterial color={SKIN} roughness={0.8} />
+      </instancedMesh>
+      <instancedMesh ref={feet} args={[undefined, undefined, npcs.length * 2]} castShadow>
+        <capsuleGeometry args={[0.075, 0.12, 3, 6]} />
+        <meshStandardMaterial color="#51463e" roughness={0.95} />
       </instancedMesh>
       {near.map((n) => (
         <NameTag key={n.id} n={n} />
@@ -171,46 +224,62 @@ export function PlayerAvatar() {
         <torusGeometry args={[0.2, 0.05, 8, 20]} />
         <meshStandardMaterial color="#e9dcc0" />
       </mesh>
-      {/* arms */}
-      <group ref={leftArmRef} position={[-0.34 * sxz, 0.88 * sy, 0]}>
-        <mesh position={[0, -0.22, 0]} rotation-z={-0.12} castShadow>
-          <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
-          <meshStandardMaterial color={color} roughness={0.85} />
+      {/* arms: upper arm, forearm and visible hand */}
+      <group ref={leftArmRef} position={[-0.37 * sxz, 0.91 * sy, 0]}>
+        <mesh position={[0, -0.16, 0]} rotation-z={-0.10} castShadow>
+          <capsuleGeometry args={[0.082, 0.25, 5, 10]} />
+          <meshStandardMaterial color={color} roughness={0.82} />
         </mesh>
-        <mesh position={[0, -0.42, 0.02]}>
-          <sphereGeometry args={[0.07, 10, 8]} />
-          <meshStandardMaterial color={SKIN} />
+        <mesh position={[0, -0.39, 0.025]} rotation-z={-0.04} castShadow>
+          <capsuleGeometry args={[0.068, 0.20, 5, 10]} />
+          <meshStandardMaterial color={color} roughness={0.82} />
         </mesh>
-      </group>
-      <group ref={rightArmRef} position={[0.34 * sxz, 0.88 * sy, 0]}>
-        <mesh position={[0, -0.22, 0]} rotation-z={0.12} castShadow>
-          <capsuleGeometry args={[0.085, 0.34, 4, 8]} />
-          <meshStandardMaterial color={color} roughness={0.85} />
-        </mesh>
-        <mesh position={[0, -0.42, 0.02]}>
-          <sphereGeometry args={[0.07, 10, 8]} />
-          <meshStandardMaterial color={SKIN} />
+        <mesh position={[0, -0.53, 0.06]} castShadow>
+          <sphereGeometry args={[0.075, 12, 10]} />
+          <meshStandardMaterial color={SKIN} roughness={0.75} />
         </mesh>
       </group>
-      {/* legs */}
-      <group ref={leftLegRef} position={[-0.14, 0.42, 0]}>
-        <mesh position={[0, -0.2, 0]} castShadow>
-          <capsuleGeometry args={[0.105, 0.3, 4, 8]} />
+      <group ref={rightArmRef} position={[0.37 * sxz, 0.91 * sy, 0]}>
+        <mesh position={[0, -0.16, 0]} rotation-z={0.10} castShadow>
+          <capsuleGeometry args={[0.082, 0.25, 5, 10]} />
+          <meshStandardMaterial color={color} roughness={0.82} />
+        </mesh>
+        <mesh position={[0, -0.39, 0.025]} rotation-z={0.04} castShadow>
+          <capsuleGeometry args={[0.068, 0.20, 5, 10]} />
+          <meshStandardMaterial color={color} roughness={0.82} />
+        </mesh>
+        <mesh position={[0, -0.53, 0.06]} castShadow>
+          <sphereGeometry args={[0.075, 12, 10]} />
+          <meshStandardMaterial color={SKIN} roughness={0.75} />
+        </mesh>
+      </group>
+      {/* separated legs with visible shoes */}
+      <group ref={leftLegRef} position={[-0.16, 0.43, 0]}>
+        <mesh position={[0, -0.17, 0]} castShadow>
+          <capsuleGeometry args={[0.105, 0.25, 5, 10]} />
           <meshStandardMaterial color={color} roughness={0.9} />
         </mesh>
-        <mesh position={[0, -0.39, 0.06]} scale={[1, 0.55, 1.3]}>
-          <sphereGeometry args={[0.105, 10, 8]} />
-          <meshStandardMaterial color="#5b5149" />
-        </mesh>
-      </group>
-      <group ref={rightLegRef} position={[0.14, 0.42, 0]}>
-        <mesh position={[0, -0.2, 0]} castShadow>
-          <capsuleGeometry args={[0.105, 0.3, 4, 8]} />
+        <mesh position={[0, -0.37, 0.025]} castShadow>
+          <capsuleGeometry args={[0.085, 0.16, 5, 10]} />
           <meshStandardMaterial color={color} roughness={0.9} />
         </mesh>
-        <mesh position={[0, -0.39, 0.06]} scale={[1, 0.55, 1.3]}>
-          <sphereGeometry args={[0.105, 10, 8]} />
-          <meshStandardMaterial color="#5b5149" />
+        <mesh position={[0, -0.49, 0.12]} rotation-x={Math.PI / 2} castShadow>
+          <capsuleGeometry args={[0.075, 0.16, 4, 8]} />
+          <meshStandardMaterial color="#51463e" roughness={0.95} />
+        </mesh>
+      </group>
+      <group ref={rightLegRef} position={[0.16, 0.43, 0]}>
+        <mesh position={[0, -0.17, 0]} castShadow>
+          <capsuleGeometry args={[0.105, 0.25, 5, 10]} />
+          <meshStandardMaterial color={color} roughness={0.9} />
+        </mesh>
+        <mesh position={[0, -0.37, 0.025]} castShadow>
+          <capsuleGeometry args={[0.085, 0.16, 5, 10]} />
+          <meshStandardMaterial color={color} roughness={0.9} />
+        </mesh>
+        <mesh position={[0, -0.49, 0.12]} rotation-x={Math.PI / 2} castShadow>
+          <capsuleGeometry args={[0.075, 0.16, 4, 8]} />
+          <meshStandardMaterial color="#51463e" roughness={0.95} />
         </mesh>
       </group>
       <group ref={headRef}>
@@ -238,19 +307,18 @@ export function PlayerAvatar() {
           </mesh>
         )}
       </group>
-      {/* hands */}
-      {handsJoined ? (
-        <mesh position={[0, hy - 0.42, 0.3]} rotation-x={-0.2}>
-          <capsuleGeometry args={[0.06, 0.18, 4, 8]} />
-          <meshStandardMaterial color={SKIN} />
-        </mesh>
-      ) : (
-        [-1, 1].map((s) => (
-          <mesh key={s} position={[s * 0.36 * sxz, hy - 0.75, 0.05]}>
-            <sphereGeometry args={[0.07, 8, 8]} />
-            <meshStandardMaterial color={SKIN} />
+      {/* Prayer hands are positioned clearly in front of the chest. */}
+      {handsJoined && (
+        <group position={[0, hy - 0.40, 0.30]} rotation-x={-0.18}>
+          <mesh rotation-z={0.04}>
+            <capsuleGeometry args={[0.055, 0.19, 5, 10]} />
+            <meshStandardMaterial color={SKIN} roughness={0.7} />
           </mesh>
-        ))
+          <mesh position={[0.075, -0.015, 0]}>
+            <capsuleGeometry args={[0.045, 0.15, 5, 8]} />
+            <meshStandardMaterial color={SKIN} roughness={0.7} />
+          </mesh>
+        </group>
       )}
       <Html position={[0, hy + 0.6, 0]} center distanceFactor={14} zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
         <div className="name-tag name-tag-self">{avatar?.name ?? "Phật tử"}</div>
