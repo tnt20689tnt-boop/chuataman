@@ -3,6 +3,7 @@ import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_K
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { ringBell, speak, stopSpeak } from "./audio";
 import { connectMultiplayer, sendTempleChat, sendTemplePrayer, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
+import { getAuthClient, type User } from "./auth";
 
 function Lotus({ className }: { className?: string }) {
   return (
@@ -65,6 +66,7 @@ export function Hud() {
         <div>
           <div className="font-display text-lg leading-tight tracking-wide text-foreground sm:text-xl">CHÙA TÂM AN</div>
           <div className="hidden text-xs italic text-muted-foreground sm:block">An yên trong tâm – Hạnh phúc trong đời</div>
+          <button className="hud-swatch mt-2" onClick={() => setUI({ panel: "auth" })}>👤 Đăng nhập / Tài khoản</button>
         </div>
       </header>
 
@@ -110,6 +112,7 @@ export function Hud() {
       {panel === "pray" && <PrayPanel />}
       {panel === "chat" && <ChatPanel name={avatar?.name ?? "Phật tử"} />}
       {panel === "avatar" && <AvatarPanel initial={avatar} />}
+      {panel === "auth" && <AuthPanel />}
     </div>
   );
 }
@@ -315,6 +318,87 @@ function ChatPanel({ name }: { name: string }) {
         <input className="hud-input flex-1" value={text} maxLength={300} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Nhập lời chào…" disabled={!multiplayer.connected} />
         <button className="hud-primary" onClick={send} disabled={!multiplayer.connected || !text.trim()}>Gửi</button>
       </div>
+    </Panel>
+  );
+}
+
+function AuthPanel() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const client = getAuthClient();
+
+  useEffect(() => {
+    if (!client) return;
+    void client.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    const { data } = client.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  const signIn = async () => {
+    if (!client) return setMessage("Chưa cấu hình máy chủ đăng nhập. Vui lòng thử lại sau.");
+    if (!email.trim() || !password) return setMessage("Vui lòng nhập email và mật khẩu.");
+    setBusy(true); setMessage("");
+    const { error } = await client.auth.signInWithPassword({ email: email.trim(), password });
+    setBusy(false);
+    setMessage(error ? "Đăng nhập chưa thành công: " + error.message : "Đăng nhập thành công. A Di Đà Phật!");
+  };
+
+  const signUp = async () => {
+    if (!client) return setMessage("Chưa cấu hình máy chủ đăng nhập. Vui lòng thử lại sau.");
+    if (!displayName.trim() || !email.trim() || password.length < 6) return setMessage("Nhập tên, email và mật khẩu ít nhất 6 ký tự.");
+    setBusy(true); setMessage("");
+    const { data, error } = await client.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { data: { display_name: displayName.trim().slice(0, 24) } },
+    });
+    setBusy(false);
+    if (error) setMessage("Chưa đăng ký được: " + error.message);
+    else if (!data.session) setMessage("Đã tạo tài khoản. Hãy mở email để xác nhận, sau đó đăng nhập.");
+    else setMessage("Đăng ký thành công. Chào mừng bạn đến Chùa Tâm An!");
+  };
+
+  const signOut = async () => {
+    if (!client) return;
+    setBusy(true);
+    const { error } = await client.auth.signOut();
+    setBusy(false);
+    setMessage(error ? "Chưa đăng xuất được: " + error.message : "Bạn đã đăng xuất.");
+  };
+
+  return (
+    <Panel title="Tài khoản Phật tử" onClose={() => setUI({ panel: null })}>
+      {!client && <p className="hud-note mb-3">Máy chủ đăng nhập chưa được cấu hình. Chức năng tham quan chùa vẫn dùng bình thường.</p>}
+      {user ? (
+        <>
+          <div className="hud-tile mb-3">
+            <div className="text-xs text-muted-foreground">Đang đăng nhập</div>
+            <div className="mt-1 font-semibold text-foreground">{String(user.user_metadata?.display_name || "Phật tử")}</div>
+            <div className="text-sm text-muted-foreground">{user.email}</div>
+          </div>
+          <button className="hud-primary w-full" disabled={busy} onClick={() => void signOut()}>{busy ? "Đang xử lý…" : "Đăng xuất"}</button>
+        </>
+      ) : (
+        <>
+          <p className="mb-3 text-sm text-muted-foreground">Tạo tài khoản miễn phí để lưu danh tính Phật tử và sử dụng các tiện ích cá nhân.</p>
+          <label className="mb-1 block text-sm font-semibold">Tên hiển thị / pháp danh</label>
+          <input className="hud-input mb-3 w-full" value={displayName} maxLength={24} onChange={(e) => setDisplayName(e.target.value)} placeholder="Ví dụ: Diệu An" autoComplete="nickname" />
+          <label className="mb-1 block text-sm font-semibold">Email</label>
+          <input className="hud-input mb-3 w-full" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ban@email.com" autoComplete="email" />
+          <label className="mb-1 block text-sm font-semibold">Mật khẩu</label>
+          <input className="hud-input mb-3 w-full" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Ít nhất 6 ký tự" autoComplete="current-password" />
+          <div className="grid grid-cols-2 gap-2">
+            <button className="hud-primary" disabled={busy || !client} onClick={() => void signIn()}>{busy ? "Đang xử lý…" : "Đăng nhập"}</button>
+            <button className="hud-swatch justify-center" disabled={busy || !client} onClick={() => void signUp()}>Đăng ký miễn phí</button>
+          </div>
+        </>
+      )}
+      {message && <p role="status" className="mt-3 text-sm text-muted-foreground">{message}</p>}
+      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">Không thu phí. Chùa không yêu cầu thông tin thanh toán. Hãy giữ mật khẩu riêng tư và không chia sẻ cho người khác.</p>
     </Panel>
   );
 }
