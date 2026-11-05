@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
-import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, subscribeAudioSettings, updateAudioSettings } from "./audio";
+import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, subscribeAudioSettings, testFootsteps, updateAudioSettings } from "./audio";
 import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
 
@@ -365,7 +365,8 @@ function AudioPanel() {
       await enableAudio();
       if (id === "music" || id === "birds" || id === "water") return;
     }
-    await playSound(id);
+    if (id === "footsteps") testFootsteps();
+    else await playSound(id);
   };
   const checkFiles = async () => {
     setChecking(true);
