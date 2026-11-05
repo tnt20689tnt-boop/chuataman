@@ -297,7 +297,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
   const [a, setA] = useState<Avatar>(initial ?? { name: "", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
   const ok = a.name.trim().length >= 2;
   return (
-    <Panel title={initial ? "Tùy chỉnh Avatar" : "Tạo Avatar của bạn"} onClose={initial ? () => setUI({ panel: null }) : undefined}>
+    <Panel title={initial ? "Tùy chỉnh Avatar" : "Tạo Avatar của bạn"} {...(initial ? { onClose: () => setUI({ panel: null }) } : {})}>
       <label className="mb-1 block text-sm font-semibold text-foreground">Tên hiển thị / pháp danh</label>
       <input className="hud-input mb-4 w-full" value={a.name} maxLength={24} onChange={(e) => setA({ ...a, name: e.target.value })} placeholder="Ví dụ: Diệu An" />
       <div className="mb-1 text-sm font-semibold text-foreground">Trang phục</div>

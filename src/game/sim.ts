@@ -17,7 +17,7 @@ export const OUTFIT_LABEL: Record<Outfit, string> = {
   tusi: "Y tu sĩ",
   vang: "Áo vàng",
 };
-export const HAIR_COLORS = ["#1b1410", "#2b1d14", "#3a2a1e", "#151515"];
+export const HAIR_COLORS: [string, ...string[]] = ["#1b1410", "#2b1d14", "#3a2a1e", "#151515"];
 export type Hair = "troc" | "ngan" | "bui" | "dai";
 export const HAIR_LABEL: Record<Hair, string> = {
   troc: "Cạo trọc",
