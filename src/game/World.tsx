@@ -20,6 +20,7 @@ import { PlayerAvatar } from "./Characters";
 import { RemotePlayers } from "./RemotePlayers";
 import { ZONES, clamp, rng, stepPlayer } from "./sim";
 import { cam, getUI, input, player, setUI } from "./store";
+import { playFootstep, stopFootsteps } from "./audio";
 
 function Ground() {
   const grass = useMemo(() => grassTexture(), []);
@@ -148,6 +149,8 @@ function Controller() {
     input.right = (k.has("KeyD") || k.has("ArrowRight") ? 1 : 0) - (k.has("KeyA") || k.has("ArrowLeft") ? 1 : 0) + input.joyR;
     input.run = k.has("ShiftLeft") || k.has("ShiftRight");
     const moved = stepPlayer(player, input, cam.yaw, dt);
+    if (moved) playFootstep();
+    else stopFootsteps();
     const ui = getUI();
     if (moved && ui.pose !== "walk") setUI({ pose: "walk", action: "none" });
     if (!moved && ui.pose === "walk") setUI({ pose: "stand" });
