@@ -54,7 +54,7 @@ export function Crowd({ count = 1000 }: { count?: number }) {
       place(n, n.x, n.z, n.rot, 0);
       c.set(OUTFIT_COLORS[n.outfit]).offsetHSL(0, 0, (Math.sin(i) * 0.04));
       body.current!.setColorAt(i, c);
-      c.set(HAIR_COLORS[i % HAIR_COLORS.length]);
+      c.set(HAIR_COLORS[i % HAIR_COLORS.length] ?? "#1b1410");
       hair.current!.setColorAt(i, c);
     });
     [body, head, hair].forEach((r) => {

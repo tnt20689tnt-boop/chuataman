@@ -30,12 +30,12 @@ export function Roof({ w, d, h, y = 0 }: { w: number; d: number; h: number; y?: 
         <meshStandardMaterial color="#9a9488" />
       </mesh>
       {/* upturned corners */}
-      {[
+      {([
         [1, 1],
         [1, -1],
         [-1, 1],
         [-1, -1],
-      ].map(([sx, sz], i) => (
+      ] as [number, number][]).map(([sx, sz], i) => (
         <mesh
           key={i}
           position={[(sx * w * 0.58), h * 0.1, (sz * d * 0.58)]}
@@ -211,7 +211,7 @@ export function Buddha(props: { position: [number, number, number]; scale?: numb
 
 export function Tower({ position, tiers = 3, label }: { position: [number, number, number]; tiers?: number; label?: string }) {
   return (
-    <group position={position} name={label}>
+    <group position={position} name={label ?? ""}>
       <mesh position={[0, 0.5, 0]} receiveShadow>
         <boxGeometry args={[10, 1, 10]} />
         <meshStandardMaterial color="#a89c88" />
