@@ -572,12 +572,20 @@ function AuthPanel() {
 }
 
 function AvatarPanel({ initial }: { initial: Avatar | null }) {
-  const [a, setA] = useState<Avatar>(initial ?? { name: "", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
+  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
   const ok = a.name.trim().length >= 2;
   return (
     <Panel title={initial ? "Tùy chỉnh Avatar" : "Tạo Avatar của bạn"} {...(initial ? { onClose: () => setUI({ panel: null }) } : {})}>
       <label className="mb-1 block text-sm font-semibold text-foreground">Tên hiển thị / pháp danh</label>
       <input className="hud-input mb-4 w-full" value={a.name} maxLength={24} onChange={(e) => setA({ ...a, name: e.target.value })} placeholder="Ví dụ: Diệu An" />
+      <div className="mb-1 text-sm font-semibold text-foreground">Kiểu nhân vật</div>
+      <div className="mb-4 flex gap-2">
+        {(["nam", "nu"] as const).map((gender) => (
+          <button key={gender} className="hud-swatch" data-active={(a.gender ?? "nam") === gender} onClick={() => setA({ ...a, gender })}>
+            {gender === "nam" ? "👨 Nam" : "👩 Nữ"}
+          </button>
+        ))}
+      </div>
       <div className="mb-1 text-sm font-semibold text-foreground">Trang phục</div>
       <div className="mb-4 flex flex-wrap gap-2">
         {(Object.keys(OUTFIT_LABEL) as Outfit[]).map((o) => (
