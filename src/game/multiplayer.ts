@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
+import { type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { getUI, player } from "./store";
 import { getAuthClient } from "./auth";
 
@@ -104,13 +104,16 @@ export function useMultiplayer() {
 
 function readPresence(channelRef: RealtimeChannel) {
   const state = channelRef.presenceState<RemotePlayer>();
-  const players: RemotePlayer[] = [];
-  for (const constKey in state) {
-    for (const meta of state[constKey] ?? []) {
-      if (meta.id !== clientId) players.push(meta);
+  // Supabase may return several presence metas for one account (for example,
+  // when the same person opens the temple in multiple tabs). Count each
+  // authenticated account once and never include the current account.
+  const uniquePlayers = new Map<string, RemotePlayer>();
+  for (const presenceKey in state) {
+    for (const meta of state[presenceKey] ?? []) {
+      if (meta.id && meta.id !== clientId) uniquePlayers.set(meta.id, meta);
     }
   }
-  publish({ connected: true, players });
+  publish({ connected: true, players: [...uniquePlayers.values()] });
 }
 
 export function connectMultiplayer() {
