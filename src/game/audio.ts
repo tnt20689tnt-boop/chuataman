@@ -8,7 +8,7 @@ const SOURCES: Record<SoundId, string> = {
   water: "https://upload.wikimedia.org/wikipedia/commons/transcoded/2/26/Flowing-water-100019.ogg/Flowing-water-100019.ogg.mp3",
   bell: "https://upload.wikimedia.org/wikipedia/commons/transcoded/f/fa/Gong_or_bell_vibrant.ogg/Gong_or_bell_vibrant.ogg.mp3",
   mokugyo: "https://www.pdsounds.org/audio/download/260/hitting_a_wooden_pole2.mp3",
-  footsteps: "https://www.pdsounds.org/audio/download/770/thud.mp3"
+  footsteps: "https://orangefreesounds.com/wp-content/uploads/2023/10/Gravel-footsteps-sound-effect.mp3"
 };
 const loops = new Set<SoundId>(["music", "birds", "water"]);
 const elements = new Map<SoundId, HTMLAudioElement>();
@@ -25,7 +25,7 @@ export function updateAudioSettings(patch: Partial<AudioSettings>) { settings = 
 function getAudio(id: SoundId) {
   let el = elements.get(id);
   if (!el) {
-    el = new Audio(SOURCES[id]); el.preload = "none"; el.loop = loops.has(id);
+    el = new Audio(SOURCES[id]); el.preload = "none"; el.loop = loops.has(id) || id === "footsteps";
     el.addEventListener("error", () => console.warn("[Chùa Tâm An] Lỗi tải âm thanh:", id, el?.currentSrc));
     elements.set(id, el);
   }
@@ -66,7 +66,9 @@ export function ringBell(volume = 0.5) {
   bellTimer = window.setTimeout(() => { el.pause(); el.currentTime = 0; bellTimer = null; }, 9000);
 }
 export function woodBlock() { void playSound("mokugyo"); }
-export function playFootstep() { if (!settings.enabled || performance.now() - lastStepAt < 420) return; lastStepAt = performance.now(); void playSound("footsteps"); }
+export function playFootstep() { if (!settings.enabled) return; const el = getAudio("footsteps"); el.volume = settings.effects; if (el.paused) void el.play().catch((error) => console.warn("[Chùa Tâm An] Không phát được bước chân:", error)); }
+export function stopFootsteps() { const el = elements.get("footsteps"); if (el && !el.paused) { el.pause(); el.currentTime = 0; } }
+export function testFootsteps() { if (!settings.enabled) return; playFootstep(); window.setTimeout(stopFootsteps, 2500); }
 export function speak(text: string, onEnd?: () => void) {
   stopSpeak();
   if (!settings.enabled || !("speechSynthesis" in window)) { onEnd?.(); return false; }
