@@ -138,8 +138,20 @@ function DonationBox() {
           {amounts.map(value => <button key={value} onClick={() => setAmount(value)} style={{ border: amount === value ? "2px solid #8d4a2e" : "1px solid #c9b58e", borderRadius: 9, padding: "10px 4px", background: amount === value ? "#ead5ad" : "#fffdf7", color: "#563524", fontWeight: 700, cursor: "pointer" }}>{money(value)}</button>)}
         </div>
         <div style={{ minHeight: 35, marginTop: 11, fontSize: 12, lineHeight: 1.45 }}>
-          {amount ? <>Bạn đã chọn mức công đức <b>{money(amount)}</b>.<br/>Phần thanh toán trực tuyến sẽ được kết nối sau.</> : "Vui lòng chọn mức công đức tùy tâm."}
+          {amount ? <>Bạn đã chọn mức công đức <b>{money(amount)}</b>.</> : "Vui lòng chọn mức công đức tùy tâm."}
         </div>
+        {amount !== null && <div style={{ margin: "10px auto 4px", padding: 10, border: "1px solid #d8c49d", borderRadius: 12, background: "#fff" }}>
+          <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 7, color: "#63351f" }}>QUÉT MÃ ĐỂ CÔNG ĐỨC</div>
+          <img
+            src={`https://img.vietqr.io/image/VCB-9988514001-compact2.png?amount=${amount}&addInfo=${encodeURIComponent("Cong duc Chua Tam An")}&accountName=${encodeURIComponent("TRAN NGOC TOAN")}`}
+            alt="Mã QR Vietcombank công đức Chùa Tâm An"
+            style={{ display: "block", width: 220, height: "auto", maxWidth: "100%", margin: "0 auto" }}
+          />
+          <div style={{ fontSize: 12, lineHeight: 1.6, marginTop: 6, color: "#594331" }}>
+            <b>Vietcombank</b><br/>STK: <b>9988514001</b><br/>Chủ TK: <b>TRAN NGOC TOAN</b><br/>Số tiền: <b>{money(amount)}</b><br/>Nội dung: Cong duc Chua Tam An
+          </div>
+          <div style={{ fontSize: 11, color: "#806b54", marginTop: 7 }}>Vui lòng kiểm tra đúng tên người nhận và số tiền trong ứng dụng ngân hàng trước khi xác nhận.</div>
+        </div>}
         <button onClick={() => { setOpen(false); setAmount(null); }} style={{ marginTop: 7, border: 0, borderRadius: 9, padding: "9px 18px", background: "#75412d", color: "#fff7e8", fontWeight: 700, cursor: "pointer" }}>Đóng</button>
       </div>
     </Html>}
