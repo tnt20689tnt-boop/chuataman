@@ -20,6 +20,8 @@ let activeZone = "san";
 let chantTimer: number | null = null;
 let chantActive = false;
 let activeEffect: HTMLAudioElement | null = null;
+let zoneWoodTimer: number | null = null;
+let zoneBellTimer: number | null = null;
 function save() { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch {} listeners.forEach((fn) => fn()); }
 export function getAudioSettings() { return { ...settings }; }
 export function subscribeAudioSettings(fn: () => void) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -41,11 +43,14 @@ async function play(id: SoundId, restart = false) {
   try { await el.play(); return true; } catch (error) { console.warn("[Chùa Tâm An] Trình duyệt từ chối phát:", id, error); return false; }
 }
 function zoneLoops(zone: string): SoundId[] {
-  // Keep a soft meditation track audible throughout the temple.
-  // Nature zones layer birds and flowing water over the music.
-  if (zone === "ho" || zone === "phongsinh") return ["music", "birds", "water"];
-  if (zone === "cong" || zone === "san" || zone === "giaoluu") return ["music", "birds"];
-  return ["music"];
+  // Main hall: chanting and ritual sounds only, never background music.
+  // Lotus pond: water and birds only, never background music.
+  if (zone === "ho") return ["birds", "water"];
+  // Instrumental meditation music is reserved for the meditation area.
+  if (zone === "thien") return ["music"];
+  // Other outdoor/common areas keep only quiet natural ambience.
+  if (["cong", "san", "phap", "chuong", "kinh", "giaoluu", "phongsinh"].includes(zone)) return ["birds"];
+  return [];
 }
 function syncLoops() {
   const wanted = new Set(zoneLoops(activeZone));
@@ -57,6 +62,43 @@ function syncLoops() {
     if (!shouldPlay) el.pause();
     else if (el.paused) void el.play().catch(() => undefined);
   });
+}
+function stopZoneRitualSounds() {
+  if (zoneWoodTimer !== null) window.clearInterval(zoneWoodTimer);
+  if (zoneBellTimer !== null) window.clearInterval(zoneBellTimer);
+  zoneWoodTimer = null;
+  zoneBellTimer = null;
+  (["bell", "mokugyo"] as SoundId[]).forEach((id) => {
+    const el = elements.get(id);
+    if (el) { el.pause(); el.currentTime = 0; }
+  });
+}
+function startZoneRitualSounds() {
+  stopZoneRitualSounds();
+  if (!settings.enabled || (activeZone !== "dien" && activeZone !== "thien")) return;
+  const mainHall = activeZone === "dien";
+  const woodVolume = mainHall ? 0.32 : 0.18;
+  const bellVolume = mainHall ? 0.42 : 0.3;
+  const strikeWood = () => {
+    if (!settings.enabled || activeZone !== (mainHall ? "dien" : "thien")) return;
+    const el = getAudio("mokugyo");
+    el.volume = Math.min(1, woodVolume * settings.effects / DEFAULTS.effects);
+    el.pause(); el.currentTime = 0;
+    void el.play().catch((error) => console.warn("[Chùa Tâm An] Không phát được tiếng mõ:", error));
+  };
+  const strikeBell = () => {
+    if (!settings.enabled || activeZone !== (mainHall ? "dien" : "thien")) return;
+    const el = getAudio("bell");
+    el.volume = Math.min(1, bellVolume * settings.effects / DEFAULTS.effects);
+    el.pause(); el.currentTime = 0;
+    void el.play().catch((error) => console.warn("[Chùa Tâm An] Không phát được tiếng chuông:", error));
+  };
+  strikeWood();
+  zoneWoodTimer = window.setInterval(strikeWood, mainHall ? 2600 : 4200);
+  zoneBellTimer = window.setInterval(strikeBell, mainHall ? 32000 : 42000);
+  window.setTimeout(() => {
+    if (settings.enabled && activeZone === (mainHall ? "dien" : "thien")) strikeBell();
+  }, 900);
 }
 function stopChant() {
   chantActive = false;
@@ -71,7 +113,7 @@ function startChant() {
   const recite = () => {
     if (!chantActive || !settings.enabled || activeZone !== "dien" || speechActive) return;
     const u = new SpeechSynthesisUtterance("Nam mô A Di Đà Phật");
-    u.lang = "vi-VN"; u.rate = 0.76; u.pitch = 0.88; u.volume = 0.38;
+    u.lang = "vi-VN"; u.rate = 0.72; u.pitch = 0.9; u.volume = 0.68;
     const vi = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("vi"));
     if (vi) u.voice = vi;
     u.onend = () => { if (chantActive) chantTimer = window.setTimeout(recite, 2600); };
@@ -92,9 +134,10 @@ export async function enableAudio() {
   save();
   syncLoops();
   if (activeZone === "dien") startChant();
+  startZoneRitualSounds();
   return true;
 }
-export function disableAudio() { settings.enabled = false; save(); stopChant(); elements.forEach((el) => el.pause()); stopSpeak(); }
+export function disableAudio() { settings.enabled = false; save(); stopChant(); stopZoneRitualSounds(); elements.forEach((el) => el.pause()); stopSpeak(); }
 export async function playSound(id: SoundId) {
   if (loops.has(id)) { const el = getAudio(id); if (el.paused) return play(id); el.pause(); return false; }
   if (activeEffect && activeEffect !== elements.get(id)) { activeEffect.pause(); activeEffect.currentTime = 0; }
