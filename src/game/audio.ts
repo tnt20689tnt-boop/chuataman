@@ -16,6 +16,9 @@ const listeners = new Set<() => void>();
 let settings: AudioSettings = (() => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return { ...DEFAULTS }; } })();
 let speechTimer: number | null = null;
 let speechActive = false;
+let activeZone = "san";
+let chantTimer: number | null = null;
+let chantActive = false;
 let activeEffect: HTMLAudioElement | null = null;
 function save() { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch {} listeners.forEach((fn) => fn()); }
 export function getAudioSettings() { return { ...settings }; }
@@ -37,16 +40,61 @@ async function play(id: SoundId, restart = false) {
   if (restart) { el.pause(); el.currentTime = 0; }
   try { await el.play(); return true; } catch (error) { console.warn("[Chùa Tâm An] Trình duyệt từ chối phát:", id, error); return false; }
 }
+function zoneLoops(zone: string): SoundId[] {
+  if (zone === "dien") return [];
+  if (zone === "ho" || zone === "phongsinh") return ["birds", "water"];
+  if (zone === "san" || zone === "thien") return ["music"];
+  if (zone === "cong" || zone === "giaoluu") return ["birds"];
+  return ["music"];
+}
 function syncLoops() {
+  const wanted = new Set(zoneLoops(activeZone));
   (["music", "birds", "water"] as SoundId[]).forEach((id) => {
-    const el = elements.get(id); if (!el) return;
-    el.volume = level(id);
-    if (!settings.enabled || level(id) <= 0) el.pause();
+    const shouldPlay = settings.enabled && wanted.has(id) && level(id) > 0;
+    const el = elements.get(id) ?? (shouldPlay ? getAudio(id) : undefined);
+    if (!el) return;
+    el.volume = level(id) * (speechActive ? 0.24 : 1);
+    if (!shouldPlay) el.pause();
     else if (el.paused) void el.play().catch(() => undefined);
   });
 }
-export async function enableAudio() { settings.enabled = true; save(); await play("music"); await play("birds"); await play("water"); return true; }
-export function disableAudio() { settings.enabled = false; save(); elements.forEach((el) => el.pause()); stopSpeak(); }
+function stopChant() {
+  chantActive = false;
+  if (chantTimer !== null) window.clearTimeout(chantTimer);
+  chantTimer = null;
+  if ("speechSynthesis" in window && !speechActive) speechSynthesis.cancel();
+}
+function startChant() {
+  stopChant();
+  if (!settings.enabled || activeZone !== "dien" || speechActive || !("speechSynthesis" in window)) return;
+  chantActive = true;
+  const recite = () => {
+    if (!chantActive || !settings.enabled || activeZone !== "dien" || speechActive) return;
+    const u = new SpeechSynthesisUtterance("Nam mô A Di Đà Phật");
+    u.lang = "vi-VN"; u.rate = 0.76; u.pitch = 0.88; u.volume = 0.16;
+    const vi = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("vi"));
+    if (vi) u.voice = vi;
+    u.onend = () => { if (chantActive) chantTimer = window.setTimeout(recite, 2600); };
+    u.onerror = () => { if (chantActive) chantTimer = window.setTimeout(recite, 5000); };
+    speechSynthesis.speak(u);
+  };
+  recite();
+}
+export function setAudioZone(zoneId: string) {
+  if (!zoneId || zoneId === activeZone) return;
+  activeZone = zoneId;
+  stopChant();
+  syncLoops();
+  if (settings.enabled && activeZone === "dien") startChant();
+}
+export async function enableAudio() {
+  settings.enabled = true;
+  save();
+  syncLoops();
+  if (activeZone === "dien") startChant();
+  return true;
+}
+export function disableAudio() { settings.enabled = false; save(); stopChant(); elements.forEach((el) => el.pause()); stopSpeak(); }
 export async function playSound(id: SoundId) {
   if (loops.has(id)) { const el = getAudio(id); if (el.paused) return play(id); el.pause(); return false; }
   if (activeEffect && activeEffect !== elements.get(id)) { activeEffect.pause(); activeEffect.currentTime = 0; }
@@ -65,19 +113,22 @@ export function ringBell(volume = 0.5) {
   bellTimer = window.setTimeout(() => { el.pause(); el.currentTime = 0; bellTimer = null; }, 9000);
 }
 export function woodBlock() { void playSound("mokugyo"); }
-export function playFootstep() { if (!settings.enabled) return; const el = getAudio("footsteps"); el.volume = settings.effects; if (el.paused) void el.play().catch((error) => console.warn("[Chùa Tâm An] Không phát được bước chân:", error)); }
+export function playFootstep() { if (!settings.enabled) return; const el = getAudio("footsteps"); el.volume = Math.min(0.18, settings.effects * 0.42); if (el.paused) void el.play().catch((error) => console.warn("[Chùa Tâm An] Không phát được bước chân:", error)); }
 export function stopFootsteps() { const el = elements.get("footsteps"); if (el && !el.paused) { el.pause(); el.currentTime = 0; } }
 export function testFootsteps() { if (!settings.enabled) return; playFootstep(); window.setTimeout(stopFootsteps, 2500); }
 export function speak(text: string, onEnd?: () => void) {
+  stopChant();
   stopSpeak();
-  if (!settings.enabled || !("speechSynthesis" in window)) { onEnd?.(); return false; }
+  if (!("speechSynthesis" in window)) { onEnd?.(); return false; }
   const u = new SpeechSynthesisUtterance(text); u.lang = "vi-VN"; u.rate = 0.82; u.pitch = 0.9;
   const vi = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("vi")); if (vi) u.voice = vi;
-  u.onend = () => { stopSpeak(); onEnd?.(); }; u.onerror = () => { stopSpeak(); onEnd?.(); };
+  u.onend = () => { stopSpeak(); onEnd?.(); if (settings.enabled && activeZone === "dien") startChant(); }; u.onerror = () => { stopSpeak(); onEnd?.(); if (settings.enabled && activeZone === "dien") startChant(); };
   speechSynthesis.speak(u); speechActive = true; syncLoops();
   speechTimer = window.setInterval(() => { if (speechActive) woodBlock(); }, 1250); return true;
 }
-export function stopSpeak() { speechActive = false; syncLoops(); if (speechTimer !== null) clearInterval(speechTimer); speechTimer = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); const el = elements.get("mokugyo"); if (el) { el.pause(); el.currentTime = 0; } }
+export function pauseSpeak() { if ("speechSynthesis" in window) speechSynthesis.pause(); }
+export function resumeSpeak() { if ("speechSynthesis" in window) speechSynthesis.resume(); }
+export function stopSpeak() { speechActive = false; syncLoops(); syncLoops(); if (speechTimer !== null) clearInterval(speechTimer); speechTimer = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); const el = elements.get("mokugyo"); if (el) { el.pause(); el.currentTime = 0; } }
 export async function checkAudioFiles() {
   const result: Record<string, "Đã tải được" | "Không tải được"> = {};
   await Promise.all((Object.keys(SOURCES) as SoundId[]).map(async (id) => {
