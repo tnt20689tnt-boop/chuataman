@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose } from "./sim";
 import { player, useUI } from "./store";
+import { moveVisitor } from "./collision";
 
 const SKIN = "#f1cfae";
 
@@ -69,10 +70,15 @@ export function Crowd({ count = 1000 }: { count?: number }) {
     }
     const bob = n.pose === "walk" ? Math.abs(Math.sin(t * 6 + n.phase)) * 0.05 : 0;
     tmp.position.set(x + fx * bow, hy - bow * 0.6 + bob, z + fz * bow);
-    tmp.scale.setScalar(1);
+    // Small but consistent facial/head-shape differences make the crowd
+    // easier to read at a distance without caricaturing either gender.
+    tmp.scale.set(female ? 0.96 : 1.02, female ? 1.02 : 1.08, female ? 0.98 : 1.02);
     tmp.updateMatrix();
     head.current!.setMatrixAt(n.id, tmp.matrix);
     if (n.hair === "troc") tmp.scale.setScalar(0);
+    else if (n.gender === "nu" && n.hair === "dai") tmp.scale.set(1.08, 1.32, 1.08);
+    else if (n.gender === "nu" && n.hair === "bui") tmp.scale.set(1.12, 1.18, 1.08);
+    else if (n.gender === "nam" && n.hair === "ngan") tmp.scale.set(1.05, 0.82, 1.05);
     else if (n.hair === "bui") tmp.scale.set(1, 1.25, 1);
     else if (n.hair === "dai") tmp.scale.set(1.05, 1.5, 1.05);
     tmp.position.y += 0.05;
@@ -108,13 +114,22 @@ export function Crowd({ count = 1000 }: { count?: number }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [npcs]);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     const t = clock.elapsedTime;
     for (const n of walkers) {
-      const p = walkerPos(n, t);
-      n.x = p.x;
-      n.z = p.z;
-      place(n, p.x, p.z, p.rot, t);
+      const target = walkerPos(n, t);
+      // Crowd walkers use the same swept collision solver as the player.
+      // This prevents their circular routes from passing through halls,
+      // altars, ponds, columns, Buddha statues or the campus buildings.
+      const motion = { x: n.x, z: n.z, y: 0 };
+      moveVisitor(motion, target.x - n.x, target.z - n.z);
+      const dx = motion.x - n.x;
+      const dz = motion.z - n.z;
+      n.x = motion.x;
+      n.z = motion.z;
+      const rot = Math.hypot(dx, dz) > 0.0001 ? Math.atan2(dx, dz) : n.rot;
+      n.rot = rot;
+      place(n, n.x, n.z, rot, t);
     }
     for (const n of npcs) if (n.pose === "kneel") place(n, n.x, n.z, n.rot, t);
     body.current!.instanceMatrix.needsUpdate = true;
