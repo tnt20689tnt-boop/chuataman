@@ -27,8 +27,15 @@ import { SCENE_COLORS as C } from './templeData';
 import { teleport } from './store';
 
 function getVietnamDaylight() {
-  const now = new Date();
-  const hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  const part = (type: string) => Number(parts.find((item) => item.type === type)?.value ?? 0);
+  const hour = part("hour") + part("minute") / 60 + part("second") / 3600;
   // Sunrise around 05:30, sunset around 18:15 (Vietnam local device time).
   const daylight = THREE.MathUtils.clamp((hour - 5.5) / 1.1, 0, 1) *
     (1 - THREE.MathUtils.clamp((hour - 17.2) / 1.1, 0, 1));
