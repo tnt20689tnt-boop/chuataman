@@ -122,10 +122,12 @@ function DonationBox() {
       <boxGeometry args={[1.9, 0.55, 0.12]} />
       <meshBasicMaterial transparent opacity={0} depthWrite={false} />
     </mesh>
-    <Html position={[0, 1.95, 0.72]} center distanceFactor={9} transform={false} style={{ pointerEvents: "auto" }}>
+    {/* Large, highly visible clickable merit sign above the donation box. */}
+    <Html position={[0, 2.55, 0.72]} center distanceFactor={7} transform={false} style={{ pointerEvents: "auto" }}>
       <button onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
-        style={{ border: "1px solid #d6bd83", borderRadius: 18, padding: "7px 13px", background: "rgba(75,35,25,.96)", color: "#fff1cf", fontWeight: 700, whiteSpace: "nowrap", cursor: "pointer", boxShadow: "0 2px 10px #0006" }}>
-        {open ? "Đóng bảng công đức" : "🙏 Bấm để công đức"}
+        style={{ width: 330, minHeight: 104, boxSizing: "border-box", border: "4px solid #d9b96f", borderRadius: 14, padding: "13px 16px", background: "linear-gradient(145deg,#7c241d,#3e1714)", color: "#fff2ce", fontWeight: 800, whiteSpace: "normal", cursor: "pointer", boxShadow: "0 5px 22px #0009, inset 0 0 0 2px #f0d99b", textAlign: "center" }}>
+        <div style={{ fontSize: 25, letterSpacing: 1.5, lineHeight: 1.2 }}>HÒM CÔNG ĐỨC</div>
+        <div style={{ fontSize: 15, marginTop: 8, color: "#ffe3a1" }}>{open ? "CHẠM ĐỂ ĐÓNG BẢNG" : "🙏 CHẠM VÀO ĐÂY ĐỂ PHÁT TÂM"}</div>
       </button>
     </Html>
     {open && <Html position={[0, 2.45, 0.78]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
