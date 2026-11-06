@@ -34,9 +34,13 @@ export function Hud() {
     else setUI({ panel: "avatar" });
     connectMultiplayer();
     const auth = getAuthClient();
-    const authListener = auth?.auth.onAuthStateChange(() => {
-      disconnectMultiplayer();
-      connectMultiplayer();
+    const authListener = auth?.auth.onAuthStateChange((event) => {
+      // Token refreshes and INITIAL_SESSION do not change this page's player
+      // identity. Reconnecting for them made every visitor briefly disappear.
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        disconnectMultiplayer();
+        connectMultiplayer();
+      }
     });
     return () => {
       authListener?.data.subscription.unsubscribe();
