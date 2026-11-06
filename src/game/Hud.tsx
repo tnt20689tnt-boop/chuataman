@@ -174,6 +174,7 @@ const ZONE_GUIDES: Record<string, string> = {
 function TourPanel() {
   const [selected, setSelected] = useState(0);
   const zone = ZONES[selected];
+  if (!zone) return null;
   const visit = () => {
     teleport(zone.x, zone.z, zone.rot);
     setUI({ panel: null, action: "none", pose: "stand" });
@@ -358,7 +359,10 @@ function AudioPanel() {
   const [settings, setSettings] = useState(getAudioSettings());
   const [checks, setChecks] = useState<Record<string, string> | null>(null);
   const [checking, setChecking] = useState(false);
-  useEffect(() => subscribeAudioSettings(() => setSettings(getAudioSettings())), []);
+  useEffect(() => {
+    const unsubscribe = subscribeAudioSettings(() => setSettings(getAudioSettings()));
+    return () => { unsubscribe(); };
+  }, []);
   const toggle = async () => settings.enabled ? disableAudio() : void await enableAudio();
   const test = async (id: "music" | "birds" | "bell" | "mokugyo" | "footsteps" | "water") => {
     if (!settings.enabled) {
@@ -515,7 +519,7 @@ function AuthPanel() {
         <>
           <div className="hud-tile mb-3">
             <div className="text-xs text-muted-foreground">Đang đăng nhập</div>
-            <div className="mt-1 font-semibold text-foreground">{String(user.user_metadata?.display_name || "Phật tử")}</div>
+            <div className="mt-1 font-semibold text-foreground">{String(user.user_metadata?.['display_name'] || "Phật tử")}</div>
             <div className="text-sm text-muted-foreground">{user.email}</div>
           </div>
           <button className="hud-primary w-full" disabled={busy} onClick={() => void signOut()}>{busy ? "Đang xử lý…" : "Đăng xuất"}</button>
