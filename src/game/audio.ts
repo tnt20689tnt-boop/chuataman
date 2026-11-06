@@ -1,6 +1,6 @@
 export type SoundId = "music" | "birds" | "water" | "bell" | "mokugyo" | "footsteps";
 export interface AudioSettings { enabled: boolean; music: number; nature: number; effects: number }
-const DEFAULTS: AudioSettings = { enabled: false, music: 0.16, nature: 0.12, effects: 0.38 };
+const DEFAULTS: AudioSettings = { enabled: false, music: 0.42, nature: 0.32, effects: 0.22 };
 const KEY = "tam-an-audio-settings";
 const SOURCES: Record<SoundId, string> = {
   music: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Jason_Shaw/Audionautix_Acoustic/Jason_Shaw_-_ACOUSTIC_MEDITATION.mp3",
@@ -33,7 +33,7 @@ function getAudio(id: SoundId) {
   }
   return el;
 }
-function level(id: SoundId) { return id === "music" ? settings.music : id === "birds" || id === "water" ? settings.nature : settings.effects; }
+function level(id: SoundId) { return id === "music" ? Math.min(0.58, settings.music * 1.8) : id === "birds" || id === "water" ? Math.min(0.48, settings.nature * 1.8) : settings.effects; }
 async function play(id: SoundId, restart = false) {
   if (!settings.enabled) return false;
   const el = getAudio(id); el.volume = Math.max(0, Math.min(1, level(id)));
@@ -71,7 +71,7 @@ function startChant() {
   const recite = () => {
     if (!chantActive || !settings.enabled || activeZone !== "dien" || speechActive) return;
     const u = new SpeechSynthesisUtterance("Nam mô A Di Đà Phật");
-    u.lang = "vi-VN"; u.rate = 0.76; u.pitch = 0.88; u.volume = 0.16;
+    u.lang = "vi-VN"; u.rate = 0.76; u.pitch = 0.88; u.volume = 0.38;
     const vi = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("vi"));
     if (vi) u.voice = vi;
     u.onend = () => { if (chantActive) chantTimer = window.setTimeout(recite, 2600); };
@@ -113,7 +113,7 @@ export function ringBell(volume = 0.5) {
   bellTimer = window.setTimeout(() => { el.pause(); el.currentTime = 0; bellTimer = null; }, 9000);
 }
 export function woodBlock() { void playSound("mokugyo"); }
-export function playFootstep() { if (!settings.enabled) return; const el = getAudio("footsteps"); el.volume = Math.min(0.18, settings.effects * 0.42); if (el.paused) void el.play().catch((error) => console.warn("[Chùa Tâm An] Không phát được bước chân:", error)); }
+export function playFootstep() { if (!settings.enabled) return; const el = getAudio("footsteps"); el.volume = Math.min(0.045, settings.effects * 0.12); if (el.paused) void el.play().catch((error) => console.warn("[Chùa Tâm An] Không phát được bước chân:", error)); }
 export function stopFootsteps() { const el = elements.get("footsteps"); if (el && !el.paused) { el.pause(); el.currentTime = 0; } }
 export function testFootsteps() { if (!settings.enabled) return; playFootstep(); window.setTimeout(stopFootsteps, 2500); }
 export function speak(text: string, onEnd?: () => void) {
