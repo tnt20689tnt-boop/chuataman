@@ -129,27 +129,30 @@ export function useMultiplayerConnected() {
 
 function readPresence(channelRef: RealtimeChannel) {
   const state = channelRef.presenceState<RemotePlayer>();
-  // Supabase Presence groups metadata by its presence key. Use that key as
-  // the stable identity and fall back to it if a client payload lacks id.
-  // This avoids silently dropping a real visitor when metadata is incomplete.
-  const uniquePlayers = new Map<string, RemotePlayer>();
+  // Presence sync can briefly omit a peer while Realtime is reconciling.
+  // Merge instead of replacing the whole list, and never let an older
+  // Presence payload overwrite a newer player_move broadcast.
+  const merged = new Map(snapshot.players.map((peer) => [peer.id, peer]));
   for (const [presenceKey, entries] of Object.entries(state)) {
     if (presenceKey === clientId) continue;
     for (const meta of entries ?? []) {
       const id = typeof meta.id === "string" && meta.id ? meta.id : presenceKey;
       if (id === clientId) continue;
-      uniquePlayers.set(id, {
+      const previous = merged.get(id);
+      const receivedAt = Number.isFinite(meta.updatedAt) ? meta.updatedAt : Date.now();
+      if (previous && previous.updatedAt > receivedAt) continue;
+      merged.set(id, {
         ...meta,
         id,
         name: typeof meta.name === "string" && meta.name.trim() ? meta.name.slice(0, 24) : "Phật tử",
-        x: Number.isFinite(meta.x) ? meta.x : 0,
-        z: Number.isFinite(meta.z) ? meta.z : 21,
-        rot: Number.isFinite(meta.rot) ? meta.rot : Math.PI,
-        updatedAt: Date.now(),
+        x: Number.isFinite(meta.x) ? meta.x : previous?.x ?? 0,
+        z: Number.isFinite(meta.z) ? meta.z : previous?.z ?? 21,
+        rot: Number.isFinite(meta.rot) ? meta.rot : previous?.rot ?? Math.PI,
+        updatedAt: receivedAt,
       });
     }
   }
-  publish({ connected: true, players: [...uniquePlayers.values()], roomId: currentRoomId });
+  publish({ connected: true, players: [...merged.values()], roomId: currentRoomId });
 }
 
 export function connectMultiplayer() {
@@ -228,9 +231,21 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
     })
     .on("broadcast", { event: "player_move" }, ({ payload }) => {
       const incoming = payload as RemotePlayer;
-      if (!incoming || incoming.id === clientId || typeof incoming.x !== "number" || typeof incoming.z !== "number") return;
-      const players = snapshot.players.filter((p) => p.id !== incoming.id);
-      players.push({ ...incoming, name: incoming.name.slice(0, 24), updatedAt: Date.now() });
+      if (!incoming || typeof incoming.id !== "string" || !incoming.id || incoming.id === clientId ||
+          !Number.isFinite(incoming.x) || !Number.isFinite(incoming.z)) return;
+      const previous = snapshot.players.find((peer) => peer.id === incoming.id);
+      const receivedAt = Number.isFinite(incoming.updatedAt) ? incoming.updatedAt : Date.now();
+      if (previous && previous.updatedAt > receivedAt) return;
+      const next: RemotePlayer = {
+        ...incoming,
+        name: typeof incoming.name === "string" && incoming.name.trim() ? incoming.name.slice(0, 24) : "Phật tử",
+        x: incoming.x,
+        z: incoming.z,
+        rot: Number.isFinite(incoming.rot) ? incoming.rot : previous?.rot ?? Math.PI,
+        updatedAt: receivedAt,
+      };
+      const players = snapshot.players.filter((peer) => peer.id !== next.id);
+      players.push(next);
       publish({ connected: snapshot.connected, players, roomId: currentRoomId });
     })
     .subscribe(async (status) => {
