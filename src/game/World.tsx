@@ -23,7 +23,8 @@ import { cam, getUI, input, player, setUI } from "./store";
 import { playFootstep, stopFootsteps, setAudioZone } from "./audio";
 import { Surface } from './Materials';
 import { TempleCampus } from './TempleCampus';
-import { SCENE_COLORS as C } from './templeData';
+import { BUILDINGS, SCENE_COLORS as C } from './templeData';
+import { surfaceHeight } from './collision';
 import { teleport } from './store';
 
 function getVietnamDaylight() {
@@ -183,6 +184,7 @@ function Controller() {
   const last = useRef(0);
   const lastAudioZone = useRef("");
   const keys = useRef(new Set<string>());
+  const restKeyPressed = useRef(false);
 
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -197,6 +199,7 @@ function Controller() {
     }
     const down = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.closest("input,textarea")) return;
+      if (e.code === "KeyE") restKeyPressed.current = true;
       keys.current.add(e.code);
     };
     const up = (e: KeyboardEvent) => keys.current.delete(e.code);
@@ -242,10 +245,32 @@ function Controller() {
     input.fwd = (k.has("KeyW") || k.has("ArrowUp") ? 1 : 0) - (k.has("KeyS") || k.has("ArrowDown") ? 1 : 0) + input.joyF;
     input.right = (k.has("KeyD") || k.has("ArrowRight") ? 1 : 0) - (k.has("KeyA") || k.has("ArrowLeft") ? 1 : 0) + input.joyR;
     input.run = k.has("ShiftLeft") || k.has("ShiftRight");
-    const moved = stepPlayer(player, input, cam.yaw, dt);
+    let ui = getUI();
+    const guestHouse = BUILDINGS.find((b) => b.kind === "guest");
+    if (restKeyPressed.current) {
+      restKeyPressed.current = false;
+      if (ui.pose === "lie" && guestHouse) {
+        const side = player.x < guestHouse.x ? -1 : 1;
+        player.x = guestHouse.x + side * 7;
+        player.z = guestHouse.z + 4.2;
+        player.y = surfaceHeight(player.x, player.z);
+        setUI({ pose: "stand", action: "none" });
+      } else if (guestHouse) {
+        const beds = [-1, 1].map((side) => ({ x: guestHouse.x + side * 7, z: guestHouse.z - 3 }));
+        const bed = beds.find((b) => Math.hypot(player.x - b.x, player.z - b.z) < 5.2);
+        if (bed) {
+          player.x = bed.x;
+          player.z = bed.z;
+          player.y = 1.32;
+          player.rot = Math.PI;
+          setUI({ pose: "lie", action: "none" });
+        }
+      }
+      ui = getUI();
+    }
+    const moved = ui.pose === "lie" ? false : stepPlayer(player, input, cam.yaw, dt);
     if (moved) playFootstep();
     else stopFootsteps();
-    const ui = getUI();
     if (moved && ui.pose !== "walk") setUI({ pose: "walk", action: "none" });
     if (!moved && ui.pose === "walk") setUI({ pose: "stand" });
 
