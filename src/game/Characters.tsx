@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
@@ -299,6 +299,7 @@ export function PlayerAvatar() {
   }, [externalClips, action, pose]);
 
   useFrame(({ clock }, delta) => {
+    mixerRef.current?.update(delta);
     if (!g.current) return;
     g.current.position.set(player.x, player.y, player.z);
     // Lay the avatar horizontally on the guest-room mattress when resting.
