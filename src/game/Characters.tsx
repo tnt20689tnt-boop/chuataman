@@ -5,6 +5,8 @@ import { Html } from "@react-three/drei";
 import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose } from "./sim";
 import { player, useUI } from "./store";
 import { moveVisitor } from "./collision";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 const SKIN = "#f4d6bd";
 
@@ -225,6 +227,76 @@ export function PlayerAvatar() {
   ), [female]);
   const hair = avatar?.hair ?? "ngan";
   const handsJoined = action === "chap" || action === "le" || action === "thien" || action === "kinh";
+  // Optional Hyper3D/Rodin character files. Add the exported GLB files to
+  // public/models; if they are absent or fail to load, the procedural avatar
+  // remains available without interrupting the game.
+  const [externalModel, setExternalModel] = useState<THREE.Group | null>(null);
+  const [externalClips, setExternalClips] = useState<THREE.AnimationClip[]>([]);
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const activeClipRef = useRef<THREE.AnimationAction | null>(null);
+  const modelPath = female ? "/models/hyper3d-female.glb" : "/models/hyper3d-male.glb";
+
+  useEffect(() => {
+    let alive = true;
+    setExternalModel(null);
+    setExternalClips([]);
+    mixerRef.current = null;
+    activeClipRef.current = null;
+    const loader = new GLTFLoader();
+    loader.load(
+      modelPath,
+      (gltf) => {
+        if (!alive) return;
+        const model = cloneSkinned(gltf.scene) as THREE.Group;
+        model.updateMatrixWorld(true);
+        const bounds = new THREE.Box3().setFromObject(model);
+        const size = bounds.getSize(new THREE.Vector3());
+        const center = bounds.getCenter(new THREE.Vector3());
+        const height = Math.max(size.y, 0.001);
+        const scale = 2.35 / height;
+        model.scale.setScalar(scale);
+        model.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+        model.traverse((node) => {
+          if ((node as THREE.Mesh).isMesh) {
+            const mesh = node as THREE.Mesh;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+          }
+        });
+        mixerRef.current = new THREE.AnimationMixer(model);
+        setExternalClips(gltf.animations ?? []);
+        setExternalModel(model);
+      },
+      undefined,
+      () => {
+        // Missing model files are expected until the GLB exports are added.
+        if (alive) setExternalModel(null);
+      },
+    );
+    return () => {
+      alive = false;
+      mixerRef.current?.stopAllAction();
+      mixerRef.current = null;
+      activeClipRef.current = null;
+    };
+  }, [modelPath]);
+
+  useEffect(() => {
+    if (!mixerRef.current || externalClips.length === 0) return;
+    const wanted = action === "le" ? ["bow", "kneel", "prayer", "idle"]
+      : action === "chap" || action === "kinh" ? ["prayer", "pray", "idle"]
+      : action === "thien" ? ["meditat", "sit", "idle"]
+      : pose === "walk" ? ["walk", "run"]
+      : ["idle", "stand"];
+    const clip = externalClips.find((item) => wanted.some((word) => item.name.toLowerCase().includes(word)))
+      ?? externalClips[0];
+    const next = mixerRef.current.clipAction(clip);
+    if (activeClipRef.current !== next) {
+      activeClipRef.current?.fadeOut(0.18);
+      next.reset().fadeIn(0.18).play();
+      activeClipRef.current = next;
+    }
+  }, [externalClips, action, pose]);
 
   useFrame(({ clock }, delta) => {
     if (!g.current) return;
@@ -517,6 +589,7 @@ export function PlayerAvatar() {
           </mesh>
         </group>
       )}
+      </group>}
       <Html position={[0, hy + 0.6, 0]} center distanceFactor={14} zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
         <div className="name-tag name-tag-self">{avatar?.name ?? "Phật tử"}</div>
       </Html>
