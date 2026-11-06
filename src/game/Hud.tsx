@@ -27,6 +27,7 @@ export function Hud() {
   const zone = useUI((s) => s.zoneLabel);
   const ready = useUI((s) => s.sceneReady);
   const multiplayer = useMultiplayer();
+  const connected = useMultiplayerConnected();
 
   useEffect(() => {
     const a = loadAvatar();
