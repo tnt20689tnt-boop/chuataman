@@ -234,6 +234,7 @@ export function PlayerAvatar() {
   const [externalClips, setExternalClips] = useState<THREE.AnimationClip[]>([]);
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const activeClipRef = useRef<THREE.AnimationAction | null>(null);
+  const externalMotionRef = useRef<THREE.Group>(null);
   const modelPath = female ? "/models/hyper3d-female.glb" : "/models/hyper3d-male.glb";
 
   useEffect(() => {
@@ -300,6 +301,19 @@ export function PlayerAvatar() {
 
   useFrame(({ clock }, delta) => {
     mixerRef.current?.update(delta);
+    const t = clock.elapsedTime;
+    if (externalMotionRef.current && externalModel) {
+      const walkingExternal = pose === "walk";
+      const breathingExternal = Math.sin(t * 2.0) * 0.006;
+      const bowExternal = action === "le" ? Math.max(0, Math.sin(t * 1.15)) * 0.12
+        : action === "thien" ? 0.035 : 0;
+      const externalSmooth = 1 - Math.exp(-delta * 8);
+      externalMotionRef.current.rotation.x += (bowExternal - externalMotionRef.current.rotation.x) * externalSmooth;
+      externalMotionRef.current.rotation.z = Math.sin(t * 1.2) * (walkingExternal ? 0.025 : 0.007);
+      externalMotionRef.current.position.y = walkingExternal
+        ? Math.abs(Math.sin(t * 6.5)) * 0.025
+        : breathingExternal;
+    }
     if (!g.current) return;
     g.current.position.set(player.x, player.y, player.z);
     // Lay the avatar horizontally on the guest-room mattress when resting.
@@ -355,7 +369,7 @@ export function PlayerAvatar() {
 
   return (
     <group ref={g}>
-      {externalModel ? <primitive object={externalModel} /> : <group>
+      {externalModel ? <group ref={externalMotionRef}><primitive object={externalModel} /></group> : <group>
       <mesh ref={robeRef} position={[0, 0, 0]} scale={[sxz, sy, sxz]} castShadow>
         <primitive object={robeGeometry} attach="geometry" />
         <meshStandardMaterial color={color} roughness={0.8} />
