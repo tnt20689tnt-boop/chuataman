@@ -125,6 +125,37 @@ function GoldBurner() {
   </group>;
 }
 
+function DonationBox() {
+  return <group>
+    {/* Traditional lacquered wooden merit box with brass fittings and a visible offering slot. */}
+    <mesh position={[0, 0.72, 0]} castShadow receiveShadow>
+      <boxGeometry args={[1.45, 1.35, 1.05]} />
+      <meshStandardMaterial color="#641f1b" roughness={0.48} metalness={0.12} />
+    </mesh>
+    <mesh position={[0, 1.42, 0]} castShadow>
+      <boxGeometry args={[1.58, 0.16, 1.16]} />
+      <meshStandardMaterial color="#c49a52" metalness={0.78} roughness={0.28} />
+    </mesh>
+    <mesh position={[0, 1.515, 0]} rotation-x={-0.04}>
+      <boxGeometry args={[0.34, 0.025, 0.12]} />
+      <meshStandardMaterial color="#241812" roughness={0.9} />
+    </mesh>
+    {[-0.57, 0.57].map(x => <mesh key={x} position={[x, 0.72, 0.535]}>
+      <boxGeometry args={[0.07, 1.08, 0.035]} />
+      <meshStandardMaterial color="#d5ad62" metalness={0.72} roughness={0.3} />
+    </mesh>)}
+    <mesh position={[0, 0.76, 0.545]}>
+      <boxGeometry args={[0.92, 0.43, 0.045]} />
+      <meshStandardMaterial color="#8b3023" metalness={0.18} roughness={0.42} />
+    </mesh>
+    <Inscription text="CÔNG ĐỨC" width={0.78} height={0.28} position={[0, 0.76, 0.575]} small />
+    {[-0.48, 0.48].map(x => <mesh key={x} position={[x, 0.12, 0]} castShadow>
+      <boxGeometry args={[0.16, 0.24, 0.16]} />
+      <meshStandardMaterial color="#b78b4b" metalness={0.72} roughness={0.35} />
+    </mesh>)}
+  </group>;
+}
+
 function PrayerAudio() {
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
@@ -232,6 +263,10 @@ export function MainHall() {
         {/* Central ceremonial vàng mã brazier, set in the open front-center aisle. */}
         <group position={[0, 0, 10.2]}>
           <GoldBurner />
+        </group>
+        {/* Merit box beside the entrance, offset from the central visitor path. */}
+        <group position={[-16.2, 0, 10.2]}>
+          <DonationBox />
         </group>
         {/* lanterns */}
         {[-8, -3, 3, 8].map((x) => (
