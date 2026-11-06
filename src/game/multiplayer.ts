@@ -213,7 +213,8 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
 
   client = authenticatedClient;
 
-  // This is one shared temple world: visitors must see one another across every zone.\n  channel = client.channel("tam-an-world:chung", {
+  // This is one shared temple world: visitors must see one another across every zone.
+  channel = client.channel("tam-an-world:chung", {
     config: {
       presence: { key: clientId },
       broadcast: { self: false },
