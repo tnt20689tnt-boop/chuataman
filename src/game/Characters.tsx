@@ -299,11 +299,22 @@ export function PlayerAvatar() {
         <capsuleGeometry args={[0.5, 1, 5, 8]} />
         <meshStandardMaterial color={female ? "#ead8bd" : "#d9c7a8"} roughness={0.8} />
       </mesh>
-      {/* collar sash */}
-      <mesh position={[0, 0.98 * sy, 0]} scale={[sxz, 1, sxz]}>
-        <torusGeometry args={[0.2, 0.05, 8, 20]} />
-        <meshStandardMaterial color="#e9dcc0" />
+      {/* A tapered human neck joins the head naturally to the shoulders. */}
+      <mesh position={[0, 1.105 * sy, 0]} scale={[sxz, sy, sxz]} castShadow>
+        <cylinderGeometry args={[0.105, 0.135, 0.30, 20, 1]} />
+        <meshStandardMaterial color={SKIN} roughness={0.68} />
       </mesh>
+      {/* Tailored V-shaped robe neckline: no circular ring around the neck. */}
+      <group position={[0, 0.94 * sy, 0.245 * sxz]}>
+        <mesh position={[-0.055, 0.025, 0]} rotation-z={-0.42} scale={[0.72, 1.0, 0.28]}>
+          <capsuleGeometry args={[0.026, 0.19, 5, 10]} />
+          <meshStandardMaterial color="#e9dcc0" roughness={0.82} />
+        </mesh>
+        <mesh position={[0.055, 0.025, 0]} rotation-z={0.42} scale={[0.72, 1.0, 0.28]}>
+          <capsuleGeometry args={[0.026, 0.19, 5, 10]} />
+          <meshStandardMaterial color="#e9dcc0" roughness={0.82} />
+        </mesh>
+      </group>
       {/* arms: upper arm, forearm and visible hand */}
       <group ref={leftArmRef} position={[-(female ? 0.31 : 0.37) * sxz, 0.91 * sy, 0]}>
         <mesh position={[0, -0.16, 0]} rotation-z={-0.10} castShadow>
