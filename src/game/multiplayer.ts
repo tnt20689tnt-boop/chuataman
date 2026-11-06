@@ -75,24 +75,17 @@ function addPrayer(prayer: TemplePrayer) {
   listeners.forEach((listener) => listener());
 }
 
-export async function sendTemplePrayer(name: string, text: string) {
+export function sendTemplePrayer(name: string, text: string) {
   const prayer: TemplePrayer = {
     id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "prayer-" + Date.now() + "-" + Math.random(),
     name: name.slice(0, 24),
     text: text.trim().slice(0, 200),
     at: Date.now(),
   };
-  const activeChannel = channel;
-  if (!prayer.text || !activeChannel || !snapshot.connected) return false;
-  try {
-    const status = await activeChannel.send({ type: "broadcast", event: "prayer_message", payload: prayer });
-    if (status !== "ok" || activeChannel !== channel) return false;
-    addPrayer(prayer);
-    return true;
-  } catch (error) {
-    console.warn("Chùa Tâm An: gửi lời cầu an thất bại.", error);
-    return false;
-  }
+  if (!prayer.text || !channel || !snapshot.connected) return false;
+  addPrayer(prayer);
+  void channel.send({ type: "broadcast", event: "prayer_message", payload: prayer });
+  return true;
 }
 
 function addChatMessage(message: TempleChatMessage) {
