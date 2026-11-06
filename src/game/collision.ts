@@ -55,6 +55,18 @@ for (const x of [-7, -2.333, 2.333, 7]) for (const z of [47, 57]) {
 for (let i = 0; i < 8; i++) for (const z of [-50, -74]) {
   solids.push({ id: 'hall-column', x: -19 + i * 38 / 7, z, w: 1.05, d: 1.05 });
 }
+// Meditation cushions in the main hall are solid obstacles, not walk-through decorations.
+for (const x of [-12, -6, 0, 6, 12]) {
+  for (const localZ of [2.5, 7]) {
+    solids.push({
+      id: `main-hall-mat-${x}-${localZ}`,
+      x,
+      z: -62 + localZ,
+      w: 2.55,
+      d: 1.95,
+    });
+  }
+}
 const polygons = solids.map(s => ({ ...s, shape: new SAT.Box(new SAT.Vector(s.x - s.w / 2, s.z - s.d / 2), s.w, s.d).toPolygon() }));
 // Keep a respectful buffer around both Buddha statues. The main-hall altar
 // is also solid, but this explicit statue volume protects the full seated form.
