@@ -223,6 +223,9 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
     .subscribe(async (status) => {
       if (attempt !== connectionAttempt) return;
       if (status === "SUBSCRIBED" && channel) {
+        // Supabase recovered on its own; cancel any pending full reconnect.
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = null;
         const avatar = getUI().avatar;
         const initialPresence: RemotePlayer = {
           id: authenticatedUserId,
@@ -265,13 +268,18 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           void channel.send({ type: "broadcast", event: "player_move", payload });
         }, 120);
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-        publish({ ...empty, roomId: currentRoomId });
-        if (status === "CLOSED" && !reconnectTimer) {
+        // Keep the last known remote avatars briefly to avoid visual flicker
+        // while Realtime recovers, then rebuild the channel if it did not.
+        publish({ ...snapshot, connected: false, roomId: currentRoomId });
+        if (timer) clearInterval(timer);
+        timer = null;
+        if (!reconnectTimer) {
           reconnectTimer = setTimeout(() => {
             reconnectTimer = null;
-            const closedChannel = channel;
+            if (attempt !== connectionAttempt) return;
+            const failedChannel = channel;
             channel = null;
-            if (closedChannel && client) void client.removeChannel(closedChannel);
+            if (failedChannel && client) void client.removeChannel(failedChannel);
             client = null;
             connectMultiplayer();
           }, 2500);
