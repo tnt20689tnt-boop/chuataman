@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, subscribeAudioSettings, testFootsteps, updateAudioSettings } from "./audio";
-import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useTempleChat, useTemplePrayers } from "./multiplayer";
+import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useMultiplayerConnected, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
 
 function Lotus({ className }: { className?: string }) {
@@ -84,8 +84,8 @@ export function Hud() {
 
       <div className="absolute right-3 top-3 flex flex-col items-end gap-2 sm:right-5 sm:top-5">
         <div className="hud-glass pointer-events-auto flex items-center gap-2 px-3 py-1.5 text-xs text-foreground">
-          <span className={`h-2 w-2 rounded-full ${multiplayer.connected ? "bg-success" : "bg-muted-foreground"}`} />
-          <span>Phật tử đang hiện diện: <b>{multiplayer.connected ? multiplayer.players.length + 1 : 0}</b>{multiplayer.connected ? " người" : " · đang kết nối"}</span>
+          <span className={`h-2 w-2 rounded-full ${connected ? "bg-success" : "bg-muted-foreground"}`} />
+          <span>Phật tử đang hiện diện: <b>{connected ? multiplayer.players.length + 1 : 0}</b>{connected ? " người" : " · đang kết nối"}</span>
         </div>
         <div className="hud-chip">🪷 Phòng: {multiplayer.roomId} · 📍 {zone}</div>
       </div>
@@ -261,14 +261,14 @@ function PhapPanel() {
   );
 }
 
-function PrayPanel() {
+const PrayPanel = memo(function PrayPanel() {
   const [text, setText] = useState("");
   const prayers = useTemplePrayers();
-  const multiplayer = useMultiplayer();
+  const connected = useMultiplayerConnected();
   const avatar = useUI((s) => s.avatar);
   const add = () => {
     const t = text.trim();
-    if (!t || !multiplayer.connected) return;
+    if (!t || !connected) return;
     if (sendTemplePrayer(avatar?.name || "Phật tử", t)) {
       setText("");
       ringBell(0.3);
@@ -277,13 +277,24 @@ function PrayPanel() {
   return (
     <Panel title="Góc cầu nguyện chung" onClose={() => setUI({ panel: null })}>
       <p className="mb-3 text-sm text-muted-foreground">
-        {multiplayer.connected
+        {connected
           ? "Gửi lời cầu an để mọi Phật tử đang online cùng đọc và hồi hướng điều lành."
           : "Chùa đang kết nối máy chủ. Khi online, bạn có thể gửi lời nguyện để mọi người cùng đọc."}
       </p>
       <div className="mb-4 flex gap-2">
-        <input className="hud-input min-w-0 flex-1" value={text} maxLength={200} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="Nguyện cho gia đình được an lành…" disabled={!multiplayer.connected} />
-        <button className="hud-primary" onClick={add} disabled={!multiplayer.connected || !text.trim()}>Gửi lời nguyện</button>
+        <input
+          className="hud-input min-w-0 flex-1"
+          type="text"
+          value={text}
+          maxLength={200}
+          autoComplete="off"
+          enterKeyHint="send"
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+          placeholder="Nguyện cho gia đình được an lành…"
+          disabled={!connected}
+        />
+        <button className="hud-primary" onClick={add} disabled={!connected || !text.trim()}>Gửi lời nguyện</button>
       </div>
       <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
         <span>🪷 Lời nguyện từ Phật tử đang hiện diện</span>
@@ -300,7 +311,7 @@ function PrayPanel() {
       </ul>
     </Panel>
   );
-}
+});
 function RoomsPanel({ currentRoom }: { currentRoom: string }) {
   const [roomName, setRoomName] = useState(currentRoom);
   const join = (name: string) => {
@@ -337,7 +348,7 @@ function ChatPanel({ name }: { name: string }) {
   return (
     <Panel title="Giao lưu Phật tử" onClose={() => setUI({ panel: null })}>
       <p className="hud-note mb-3">
-        {multiplayer.connected
+        {connected
           ? "Tin nhắn đang được gửi trực tiếp tới những Phật tử cùng online. Nội dung không lưu sau khi rời phiên."
           : "Chưa kết nối máy chủ. Khi kết nối online hoạt động, bạn có thể trò chuyện với mọi người trong chùa."}
       </p>
@@ -351,8 +362,8 @@ function ChatPanel({ name }: { name: string }) {
         <div ref={end} />
       </div>
       <div className="flex gap-2">
-        <input className="hud-input flex-1" value={text} maxLength={300} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Nhập lời chào…" disabled={!multiplayer.connected} />
-        <button className="hud-primary" onClick={send} disabled={!multiplayer.connected || !text.trim()}>Gửi</button>
+        <input className="hud-input flex-1" value={text} maxLength={300} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Nhập lời chào…" disabled={!connected} />
+        <button className="hud-primary" onClick={send} disabled={!connected || !text.trim()}>Gửi</button>
       </div>
     </Panel>
   );
