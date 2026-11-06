@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { Hair, Outfit, Pose } from "./sim";
-import { surfaceHeight } from './collision';
+import { isBlocked, surfaceHeight } from './collision';
 
 // Per-frame mutable state (never put in React state)
 export const player = { x: 0, y: 0, z: 21, rot: Math.PI };
@@ -68,9 +68,29 @@ export function saveAvatar(a: Avatar) {
 }
 
 export function teleport(x: number, z: number, rot: number) {
-  player.x = x;
-  player.y = surfaceHeight(x, z);
-  player.z = z;
+  // Never place a visitor inside a solid collider (for example pond water).
+  // If a future tour waypoint is misplaced, find the nearest walkable point.
+  let targetX = x;
+  let targetZ = z;
+  if (isBlocked(targetX, targetZ)) {
+    let found = false;
+    for (let radius = 0.5; radius <= 10 && !found; radius += 0.5) {
+      for (let i = 0; i < 32; i++) {
+        const angle = (i / 32) * Math.PI * 2;
+        const candidateX = x + Math.cos(angle) * radius;
+        const candidateZ = z + Math.sin(angle) * radius;
+        if (!isBlocked(candidateX, candidateZ)) {
+          targetX = candidateX;
+          targetZ = candidateZ;
+          found = true;
+          break;
+        }
+      }
+    }
+  }
+  player.x = targetX;
+  player.y = surfaceHeight(targetX, targetZ);
+  player.z = targetZ;
   player.rot = rot;
   cam.yaw = rot + Math.PI;
 }
