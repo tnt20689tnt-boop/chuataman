@@ -136,7 +136,8 @@ function DonationBox() {
       <div onClick={(e) => e.stopPropagation()} style={{ width: amount === null ? 224 : 252, boxSizing: "border-box", padding: 11, borderRadius: 10, background: "rgba(250,244,226,.98)", color: "#493024", border: "1px solid #a98750", boxShadow: "0 5px 18px #0006, inset 0 0 0 2px rgba(185,149,85,.16)", fontFamily: "Georgia,serif", textAlign: "center" }}>
         <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: .4, color: "#743b27" }}>CÔNG ĐỨC</div>
         <div style={{ width: 42, height: 1, background: "#b89555", margin: "6px auto 8px" }} />
-        <div style={{ fontSize: 10, margin: "0 0 9px", color: "#76624d" }}>Chùa Tâm An · Tùy tâm hoan hỷ</div>
+        <div style={{ fontSize: 10, margin: "0 0 7px", color: "#76624d" }}>Chùa Tâm An · Tùy tâm hoan hỷ</div>
+        <div style={{ fontSize: 10, lineHeight: 1.45, margin: "0 3px 9px", color: "#8a613d", fontStyle: "italic" }}>Nguyện cầu quý Phật tử cùng gia đình luôn thân tâm an lạc, bình an và vạn sự cát tường.</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
           {amounts.map(value => <button key={value} onClick={() => setAmount(value)} style={{ border: amount === value ? "1.5px solid #8d4a2e" : "1px solid #c9b58e", borderRadius: 6, padding: "7px 3px", background: amount === value ? "#ead5ad" : "#fffdf7", color: "#563524", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>{money(value)}</button>)}
         </div>
