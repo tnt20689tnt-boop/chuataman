@@ -197,6 +197,8 @@ function Controller() {
       };
       Object.assign(window, { __game: debug });
     }
+    const requestBedToggle = () => { restKeyPressed.current = true; };
+    window.addEventListener("guest-bed-toggle", requestBedToggle);
     const down = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.closest("input,textarea")) return;
       if (e.code === "KeyE") restKeyPressed.current = true;
@@ -228,6 +230,7 @@ function Controller() {
     el.addEventListener("pointercancel", pu);
     el.addEventListener("wheel", wheel, { passive: true });
     return () => {
+      window.removeEventListener("guest-bed-toggle", requestBedToggle);
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
       el.removeEventListener("pointerdown", pd);
