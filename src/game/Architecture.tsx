@@ -148,6 +148,22 @@ export function MainHall() {
           <meshStandardMaterial color={RED} />
         </mesh>
         <Buddha position={[0, 1.6, -6.5]} scale={1.6} />
+
+        {/* Two smaller attendant Bodhisattva statues, symmetrically flanking the main Buddha. */}
+        {[-1, 1].map((side) => (
+          <group key={side} position={[side * 7.2, 0, -6.1]}>
+            <mesh position={[0, 1.05, 0]} castShadow receiveShadow>
+              <boxGeometry args={[4.2, 1.05, 3.2]} />
+              <meshStandardMaterial color="#6f352c" roughness={0.72} />
+            </mesh>
+            <mesh position={[0, 1.62, 0]} castShadow>
+              <boxGeometry args={[4.35, 0.12, 3.35]} />
+              <meshStandardMaterial color="#c49a52" metalness={0.42} roughness={0.48} />
+            </mesh>
+            <Buddha position={[0, 1.7, 0]} scale={0.62} />
+            <pointLight position={[0, 4.1, 1.2]} intensity={5} distance={8} color="#ffd99b" />
+          </group>
+        ))}
         {/* incense bowl + smoke */}
         <mesh position={[0, 2.0, -2.4]}>
           <cylinderGeometry args={[0.6, 0.45, 0.6, 16]} />
