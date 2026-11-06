@@ -777,7 +777,7 @@ export function SkyLanterns() {
     });
   });
   return <group ref={group} name="Đèn hoa đăng bay trên bầu trời">
-    {Array.from({ length: 34 }, (_, i) => {
+    {Array.from({ length: 200 }, (_, i) => {
       const x = ((i * 37) % 146) - 73;
       const z = ((i * 53) % 186) - 93;
       const scale = 0.72 + (i % 4) * 0.12;
@@ -800,7 +800,7 @@ export function SkyLanterns() {
           <sphereGeometry args={[0.12, 10, 8]} />
           <meshBasicMaterial color="#fff0b0" />
         </mesh>
-        {i % 5 === 0 && <pointLight position={[0, 0.35, 0]} intensity={2.8} distance={10} color="#ffb45e" />}
+        {i % 10 === 0 && <pointLight position={[0, 0.35, 0]} intensity={2.2} distance={9} color="#ffb45e" />}
       </group>;
     })}
   </group>;
