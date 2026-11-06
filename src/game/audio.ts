@@ -126,8 +126,10 @@ export function setAudioZone(zoneId: string) {
   if (!zoneId || zoneId === activeZone) return;
   activeZone = zoneId;
   stopChant();
+  stopZoneRitualSounds();
   syncLoops();
   if (settings.enabled && activeZone === "dien") startChant();
+  if (settings.enabled) startZoneRitualSounds();
 }
 export async function enableAudio() {
   settings.enabled = true;
