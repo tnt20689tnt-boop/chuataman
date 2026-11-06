@@ -89,6 +89,7 @@ function IncenseSmoke() {
 function DonationBox() {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState<number | null>(null);
+  const [dharmaName, setDharmaName] = useState("");
   const amounts = [5000, 10000, 20000, 50000, 100000, 200000];
   const money = (n: number) => n.toLocaleString("vi-VN") + "đ";
   return <group>
@@ -138,18 +139,25 @@ function DonationBox() {
         <div style={{ width: 42, height: 1, background: "#b89555", margin: "6px auto 8px" }} />
         <div style={{ fontSize: 10, margin: "0 0 7px", color: "#76624d" }}>Chùa Tâm An · Tùy tâm hoan hỷ</div>
         <div style={{ fontSize: 10, lineHeight: 1.45, margin: "0 3px 9px", color: "#8a613d", fontStyle: "italic" }}>Nguyện cầu quý Phật tử cùng gia đình luôn thân tâm an lạc, bình an và vạn sự cát tường.</div>
+        <input
+          value={dharmaName}
+          onChange={(e) => setDharmaName(e.target.value.slice(0, 30))}
+          placeholder="Nhập pháp danh (không bắt buộc)"
+          aria-label="Pháp danh người công đức"
+          style={{ width: "100%", boxSizing: "border-box", marginBottom: 8, padding: "8px 9px", border: "1px solid #c9b58e", borderRadius: 6, background: "#fffdf7", color: "#563524", fontSize: 12, textAlign: "center", outlineColor: "#a98750" }}
+        />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
           {amounts.map(value => <button key={value} onClick={() => setAmount(value)} style={{ border: amount === value ? "1.5px solid #8d4a2e" : "1px solid #c9b58e", borderRadius: 6, padding: "7px 3px", background: amount === value ? "#ead5ad" : "#fffdf7", color: "#563524", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>{money(value)}</button>)}
         </div>
         {amount !== null && <div style={{ margin: "8px auto 3px", padding: 8, border: "1px solid #d8c49d", borderRadius: 8, background: "#fffdf8" }}>
           <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 5, color: "#63351f" }}>MÃ QR CÔNG ĐỨC</div>
           <img
-            src={`https://img.vietqr.io/image/VCB-9988514001-compact2.png?amount=${amount}&addInfo=${encodeURIComponent("Cong duc Chua Tam An")}&accountName=${encodeURIComponent("TRAN NGOC TOAN")}`}
+            src={`https://img.vietqr.io/image/VCB-9988514001-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(dharmaName.trim() ? "Cong duc " + dharmaName.trim() : "Cong duc Chua Tam An")}&accountName=${encodeURIComponent("TRAN NGOC TOAN")}`}
             alt="Mã QR Vietcombank công đức Chùa Tâm An"
             style={{ display: "block", width: 168, height: "auto", maxWidth: "100%", margin: "0 auto" }}
           />
           <div style={{ fontSize: 10, lineHeight: 1.5, marginTop: 5, color: "#594331" }}>
-            Vietcombank · STK <b>9988514001</b><br/>Chủ TK: <b>TRAN NGOC TOAN</b><br/>Số tiền: <b>{money(amount)}</b><br/>Nội dung: Cong duc Chua Tam An
+            Vietcombank · STK <b>9988514001</b><br/>Chủ TK: <b>TRAN NGOC TOAN</b><br/>Số tiền: <b>{money(amount)}</b><br/>Nội dung: {dharmaName.trim() ? "Cong duc " + dharmaName.trim() : "Cong duc Chua Tam An"}
           </div>
           <div style={{ fontSize: 9, color: "#806b54", marginTop: 5 }}>Kiểm tra thông tin người nhận trước khi xác nhận chuyển khoản.</div>
         </div>}
