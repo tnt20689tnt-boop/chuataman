@@ -126,71 +126,52 @@ export function MainHall() {
 }
 
 export function Buddha(props: { position: [number, number, number]; scale?: number }) {
-  const gold = <meshStandardMaterial color={GOLD} metalness={0.85} roughness={0.28} emissive="#5a3a00" emissiveIntensity={0.25} />;
+  const gold = <meshStandardMaterial color="#b58d49" metalness={0.72} roughness={0.34} />;
+  const darkGold = <meshStandardMaterial color="#51402b" metalness={0.42} roughness={0.62} />;
+  const curls = useMemo(() => Array.from({ length: 48 }, (_, i) => {
+    const y = 5.35 + (i / 48) * 0.82;
+    const ring = Math.acos(THREE.MathUtils.clamp((y - 5.76) / 0.82, -0.95, 0.95));
+    const a = i * 2.399963;
+    return [Math.sin(ring) * Math.cos(a) * 0.67, y, Math.sin(ring) * Math.sin(a) * 0.58] as [number, number, number];
+  }), []);
   return (
     <group position={props.position} scale={props.scale ?? 1}>
-      {/* lotus pedestal */}
-      {Array.from({ length: 16 }).map((_, i) => {
-        const a = (i / 16) * Math.PI * 2;
-        return (
-          <mesh key={i} position={[Math.cos(a) * 2.1, 0.6, Math.sin(a) * 2.1]} rotation={[0, -a, 0.5]}>
-            <sphereGeometry args={[0.7, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
-            {gold}
-          </mesh>
-        );
+      {/* Layered lotus pedestal, with individually formed petals. */}
+      <mesh position={[0, 0.42, 0]}><cylinderGeometry args={[2.25, 2.0, 0.84, 48]} />{gold}</mesh>
+      {Array.from({ length: 20 }).map((_, i) => {
+        const a = (i / 20) * Math.PI * 2;
+        return <mesh key={i} position={[Math.cos(a) * 2.05, 0.82, Math.sin(a) * 2.05]} rotation={[0.25, -a, 0.35]} scale={[0.72, 0.34, 0.42]}>
+          <sphereGeometry args={[1, 18, 12]} />{gold}
+        </mesh>;
       })}
-      <mesh position={[0, 0.5, 0]}>
-        <cylinderGeometry args={[2.3, 2.0, 1.2, 24]} />
-        {gold}
+      <mesh position={[0, 1.12, 0]}><cylinderGeometry args={[1.85, 2.05, 0.34, 48]} />{gold}</mesh>
+      {/* Balanced seated posture and softly modelled robe silhouette. */}
+      <mesh position={[0, 1.62, 0.24]} scale={[2.0, 0.64, 1.28]}><sphereGeometry args={[1, 40, 28]} />{gold}</mesh>
+      <mesh position={[0, 2.9, -0.02]} scale={[1.02, 1.55, 0.78]}><sphereGeometry args={[1, 40, 32]} />{gold}</mesh>
+      <mesh position={[0, 3.18, 0.02]} rotation-x={0.12} scale={[1.08, 1.24, 0.82]}>
+        <sphereGeometry args={[1, 36, 28]} />{gold}
       </mesh>
-      {/* crossed legs */}
-      <mesh position={[0, 1.55, 0.3]} scale={[2.2, 0.7, 1.4]}>
-        <sphereGeometry args={[1, 24, 16]} />
-        {gold}
-      </mesh>
-      {/* torso */}
-      <mesh position={[0, 3.0, 0]} scale={[1.15, 1.6, 0.85]}>
-        <sphereGeometry args={[1, 24, 16]} />
-        {gold}
-      </mesh>
-      {/* arms */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 1.05, 2.6, 0.35]} rotation={[0.4, 0, s * 0.25]} scale={[0.38, 1.1, 0.38]}>
-          <sphereGeometry args={[1, 12, 10]} />
-          {gold}
-        </mesh>
-      ))}
-      {/* hands */}
-      <mesh position={[0, 2.1, 0.9]} scale={[0.6, 0.25, 0.4]}>
-        <sphereGeometry args={[1, 12, 10]} />
-        {gold}
-      </mesh>
-      {/* head */}
-      <mesh position={[0, 5.0, 0]}>
-        <sphereGeometry args={[0.72, 24, 18]} />
-        {gold}
-      </mesh>
-      {/* ears */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 0.72, 4.9, 0]} scale={[0.12, 0.45, 0.2]}>
-          <sphereGeometry args={[1, 8, 8]} />
-          {gold}
-        </mesh>
-      ))}
-      {/* ushnisha */}
-      <mesh position={[0, 5.75, 0]}>
-        <sphereGeometry args={[0.4, 16, 12]} />
-        {gold}
-      </mesh>
-      <mesh position={[0, 6.3, 0]}>
-        <coneGeometry args={[0.15, 0.6, 10]} />
-        {gold}
-      </mesh>
-      {/* halo */}
-      <mesh position={[0, 5.0, -0.9]}>
-        <torusGeometry args={[1.4, 0.08, 8, 48]} />
-        <meshStandardMaterial color="#ffd77a" emissive="#ffb53a" emissiveIntensity={1.2} />
-      </mesh>
+      {[-1, 1].map((s) => <group key={s}>
+        <mesh position={[s * 0.88, 2.7, 0.38]} rotation={[0.22, 0, s * 0.32]} scale={[0.31, 0.95, 0.34]}><capsuleGeometry args={[0.5, 1, 8, 16]} />{gold}</mesh>
+        <mesh position={[s * 0.46, 2.14, 0.83]} rotation-z={s * -0.08} scale={[0.26, 0.48, 0.22]}><sphereGeometry args={[1, 24, 18]} />{gold}</mesh>
+      </group>)}
+      {/* Calm face: cheek volume, closed eyelids, nose bridge and a subtle smile. */}
+      <mesh position={[0, 5.0, 0.04]} scale={[0.62, 0.78, 0.58]}><sphereGeometry args={[1, 48, 36]} />{gold}</mesh>
+      {[-1, 1].map((s) => <group key={s}>
+        <mesh position={[s * 0.61, 4.98, 0.02]} scale={[0.15, 0.37, 0.18]}><sphereGeometry args={[1, 24, 18]} />{gold}</mesh>
+        <mesh position={[s * 0.22, 5.05, 0.555]} rotation-z={s * -0.04} scale={[0.15, 0.035, 0.035]}><sphereGeometry args={[1, 24, 12]} />{darkGold}</mesh>
+        <mesh position={[s * 0.22, 5.16, 0.55]} rotation-z={s * -0.12} scale={[0.16, 0.035, 0.035]}><sphereGeometry args={[1, 20, 12]} />{gold}</mesh>
+      </group>)}
+      <mesh position={[0, 4.91, 0.59]} rotation-x={-0.12} scale={[0.105, 0.27, 0.12]}><capsuleGeometry args={[0.5, 1, 8, 12]} />{gold}</mesh>
+      <mesh position={[0, 4.67, 0.58]} scale={[0.18, 0.045, 0.035]}><sphereGeometry args={[1, 24, 12]} />{darkGold}</mesh>
+      <mesh position={[0, 4.64, 0.585]} scale={[0.12, 0.025, 0.025]}><sphereGeometry args={[1, 20, 12]} />{gold}</mesh>
+      {/* Long earlobes and traditional curled ushnisha. */}
+      {[-1, 1].map((s) => <mesh key={s} position={[s * 0.68, 4.88, 0]} scale={[0.13, 0.42, 0.19]}><capsuleGeometry args={[0.5, 1, 8, 12]} />{gold}</mesh>)}
+      {curls.map(([x, y, z], i) => <mesh key={i} position={[x, y, z]} scale={0.075}><sphereGeometry args={[1, 10, 8]} />{darkGold}</mesh>)}
+      <mesh position={[0, 5.96, -0.02]}><sphereGeometry args={[0.29, 28, 20]} />{gold}</mesh>
+      <mesh position={[0, 5.18, 0.62]}><sphereGeometry args={[0.045, 16, 12]} /><meshStandardMaterial color="#e6c37b" metalness={0.65} roughness={0.28} /></mesh>
+      {/* Halo remains behind the head, never in front of the face. */}
+      <mesh position={[0, 5.0, -0.78]}><torusGeometry args={[1.18, 0.065, 12, 64]} /><meshStandardMaterial color="#d9b66f" metalness={0.72} roughness={0.3} emissive="#6f4a16" emissiveIntensity={0.16} /></mesh>
     </group>
   );
 }
