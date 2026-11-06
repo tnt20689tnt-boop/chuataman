@@ -23,5 +23,5 @@ export function Surface({ kind, repeat = 1, color }: { kind: 'wood' | 'stone'; r
     texture.needsUpdate = true;
     return texture;
   }), [loaded, repeat]);
-  return <meshStandardMaterial map={maps[0]} normalMap={maps[1]} roughnessMap={maps[2]} aoMap={maps[3]} aoMapIntensity={0.6} color={color ?? (kind === 'wood' ? C.wood : C.stone)} roughness={0.9} />;
+  return <meshStandardMaterial map={maps[0] ?? null} normalMap={maps[1] ?? null} roughnessMap={maps[2] ?? null} aoMap={maps[3] ?? null} aoMapIntensity={0.6} color={color ?? (kind === 'wood' ? C.wood : C.stone)} roughness={0.9} />;
 }
