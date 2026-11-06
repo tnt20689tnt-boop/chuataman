@@ -93,11 +93,13 @@ function DonationBox() {
   const money = (n: number) => n.toLocaleString("vi-VN") + "đ";
   return <group>
     {/* Traditional lacquered wooden merit box with brass fittings and a visible offering slot. */}
-    <mesh position={[0, 0.72, 0]} castShadow receiveShadow>
+    <mesh position={[0, 0.72, 0]} castShadow receiveShadow
+      onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }}>
       <boxGeometry args={[1.45, 1.35, 1.05]} />
       <meshStandardMaterial color="#641f1b" roughness={0.48} metalness={0.12} />
     </mesh>
-    <mesh position={[0, 1.42, 0]} castShadow>
+    <mesh position={[0, 1.42, 0]} castShadow
+      onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }}>
       <boxGeometry args={[1.58, 0.16, 1.16]} />
       <meshStandardMaterial color="#c49a52" metalness={0.78} roughness={0.28} />
     </mesh>
@@ -109,7 +111,8 @@ function DonationBox() {
       <boxGeometry args={[0.07, 1.08, 0.035]} />
       <meshStandardMaterial color="#d5ad62" metalness={0.72} roughness={0.3} />
     </mesh>)}
-    <mesh position={[0, 0.76, 0.545]}>
+    <mesh position={[0, 0.76, 0.545]}
+      onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }}>
       <boxGeometry args={[0.92, 0.43, 0.045]} />
       <meshStandardMaterial color="#8b3023" metalness={0.18} roughness={0.42} />
     </mesh>
