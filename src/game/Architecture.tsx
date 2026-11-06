@@ -7,9 +7,7 @@ import { Surface } from "./Materials";
 import { CarvedPanel, Inscription } from "./TempleDetails";
 import { SCENE_COLORS as C } from "./templeData";
 
-const WOOD = C.wood;
 const RED = C.lacquer;
-const GOLD = C.gold;
 
 let _tile: THREE.Texture | null = null;
 const tile = () => (_tile ??= tileTexture());
