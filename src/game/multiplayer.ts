@@ -32,7 +32,7 @@ interface MultiplayerSnapshot {
 const DEFAULT_ROOM = "chung";
 let currentRoomId = DEFAULT_ROOM;
 if (typeof window !== "undefined") {
-  try { currentRoomId = localStorage.getItem("tam-an-room") || DEFAULT_ROOM; } catch { /* storage may be unavailable */ }
+  try { currentRoomId = DEFAULT_ROOM; localStorage.setItem("tam-an-room", DEFAULT_ROOM); } catch { currentRoomId = DEFAULT_ROOM; }
 }
 const empty: MultiplayerSnapshot = { connected: false, players: [], roomId: DEFAULT_ROOM };
 let snapshot = empty;
@@ -206,7 +206,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
 
   client = authenticatedClient;
 
-  channel = client.channel(`tam-an-world:${currentRoomId}`, {
+  // This is one shared temple world: visitors must see one another across every zone.\n  channel = client.channel("tam-an-world:chung", {
     config: {
       presence: { key: clientId },
       broadcast: { self: false },
