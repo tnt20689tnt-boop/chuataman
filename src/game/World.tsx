@@ -170,7 +170,9 @@ function treePoints(): [number, number, number][] {
     const nearZone = ZONES.some((zn) => (zn.x - x) ** 2 + (zn.z - z) ** 2 < 220);
     const sidePath = Math.abs(z - 30) < 5;
     const pond = x > 50 && x < 102 && z > -36 && z < 8;
-    if (inCourt || onPath || nearZone || sidePath || pond) continue;
+    // Keep generated forest trees completely outside the ancestral hall footprint.
+    const insideAncestralHall = Math.abs(x) < 17 && z > -113 && z < -89;
+    if (inCourt || onPath || nearZone || sidePath || pond || insideAncestralHall) continue;
     pts.push([x, z, 0.8 + r() * 0.8]);
   }
   return pts;
