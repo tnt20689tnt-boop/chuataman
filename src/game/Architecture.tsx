@@ -1,7 +1,7 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { Sparkles } from "@react-three/drei";
+import { Html, Sparkles } from "@react-three/drei";
 import { tileTexture, fallTexture, waterTexture } from "./textures";
 import { Surface } from "./Materials";
 import { CarvedPanel, Inscription } from "./TempleDetails";
@@ -63,6 +63,52 @@ function Columns({ w, d, h, n = 6 }: { w: number; d: number; h: number; n?: numb
   );
 }
 
+function IncenseSmoke() {
+  const wisps = useRef<THREE.Mesh[]>([]);
+  useFrame((state) => {
+    const time = state.clock.elapsedTime;
+    wisps.current.forEach((mesh, i) => {
+      if (!mesh) return;
+      const phase = (time * 0.22 + i / 6) % 1;
+      mesh.position.set(Math.sin(time * 0.55 + i) * (0.12 + phase * 0.45), 2.25 + phase * 3.2, -2.4 + Math.cos(time * 0.4 + i) * 0.12);
+      const s = 0.12 + phase * 0.42;
+      mesh.scale.set(s * (1 + Math.sin(time + i) * 0.12), s * 1.35, s);
+      const material = mesh.material as THREE.MeshStandardMaterial;
+      material.opacity = (1 - phase) * 0.2;
+    });
+  });
+  return <group>
+    {Array.from({ length: 6 }, (_, i) => <mesh key={i} ref={el => { if (el) wisps.current[i] = el; }}>
+      <sphereGeometry args={[1, 12, 10]} />
+      <meshStandardMaterial color="#e8e5dc" transparent opacity={0.16} depthWrite={false} roughness={1} />
+    </mesh>)}
+  </group>;
+}
+
+function PrayerAudio() {
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    if (!playing) return;
+    if (!("speechSynthesis" in window)) { setPlaying(false); return; }
+    const speak = () => {
+      window.speechSynthesis.cancel();
+      const line = new SpeechSynthesisUtterance("Nam mô A Di Đà Phật");
+      line.lang = "vi-VN"; line.rate = 0.72; line.pitch = 0.86; line.volume = 0.28;
+      const voice = window.speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith("vi"));
+      if (voice) line.voice = voice;
+      window.speechSynthesis.speak(line);
+    };
+    speak();
+    const timer = window.setInterval(speak, 12000);
+    return () => { window.clearInterval(timer); window.speechSynthesis.cancel(); };
+  }, [playing]);
+  return <Html position={[0, 2.1, 10.5]} center transform={false} distanceFactor={10}>
+    <button onClick={() => setPlaying(v => !v)} style={{ border: "1px solid #c7b98f", borderRadius: 24, padding: "9px 14px", background: "rgba(250,245,225,.94)", color: "#294332", fontWeight: 600, whiteSpace: "nowrap", boxShadow: "0 3px 12px #0003" }}>
+      {playing ? "🔇 Tắt niệm Phật" : "🔊 Nghe A Di Đà Phật"}
+    </button>
+  </Html>;
+}
+
 export function MainHall() {
   return (
     <group position={[0, 0, -62]}>
@@ -107,7 +153,26 @@ export function MainHall() {
           <cylinderGeometry args={[0.6, 0.45, 0.6, 16]} />
           <meshStandardMaterial color="#8a6a2a" metalness={0.8} roughness={0.3} />
         </mesh>
-        <Sparkles position={[0, 4, -2.4]} count={40} scale={[1.2, 4, 1.2]} size={6} speed={0.25} color="#efe7da" opacity={0.6} />
+        <IncenseSmoke />
+        <Sparkles position={[0, 2.7, -2.4]} count={12} scale={[0.5, 0.7, 0.5]} size={2} speed={0.15} color="#f5dfaa" opacity={0.35} />
+        {/* Cushioned meditation mats facing the Buddha, arranged in calm rows. */}
+        {[-12, -6, 0, 6, 12].flatMap((x) => [2.5, 7].map((z, row) => (
+          <group key={`mat-${x}-${row}`} position={[x, 0.18, z]}>
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[2.35, 0.22, 1.75]} />
+              <meshStandardMaterial color={row === 0 ? "#8d4939" : "#a65e48"} roughness={0.96} />
+            </mesh>
+            <mesh position={[0, 0.13, 0]}>
+              <boxGeometry args={[2.12, 0.08, 1.52]} />
+              <meshStandardMaterial color="#c18a62" roughness={1} />
+            </mesh>
+            <mesh position={[0, 0.2, -0.48]} scale={[0.48, 0.12, 0.28]}>
+              <sphereGeometry args={[1, 16, 10]} />
+              <meshStandardMaterial color="#6f392f" roughness={1} />
+            </mesh>
+          </group>
+        )))}
+        <PrayerAudio />
         {/* lanterns */}
         {[-8, -3, 3, 8].map((x) => (
           <group key={x} position={[x, 8, 11]}>
