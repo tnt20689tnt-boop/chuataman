@@ -127,15 +127,19 @@ function DonationBox() {
       <meshBasicMaterial transparent opacity={0} depthWrite={false} />
     </mesh>
     </group>
-    {/* Separate large sign board suspended above the enlarged donation box. */}
-    <Html position={[0, 3.45, 0.72]} center distanceFactor={7} transform={false} style={{ pointerEvents: "auto" }}>
-      <button onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
-        style={{ width: 330, minHeight: 104, boxSizing: "border-box", border: "4px solid #d9b96f", borderRadius: 14, padding: "13px 16px", background: "linear-gradient(145deg,#7c241d,#3e1714)", color: "#fff2ce", fontWeight: 800, whiteSpace: "normal", cursor: "pointer", boxShadow: "0 5px 22px #0009, inset 0 0 0 2px #f0d99b", textAlign: "center" }}>
-        <div style={{ fontSize: 25, letterSpacing: 1.5, lineHeight: 1.2 }}>HÒM CÔNG ĐỨC</div>
-        <div style={{ fontSize: 15, marginTop: 8, color: "#ffe3a1" }}>{open ? "CHẠM ĐỂ ĐÓNG BẢNG" : "🙏 CHẠM VÀO ĐÂY ĐỂ PHÁT TÂM"}</div>
-      </button>
+    {/* Separate hanging sign: visual only, never blocks clicks on the donation box. */}
+    <Html position={[0, 4.15, 0.72]} center distanceFactor={7} transform={false} style={{ pointerEvents: "none" }}>
+      <div style={{ width: 250, minHeight: 66, boxSizing: "border-box", border: "3px solid #d9b96f", borderRadius: 10, padding: "10px 12px", background: "linear-gradient(145deg,#7c241d,#3e1714)", color: "#fff2ce", fontWeight: 800, boxShadow: "0 4px 16px #0008, inset 0 0 0 2px #f0d99b", textAlign: "center" }}>
+        <div style={{ fontSize: 21, letterSpacing: 1.2, lineHeight: 1.2 }}>HÒM CÔNG ĐỨC</div>
+        <div style={{ fontSize: 12, marginTop: 5, color: "#ffe3a1" }}>CHẠM VÀO HÒM ĐỂ MỞ</div>
+      </div>
     </Html>
-    {open && <Html position={[0, 4.15, 0.78]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
+    {/* Large transparent hit area on the front face; the sign above cannot intercept it. */}
+    <mesh position={[0, 0.82, 0.79]} onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }}>
+      <boxGeometry args={[1.35, 1.25, 0.035]} />
+      <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+    </mesh>
+    {open && <Html position={[0, 5.0, 0.82]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: 290, boxSizing: "border-box", padding: 16, borderRadius: 16, background: "rgba(255,249,232,.98)", color: "#493024", border: "2px solid #b89555", boxShadow: "0 8px 28px #0007", fontFamily: "Arial,sans-serif", textAlign: "center" }}>
         <div style={{ fontSize: 19, fontWeight: 800, color: "#743b27" }}>CÔNG ĐỨC CHÙA TÂM AN</div>
         <div style={{ fontSize: 12, margin: "6px 0 12px", color: "#76624d" }}>Tùy tâm gieo duyên lành – xin tùy hỷ công đức</div>
