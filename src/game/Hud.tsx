@@ -409,7 +409,7 @@ function AudioPanel() {
         <button className="hud-primary" onClick={() => void toggle()}>{settings.enabled ? "🔊 Đang bật" : "🔇 Đang tắt"}</button>
       </div>
       <div className="space-y-4">
-        {volume("Nhạc thiền nền", settings.music, (music) => updateAudioSettings({ music }))}
+        {volume("Nhạc thiền (chỉ phát tại khu thiền)", settings.music, (music) => updateAudioSettings({ music }))}
         {volume("Thiên nhiên: chim, gió, nước", settings.nature, (nature) => updateAudioSettings({ nature }))}
         {volume("Chuông, mõ, bước chân", settings.effects, (effects) => updateAudioSettings({ effects }))}
       </div>
@@ -431,7 +431,7 @@ function AudioPanel() {
         </div>
         {checks ? <div className="space-y-1 text-xs">{Object.entries(checks).map(([name, status]) => <div key={name} className="flex justify-between gap-2"><span>{labels[name] ?? name}</span><b className={status === "Đã tải được" ? "text-green-600" : "text-destructive"}>{status}</b></div>)}</div> : <p className="text-xs text-muted-foreground">Kiểm tra khả năng tải và giải mã từng tệp âm thanh.</p>}
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Âm thanh nền được giữ ở mức nhỏ. Nhạc, thiên nhiên có thể bật/tắt riêng; chuông, mõ và bước chân dùng chung một kênh để tránh chồng tiếng. Nhạc thiền: Jason Shaw (CC BY 3.0); bước chân: Alexander / Orange Free Sounds (CC BY-NC 4.0). Trên điện thoại, cần chạm Bật âm thanh lần đầu.</p>
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Chính điện: chỉ niệm Phật, chuông và mõ; không có nhạc nền. Hồ sen: chỉ tiếng nước và chim; không có nhạc nền. Khu thiền: nhạc thiền không lời cùng chuông và mõ. Trên điện thoại, cần chạm Bật âm thanh lần đầu.</p>
     </Panel>
   );
 }
