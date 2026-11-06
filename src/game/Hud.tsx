@@ -348,14 +348,20 @@ function RoomsPanel({ currentRoom }: { currentRoom: string }) {
 function ChatPanel({ name }: { name: string }) {
   const msgs = useTempleChat();
   const [text, setText] = useState("");
-  const multiplayer = useMultiplayer();
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   const connected = useMultiplayerConnected();
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => end.current?.scrollIntoView(), [msgs]);
-  const send = () => {
+  const send = async () => {
     const t = text.trim();
-    if (!t) return;
-    if (sendTempleChat(name, t)) setText("");
+    if (!t || sending) return;
+    setSending(true);
+    setSendError("");
+    const sent = await sendTempleChat(name, t);
+    setSending(false);
+    if (sent) setText("");
+    else setSendError("Máy chủ chưa nhận được tin nhắn. Hãy kiểm tra kết nối rồi gửi lại.");
   };
   return (
     <Panel title="Giao lưu Phật tử" onClose={() => setUI({ panel: null })}>
@@ -375,8 +381,9 @@ function ChatPanel({ name }: { name: string }) {
       </div>
       <div className="flex gap-2">
         <input className="hud-input flex-1" value={text} maxLength={300} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Nhập lời chào…" disabled={!connected} />
-        <button className="hud-primary" onClick={send} disabled={!connected || !text.trim()}>Gửi</button>
+        <button className="hud-primary" onClick={() => void send()} disabled={!connected || !text.trim() || sending}>{sending ? "Đang gửi…" : "Gửi"}</button>
       </div>
+      {sendError && <p role="alert" className="mt-2 text-xs text-destructive">{sendError}</p>}
     </Panel>
   );
 }
