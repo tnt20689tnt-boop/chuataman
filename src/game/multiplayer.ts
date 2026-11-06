@@ -241,24 +241,6 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
         reconnectTimer = null;
         const avatar = getUI().avatar;
 
-        // New visitors otherwise all start at the exact same world coordinate
-        // (0, 21). Their local and remote meshes overlap perfectly, making it
-        // look as if multiplayer avatars are missing. Give each live page a
-        // stable, small offset around the entrance spawn before publishing.
-        // Do this only for the untouched default spawn; never teleport someone
-        // who has already started exploring or reconnected after moving.
-        if (Math.abs(player.x) < 0.001 && Math.abs(player.z - 21) < 0.001) {
-          let hash = 2166136261;
-          for (let i = 0; i < authenticatedUserId.length; i++) {
-            hash ^= authenticatedUserId.charCodeAt(i);
-            hash = Math.imul(hash, 16777619);
-          }
-          const angle = ((hash >>> 0) / 4294967296) * Math.PI * 2;
-          const radius = 3.2;
-          player.x = Math.cos(angle) * radius;
-          player.z = 21 + Math.sin(angle) * radius;
-        }
-
         const initialPresence: RemotePlayer = {
           id: authenticatedUserId,
           name: avatar?.name || "Phật tử",
