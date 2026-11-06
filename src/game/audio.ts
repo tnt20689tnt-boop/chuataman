@@ -41,10 +41,10 @@ async function play(id: SoundId, restart = false) {
   try { await el.play(); return true; } catch (error) { console.warn("[Chùa Tâm An] Trình duyệt từ chối phát:", id, error); return false; }
 }
 function zoneLoops(zone: string): SoundId[] {
-  if (zone === "dien") return [];
-  if (zone === "ho" || zone === "phongsinh") return ["birds", "water"];
-  if (zone === "san" || zone === "thien") return ["music"];
-  if (zone === "cong" || zone === "giaoluu") return ["birds"];
+  // Keep a soft meditation track audible throughout the temple.
+  // Nature zones layer birds and flowing water over the music.
+  if (zone === "ho" || zone === "phongsinh") return ["music", "birds", "water"];
+  if (zone === "cong" || zone === "san" || zone === "giaoluu") return ["music", "birds"];
   return ["music"];
 }
 function syncLoops() {
