@@ -40,6 +40,7 @@ const listeners = new Set<() => void>();
 let client: SupabaseClient | null = null;
 let channel: RealtimeChannel | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
+let presenceTimer: ReturnType<typeof setInterval> | null = null;
 let clientId = "";
 let connectionAttempt = 0;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -267,11 +268,16 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           hair: avatar?.hair ?? "ngan",
           hairColor: avatar?.hairColor ?? "#1b1410",
         };
-        await channel.track(initialPresence);
+        const { error: trackError } = await channel.track(initialPresence);
+        if (trackError) console.warn("Chùa Tâm An: chưa đăng ký được Presence.", trackError);
         let lastPresenceAt = Date.now();
-        // Read the room immediately after our own presence is registered.
+        // Reconcile periodically in case a presence sync event was missed.
         readPresence(channel);
         publish({ ...snapshot, connected: true, roomId: currentRoomId });
+        if (presenceTimer) clearInterval(presenceTimer);
+        presenceTimer = setInterval(() => {
+          if (channel && attempt === connectionAttempt) readPresence(channel);
+        }, 1500);
         if (timer) clearInterval(timer);
         let lastX = player.x;
         let lastZ = player.z;
@@ -323,6 +329,8 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
         publish({ ...snapshot, connected: false, roomId: currentRoomId });
         if (timer) clearInterval(timer);
         timer = null;
+        if (presenceTimer) clearInterval(presenceTimer);
+        presenceTimer = null;
         if (!reconnectTimer) {
           reconnectTimer = setTimeout(() => {
             reconnectTimer = null;
@@ -344,6 +352,8 @@ export function disconnectMultiplayer() {
   reconnectTimer = null;
   if (timer) clearInterval(timer);
   timer = null;
+  if (presenceTimer) clearInterval(presenceTimer);
+  presenceTimer = null;
   const oldChannel = channel;
   channel = null;
   clientId = "";
