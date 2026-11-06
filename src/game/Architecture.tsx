@@ -92,7 +92,7 @@ function DonationBox() {
   const amounts = [5000, 10000, 20000, 50000, 100000, 200000];
   const money = (n: number) => n.toLocaleString("vi-VN") + "đ";
   return <group>
-    <group scale={2}>
+    <group scale={2.2}>
     {/* Double-size lacquered merit box, mounted close to the left wall. */}
     <mesh position={[0, 0.72, 0]} castShadow receiveShadow
       onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }}>
@@ -127,16 +127,9 @@ function DonationBox() {
       <meshBasicMaterial transparent opacity={0} depthWrite={false} />
     </mesh>
     </group>
-    {/* Separate hanging sign: visual only, never blocks clicks on the donation box. */}
-    <Html position={[0, 4.15, 0.72]} center distanceFactor={7} transform={false} style={{ pointerEvents: "none" }}>
-      <div style={{ width: 250, minHeight: 66, boxSizing: "border-box", border: "3px solid #d9b96f", borderRadius: 10, padding: "10px 12px", background: "linear-gradient(145deg,#7c241d,#3e1714)", color: "#fff2ce", fontWeight: 800, boxShadow: "0 4px 16px #0008, inset 0 0 0 2px #f0d99b", textAlign: "center" }}>
-        <div style={{ fontSize: 21, letterSpacing: 1.2, lineHeight: 1.2 }}>HÒM CÔNG ĐỨC</div>
-        <div style={{ fontSize: 12, marginTop: 5, color: "#ffe3a1" }}>CHẠM VÀO HÒM ĐỂ MỞ</div>
-      </div>
-    </Html>
-    {/* Large transparent hit area on the front face; the sign above cannot intercept it. */}
-    <mesh position={[0, 0.82, 0.79]} onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }}>
-      <boxGeometry args={[1.35, 1.25, 0.035]} />
+    {/* Enlarged invisible hit surface aligned with the front of the wall-mounted box. */}
+    <mesh position={[0, 0.82, 1.30]} onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }}>
+      <boxGeometry args={[1.55, 1.45, 0.035]} />
       <meshBasicMaterial transparent opacity={0} depthWrite={false} />
     </mesh>
     {open && <Html position={[0, 5.0, 0.82]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
@@ -285,7 +278,7 @@ export function MainHall() {
         )))}
         <PrayerAudio />
         {/* Enlarged merit box mounted against the left inner wall; its sign hangs separately above it. */}
-        <group position={[-18.4, 0, 0]} rotation-y={Math.PI / 2}>
+        <group position={[-18.445, 0, 0]} rotation-y={Math.PI / 2}>
           <DonationBox />
         </group>
         {/* lanterns */}
