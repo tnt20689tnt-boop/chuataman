@@ -240,6 +240,43 @@ export function Buddha(props: { position: [number, number, number]; scale?: numb
       <mesh position={[0, 4.62, 0.585]} scale={[0.1, 0.018, 0.02]}>
         <sphereGeometry args={[1, 20, 12]} /><primitive object={skin} attach="material" />
       </mesh>
+      {/* Sculpted facial planes: gentle brows, eyelid curves, nostrils and defined lips */}
+      {[-1, 1].map(s => {
+        const brow = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(s * 0.08, 5.13, 0.535),
+          new THREE.Vector3(s * 0.2, 5.18, 0.54),
+          new THREE.Vector3(s * 0.34, 5.14, 0.51),
+        ]);
+        const lid = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(s * 0.08, 4.91, 0.555),
+          new THREE.Vector3(s * 0.2, 4.88, 0.57),
+          new THREE.Vector3(s * 0.34, 4.91, 0.54),
+        ]);
+        return <group key={s}>
+          <mesh geometry={new THREE.TubeGeometry(brow, 16, 0.026, 8, false)}>
+            <primitive object={skin} attach="material" />
+          </mesh>
+          <mesh geometry={new THREE.TubeGeometry(lid, 16, 0.018, 8, false)}>
+            <primitive object={shadowGold} attach="material" />
+          </mesh>
+        </group>;
+      })}
+      <mesh position={[-0.075, 4.56, 0.585]} rotation-z={-0.08} scale={[0.075, 0.026, 0.025]}>
+        <sphereGeometry args={[1, 20, 12]} /><primitive object={skin} attach="material" />
+      </mesh>
+      <mesh position={[0.075, 4.56, 0.585]} rotation-z={0.08} scale={[0.075, 0.026, 0.025]}>
+        <sphereGeometry args={[1, 20, 12]} /><primitive object={skin} attach="material" />
+      </mesh>
+      <mesh position={[0, 4.43, 0.535]} scale={[0.2, 0.12, 0.075]}>
+        <sphereGeometry args={[1, 28, 18]} /><primitive object={skin} attach="material" />
+      </mesh>
+      {/* Fine robe edging and shoulder drape */}
+      <mesh position={[0.02, 3.88, 0.62]} rotation-z={-0.12} scale={[0.66, 0.035, 0.035]}>
+        <sphereGeometry args={[1, 32, 16]} /><primitive object={gold} attach="material" />
+      </mesh>
+      <mesh position={[-0.68, 3.25, 0.61]} rotation-z={0.34} scale={[0.055, 0.92, 0.045]}>
+        <sphereGeometry args={[1, 24, 16]} /><primitive object={gold} attach="material" />
+      </mesh>
       {curls.map(([x, y, z], i) => <mesh key={i} position={[x, y, z]} scale={0.068}>
         <sphereGeometry args={[1, 12, 10]} /><primitive object={shadowGold} attach="material" />
       </mesh>)}
