@@ -114,7 +114,7 @@ export function Crowd({ count = 1000 }: { count?: number }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [npcs]);
 
-  useFrame(({ clock }, delta) => {
+  useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     for (const n of walkers) {
       const target = walkerPos(n, t);
