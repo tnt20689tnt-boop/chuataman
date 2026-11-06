@@ -268,6 +268,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           hairColor: avatar?.hairColor ?? "#1b1410",
         };
         await channel.track(initialPresence);
+        let lastPresenceAt = Date.now();
         // Read the room immediately after our own presence is registered.
         readPresence(channel);
         publish({ ...snapshot, connected: true, roomId: currentRoomId });
@@ -275,14 +276,31 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
         let lastX = player.x;
         let lastZ = player.z;
         let lastRot = player.rot;
-        let lastHeartbeat = 0;
+        let lastBroadcastAt = 0;
         timer = setInterval(() => {
-          if (!channel) return;
+          if (!channel || attempt !== connectionAttempt) return;
           const now = Date.now();
           const currentAvatar = getUI().avatar;
-          const moved = Math.abs(player.x - lastX) > 0.035 || Math.abs(player.z - lastZ) > 0.035 || Math.abs(player.rot - lastRot) > 0.035;
-          if (!moved && now - lastHeartbeat < 1500) return;
-          lastX = player.x; lastZ = player.z; lastRot = player.rot; lastHeartbeat = now;
+          const moved = Math.abs(player.x - lastX) > 0.06 || Math.abs(player.z - lastZ) > 0.06 || Math.abs(player.rot - lastRot) > 0.06;
+          const heartbeatDue = now - lastBroadcastAt >= 1500;
+          if (!moved && !heartbeatDue) {
+            // Presence is a room roster, not a per-frame movement stream.
+            // Refresh it slowly so Supabase does not flood every client with
+            // presence-sync events while someone walks or runs.
+            if (now - lastPresenceAt >= 3000) {
+              lastPresenceAt = now;
+              void channel.track({
+                id: authenticatedUserId,
+                name: currentAvatar?.name || "Phật tử",
+                x: player.x, z: player.z, rot: player.rot, updatedAt: now,
+                outfit: currentAvatar?.outfit ?? "lam",
+                hair: currentAvatar?.hair ?? "ngan",
+                hairColor: currentAvatar?.hairColor ?? "#1b1410",
+              } satisfies RemotePlayer);
+            }
+            return;
+          }
+          lastX = player.x; lastZ = player.z; lastRot = player.rot; lastBroadcastAt = now;
           const payload: RemotePlayer = {
             id: authenticatedUserId,
             name: currentAvatar?.name || "Phật tử",
@@ -291,11 +309,14 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
             hair: currentAvatar?.hair ?? "ngan",
             hairColor: currentAvatar?.hairColor ?? "#1b1410",
           };
-          // Refresh Presence as well as broadcasting movement. A person who
-          // enters later then receives our latest position and appearance.
-          void channel.track(payload);
+          // Broadcast movement frequently enough for smooth remote motion,
+          // but update Presence only every 3 seconds to avoid sync storms.
           void channel.send({ type: "broadcast", event: "player_move", payload });
-        }, 120);
+          if (now - lastPresenceAt >= 3000) {
+            lastPresenceAt = now;
+            void channel.track(payload);
+          }
+        }, 150);
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
         // Keep the last known remote avatars briefly to avoid visual flicker
         // while Realtime recovers, then rebuild the channel if it did not.
