@@ -218,16 +218,35 @@ export function BellTower({ position }: { position: [number, number, number] }) 
 }
 
 export function Gate({ z }: { z: number }) {
-  return <group position={[0, 0, z]}>
+  return <group position={[0, 0, z]} name="Cổng tam quan Chùa Tâm An">
     {[-8, -3.6, 3.6, 8].map(x => <group key={x} position={[x, 0, 0]}>
-      <mesh position={[0, 4.5, 0]} castShadow><boxGeometry args={[1.1, 9, 1.5]} /><Surface kind="stone" repeat={2} /></mesh>
+      <mesh position={[0, 4.5, 0]} castShadow receiveShadow><boxGeometry args={[1.1, 9, 1.5]} /><Surface kind="stone" repeat={2} /></mesh>
       <mesh position={[0, 0.4, 0]} castShadow><boxGeometry args={[1.5, 0.8, 1.9]} /><Surface kind="stone" /></mesh>
       <Inscription text="TỪ BI" width={0.65} height={3} position={[0, 4, 0.78]} small />
+      {Math.abs(x) === 8 && <>
+        <Inscription text="TÂM AN" width={2.15} height={0.78} position={[0, 6.65, 0.86]} small />
+        <mesh position={[0, 7.12, 0.82]} castShadow><boxGeometry args={[2.35, 0.09, 0.34]} /><meshStandardMaterial color={C.gold} metalness={0.55} roughness={0.42} /></mesh>
+      </>}
     </group>)}
+    {/* Main timber lintel visually supports the temple name plaque. */}
+    <mesh position={[0, 7.65, 0]} castShadow receiveShadow>
+      <boxGeometry args={[8.4, 0.42, 1.9]} />
+      <Surface kind="wood" color={C.woodDark} />
+    </mesh>
+    <mesh position={[0, 7.9, 0]} castShadow>
+      <boxGeometry args={[8.05, 0.12, 1.72]} />
+      <meshStandardMaterial color={C.gold} metalness={0.58} roughness={0.38} />
+    </mesh>
     <Roof w={9} d={4.5} h={2.5} y={9} />
     {[-5.8, 5.8].map(x => <group key={x} position={[x, 0, 0]}><Roof w={4.5} d={3.5} h={1.8} y={7} /></group>)}
-    <Inscription text="CHÙA TÂM AN" width={7.3} height={1.6} position={[0, 8.4, 1.2]} />
-    <group rotation-y={Math.PI}><Inscription text="CHÙA TÂM AN" width={7.3} height={1.6} position={[0, 8.4, 1.2]} /></group>
+    {/* Large, readable name board on both approaches to the gate. */}
+    <Inscription text="CHÙA TÂM AN" width={7.55} height={1.55} position={[0, 8.42, 1.22]} />
+    <group rotation-y={Math.PI}><Inscription text="CHÙA TÂM AN" width={7.55} height={1.55} position={[0, 8.42, 1.22]} /></group>
+    {/* Gold lotus-like medallions frame the main sign without obscuring its lettering. */}
+    {[-4.05, 4.05].map(x => <group key={x} position={[x, 8.42, 1.39]}>
+      <mesh rotation-x={Math.PI / 2}><torusGeometry args={[0.22, 0.045, 8, 24]} /><meshStandardMaterial color={C.gold} metalness={0.72} roughness={0.28} /></mesh>
+      <mesh><sphereGeometry args={[0.09, 12, 10]} /><meshStandardMaterial color={C.gold} metalness={0.72} roughness={0.28} /></mesh>
+    </group>)}
   </group>;
 }
 
