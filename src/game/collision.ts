@@ -30,6 +30,18 @@ for (const b of BUILDINGS) {
     { id: b.id + '-front-right', x: b.x + b.w / 3, z: b.z + b.d / 2, w: b.w / 3 + 0.15, d: 0.8 },
   );
   if (b.kind === 'ancestral') solids.push({ id: 'ancestral-altar', x: b.x, z: b.z - 4, w: 10, d: 5 });
+  // Library bookcases are solid furniture, not decorative walk-through meshes.
+  if (b.kind === 'library') {
+    for (const side of [-1, 1]) {
+      solids.push({
+        id: 'library-bookcase-' + side,
+        x: b.x + side * 9,
+        z: b.z - 2,
+        w: 1.9,
+        d: 8.3,
+      });
+    }
+  }
 }
 for (const z of [24, 112]) for (const x of [-8, -3.6, 3.6, 8]) {
   solids.push({ id: 'gate-column', x, z, w: 1.25, d: 1.65 });
