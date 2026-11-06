@@ -243,12 +243,30 @@ export function PlayerAvatar() {
       robeRef.current.scale.y = sy * (1 + breath * 0.006);
     }
     g.current.position.y = player.y + (walking ? Math.abs(Math.sin(t * 8.5)) * 0.025 : Math.sin(t * 1.8) * 0.008);
-    if (leftArmRef.current) leftArmRef.current.rotation.x += (gait - leftArmRef.current.rotation.x) * smooth;
-    if (rightArmRef.current) rightArmRef.current.rotation.x += (-gait - rightArmRef.current.rotation.x) * smooth;
-    if (leftArmRef.current) leftArmRef.current.rotation.z += ((walking ? -0.10 : Math.sin(t * 1.1) * 0.025) - leftArmRef.current.rotation.z) * smooth;
-    if (rightArmRef.current) rightArmRef.current.rotation.z += ((walking ? 0.10 : -Math.sin(t * 1.1) * 0.025) - rightArmRef.current.rotation.z) * smooth;
-    if (leftLegRef.current) leftLegRef.current.rotation.x += (-gait * 0.8 - leftLegRef.current.rotation.x) * smooth;
-    if (rightLegRef.current) rightLegRef.current.rotation.x += (gait * 0.8 - rightLegRef.current.rotation.x) * smooth;
+    const prayerPose = action === "chap" || action === "le" || action === "thien";
+    // Arms move from the shoulders toward the sternum, rather than leaving
+    // two detached hands floating in front of the robe.
+    const inward = prayerPose ? 0.68 : 0;
+    if (leftArmRef.current) {
+      leftArmRef.current.rotation.x += ((walking ? gait : 0) - leftArmRef.current.rotation.x) * smooth;
+      leftArmRef.current.rotation.z += ((walking ? -0.10 : inward + Math.sin(t * 1.1) * 0.012) - leftArmRef.current.rotation.z) * smooth;
+    }
+    if (rightArmRef.current) {
+      rightArmRef.current.rotation.x += ((walking ? -gait : 0) - rightArmRef.current.rotation.x) * smooth;
+      rightArmRef.current.rotation.z += ((walking ? 0.10 : -inward - Math.sin(t * 1.1) * 0.012) - rightArmRef.current.rotation.z) * smooth;
+    }
+    // Meditation: legs fold outward into a stable cross-legged seat.
+    // Kneeling: knees lower and feet tuck beneath the robe.
+    if (leftLegRef.current && rightLegRef.current) {
+      const seated = action === "thien";
+      const kneeling = action === "le";
+      leftLegRef.current.position.set(seated ? -0.25 : -0.14, seated ? 0.31 : kneeling ? 0.30 : 0.43, seated ? 0.13 : 0);
+      rightLegRef.current.position.set(seated ? 0.25 : 0.14, seated ? 0.31 : kneeling ? 0.30 : 0.43, seated ? 0.13 : 0);
+      leftLegRef.current.rotation.z += (((seated ? 0.95 : kneeling ? -0.18 : 0) - leftLegRef.current.rotation.z) * smooth);
+      rightLegRef.current.rotation.z += (((seated ? -0.95 : kneeling ? 0.18 : 0) - rightLegRef.current.rotation.z) * smooth);
+      leftLegRef.current.rotation.x += ((seated ? -0.18 : kneeling ? 0.72 : -gait * 0.8) - leftLegRef.current.rotation.x) * smooth;
+      rightLegRef.current.rotation.x += ((seated ? -0.18 : kneeling ? 0.72 : gait * 0.8) - rightLegRef.current.rotation.x) * smooth;
+    }
     if (headRef.current) {
       const bow = action === "le" ? Math.max(0, Math.sin(t * 1.2)) * 0.4 : 0;
       headRef.current.position.set(0, hy - bow * 0.6 + breath * 0.006, bow);
@@ -451,14 +469,19 @@ export function PlayerAvatar() {
       </group>
       {/* Prayer hands are positioned clearly in front of the chest. */}
       {handsJoined && (
-        <group position={[0, hy - 0.40, 0.30]} rotation-x={-0.18}>
-          <mesh rotation-z={0.04}>
-            <capsuleGeometry args={[0.055, 0.19, 5, 10]} />
-            <meshStandardMaterial color={SKIN} roughness={0.7} />
+        <group position={[0, action === "thien" ? 0.48 : action === "le" ? 0.62 : 0.78, 0.43]} rotation-x={-0.12}>
+          {/* Two palms touch edge-to-edge; slim fingers point upward in anjali mudra. */}
+          <mesh position={[-0.035, 0, 0]} rotation-z={-0.035} scale={[0.72, 1.18, 0.34]}>
+            <capsuleGeometry args={[0.055, 0.16, 6, 12]} />
+            <meshStandardMaterial color={SKIN} roughness={0.68} />
           </mesh>
-          <mesh position={[0.075, -0.015, 0]}>
-            <capsuleGeometry args={[0.045, 0.15, 5, 8]} />
-            <meshStandardMaterial color={SKIN} roughness={0.7} />
+          <mesh position={[0.035, 0, 0]} rotation-z={0.035} scale={[0.72, 1.18, 0.34]}>
+            <capsuleGeometry args={[0.055, 0.16, 6, 12]} />
+            <meshStandardMaterial color={SKIN} roughness={0.68} />
+          </mesh>
+          <mesh position={[0, -0.105, -0.005]} scale={[0.9, 0.55, 0.38]}>
+            <sphereGeometry args={[0.065, 12, 10]} />
+            <meshStandardMaterial color={SKIN} roughness={0.72} />
           </mesh>
         </group>
       )}
