@@ -1,7 +1,7 @@
 import SAT from 'sat';
 import { BUILDINGS, HALL } from './templeData';
 
-export const PLAYER_RADIUS = 0.36;
+export const PLAYER_RADIUS = 0.42; // Slightly wider safety envelope for walls, door frames and pond edges.
 type Solid = { id: string; x: number; z: number; w: number; d: number };
 const solids: Solid[] = [
   { id: 'hall-left', x: -20, z: -62, w: 0.8, d: 24 },
@@ -21,16 +21,22 @@ const solids: Solid[] = [
 ];
 for (const b of BUILDINGS) {
   solids.push(
-    { id: b.id + '-left', x: b.x - b.w / 2, z: b.z, w: 0.5, d: b.d },
-    { id: b.id + '-right', x: b.x + b.w / 2, z: b.z, w: 0.5, d: b.d },
-    { id: b.id + '-back', x: b.x, z: b.z - b.d / 2, w: b.w, d: 0.5 },
-    { id: b.id + '-front-left', x: b.x - b.w / 3, z: b.z + b.d / 2, w: b.w / 3, d: 0.5 },
-    { id: b.id + '-front-right', x: b.x + b.w / 3, z: b.z + b.d / 2, w: b.w / 3, d: 0.5 },
+    // Match the rendered wall panels, with a little extra thickness so a
+    // moving avatar cannot clip through thin walls at high frame rates.
+    { id: b.id + '-left', x: b.x - b.w / 2, z: b.z, w: 0.8, d: b.d + 0.3 },
+    { id: b.id + '-right', x: b.x + b.w / 2, z: b.z, w: 0.8, d: b.d + 0.3 },
+    { id: b.id + '-back', x: b.x, z: b.z - b.d / 2, w: b.w + 0.3, d: 0.8 },
+    { id: b.id + '-front-left', x: b.x - b.w / 3, z: b.z + b.d / 2, w: b.w / 3 + 0.15, d: 0.8 },
+    { id: b.id + '-front-right', x: b.x + b.w / 3, z: b.z + b.d / 2, w: b.w / 3 + 0.15, d: 0.8 },
   );
   if (b.kind === 'ancestral') solids.push({ id: 'ancestral-altar', x: b.x, z: b.z - 4, w: 10, d: 5 });
 }
 for (const z of [24, 112]) for (const x of [-8, -3.6, 3.6, 8]) {
   solids.push({ id: 'gate-column', x, z, w: 1.1, d: 1.5 });
+}
+// Pavilion posts are solid in the rendered scene; prevent walking through them.
+for (const x of [-7, -2.333, 2.333, 7]) for (const z of [47, 57]) {
+  solids.push({ id: 'pavilion-post', x: 70 + x, z, w: 0.9, d: 0.9 });
 }
 for (let i = 0; i < 8; i++) for (const z of [-50, -74]) {
   solids.push({ id: 'hall-column', x: -19 + i * 38 / 7, z, w: 0.8, d: 0.8 });
@@ -64,7 +70,7 @@ export function surfaceHeight(x: number, z: number) {
 export function moveVisitor(p: { x: number; z: number; y: number }, dx: number, dz: number) {
   const startX = p.x, startZ = p.z;
   // Small swept substeps prevent high-speed tunneling even with unusually large caller delta.
-  const steps = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.15));
+  const steps = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.06));
   for (let i = 0; i < steps; i++) {
     if (!isBlocked(p.x + dx / steps, p.z)) p.x += dx / steps;
     if (!isBlocked(p.x, p.z + dz / steps)) p.z += dz / steps;
