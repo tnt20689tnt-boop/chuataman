@@ -133,28 +133,26 @@ function DonationBox() {
       <meshBasicMaterial transparent opacity={0} depthWrite={false} />
     </mesh>
     {open && <Html position={[0, 2.5, 2.8]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 290, boxSizing: "border-box", padding: 16, borderRadius: 16, background: "rgba(255,249,232,.98)", color: "#493024", border: "2px solid #b89555", boxShadow: "0 8px 28px #0007", fontFamily: "Arial,sans-serif", textAlign: "center" }}>
-        <div style={{ fontSize: 19, fontWeight: 800, color: "#743b27" }}>CÔNG ĐỨC CHÙA TÂM AN</div>
-        <div style={{ fontSize: 12, margin: "6px 0 12px", color: "#76624d" }}>Tùy tâm gieo duyên lành – xin tùy hỷ công đức</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {amounts.map(value => <button key={value} onClick={() => setAmount(value)} style={{ border: amount === value ? "2px solid #8d4a2e" : "1px solid #c9b58e", borderRadius: 9, padding: "10px 4px", background: amount === value ? "#ead5ad" : "#fffdf7", color: "#563524", fontWeight: 700, cursor: "pointer" }}>{money(value)}</button>)}
+      <div onClick={(e) => e.stopPropagation()} style={{ width: amount === null ? 224 : 252, boxSizing: "border-box", padding: 11, borderRadius: 10, background: "rgba(250,244,226,.98)", color: "#493024", border: "1px solid #a98750", boxShadow: "0 5px 18px #0006, inset 0 0 0 2px rgba(185,149,85,.16)", fontFamily: "Georgia,serif", textAlign: "center" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: .4, color: "#743b27" }}>CÔNG ĐỨC</div>
+        <div style={{ width: 42, height: 1, background: "#b89555", margin: "6px auto 8px" }} />
+        <div style={{ fontSize: 10, margin: "0 0 9px", color: "#76624d" }}>Chùa Tâm An · Tùy tâm hoan hỷ</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+          {amounts.map(value => <button key={value} onClick={() => setAmount(value)} style={{ border: amount === value ? "1.5px solid #8d4a2e" : "1px solid #c9b58e", borderRadius: 6, padding: "7px 3px", background: amount === value ? "#ead5ad" : "#fffdf7", color: "#563524", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>{money(value)}</button>)}
         </div>
-        <div style={{ minHeight: 35, marginTop: 11, fontSize: 12, lineHeight: 1.45 }}>
-          {amount ? <>Bạn đã chọn mức công đức <b>{money(amount)}</b>.</> : "Vui lòng chọn mức công đức tùy tâm."}
-        </div>
-        {amount !== null && <div style={{ margin: "10px auto 4px", padding: 10, border: "1px solid #d8c49d", borderRadius: 12, background: "#fff" }}>
-          <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 7, color: "#63351f" }}>QUÉT MÃ ĐỂ CÔNG ĐỨC</div>
+        {amount !== null && <div style={{ margin: "8px auto 3px", padding: 8, border: "1px solid #d8c49d", borderRadius: 8, background: "#fffdf8" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 5, color: "#63351f" }}>MÃ QR CÔNG ĐỨC</div>
           <img
             src={`https://img.vietqr.io/image/VCB-9988514001-compact2.png?amount=${amount}&addInfo=${encodeURIComponent("Cong duc Chua Tam An")}&accountName=${encodeURIComponent("TRAN NGOC TOAN")}`}
             alt="Mã QR Vietcombank công đức Chùa Tâm An"
-            style={{ display: "block", width: 220, height: "auto", maxWidth: "100%", margin: "0 auto" }}
+            style={{ display: "block", width: 168, height: "auto", maxWidth: "100%", margin: "0 auto" }}
           />
-          <div style={{ fontSize: 12, lineHeight: 1.6, marginTop: 6, color: "#594331" }}>
-            <b>Vietcombank</b><br/>STK: <b>9988514001</b><br/>Chủ TK: <b>TRAN NGOC TOAN</b><br/>Số tiền: <b>{money(amount)}</b><br/>Nội dung: Cong duc Chua Tam An
+          <div style={{ fontSize: 10, lineHeight: 1.5, marginTop: 5, color: "#594331" }}>
+            Vietcombank · STK <b>9988514001</b><br/>Chủ TK: <b>TRAN NGOC TOAN</b><br/>Số tiền: <b>{money(amount)}</b><br/>Nội dung: Cong duc Chua Tam An
           </div>
-          <div style={{ fontSize: 11, color: "#806b54", marginTop: 7 }}>Vui lòng kiểm tra đúng tên người nhận và số tiền trong ứng dụng ngân hàng trước khi xác nhận.</div>
+          <div style={{ fontSize: 9, color: "#806b54", marginTop: 5 }}>Kiểm tra thông tin người nhận trước khi xác nhận chuyển khoản.</div>
         </div>}
-        <button onClick={() => { setOpen(false); setAmount(null); }} style={{ marginTop: 7, border: 0, borderRadius: 9, padding: "9px 18px", background: "#75412d", color: "#fff7e8", fontWeight: 700, cursor: "pointer" }}>Đóng</button>
+        <button onClick={() => { setOpen(false); setAmount(null); }} style={{ marginTop: 8, border: "1px solid #a98750", borderRadius: 6, padding: "6px 15px", background: "#75412d", color: "#fff7e8", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Đóng</button>
       </div>
     </Html>}
   </group>;
