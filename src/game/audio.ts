@@ -164,12 +164,49 @@ export function testFootsteps() { if (!settings.enabled) return; playFootstep();
 export function speak(text: string, onEnd?: () => void) {
   stopChant();
   stopSpeak();
-  if (!("speechSynthesis" in window)) { onEnd?.(); return false; }
-  const u = new SpeechSynthesisUtterance(text); u.lang = "vi-VN"; u.rate = 0.82; u.pitch = 0.9;
-  const vi = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("vi")); if (vi) u.voice = vi;
-  u.onend = () => { stopSpeak(); onEnd?.(); if (settings.enabled && activeZone === "dien") startChant(); }; u.onerror = () => { stopSpeak(); onEnd?.(); if (settings.enabled && activeZone === "dien") startChant(); };
-  speechSynthesis.speak(u); speechActive = true; syncLoops();
-  speechTimer = window.setInterval(() => { if (speechActive) woodBlock(); }, 1250); return true;
+  if (!("speechSynthesis" in window) || !text.trim()) { onEnd?.(); return false; }
+
+  // Mobile Safari can silently drop a long utterance or a speak() call made
+  // immediately after cancel(). Read short sentence-sized chunks in sequence.
+  const chunks = text.match(/[^.!?]+[.!?]*/g)?.map((part) => part.trim()).filter(Boolean) ?? [text];
+  let index = 0;
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    speechActive = false;
+    syncLoops();
+    if (speechTimer !== null) window.clearInterval(speechTimer);
+    speechTimer = null;
+    onEnd?.();
+    if (settings.enabled && activeZone === "dien") startChant();
+  };
+  const speakNext = () => {
+    if (index >= chunks.length) { finish(); return; }
+    const u = new SpeechSynthesisUtterance(chunks[index++]);
+    u.lang = "vi-VN";
+    u.rate = 0.82;
+    u.pitch = 0.9;
+    u.volume = 1;
+    const voices = speechSynthesis.getVoices();
+    const vi = voices.find((v) => v.lang.toLowerCase().startsWith("vi"));
+    if (vi) u.voice = vi;
+    u.onstart = () => { speechActive = true; syncLoops(); };
+    u.onend = () => { window.setTimeout(speakNext, 120); };
+    u.onerror = (event) => {
+      console.warn("[Chùa Tâm An] Trình duyệt không đọc được lời Phật pháp:", event.error);
+      finish();
+    };
+    speechSynthesis.speak(u);
+    // Safari may leave the speech queue paused after a previous cancel().
+    speechSynthesis.resume();
+  };
+  speechActive = true;
+  syncLoops();
+  speechTimer = window.setInterval(() => { if (speechActive) woodBlock(); }, 1250);
+  // Let the browser finish processing cancel() before queuing the first phrase.
+  window.setTimeout(speakNext, 120);
+  return true;
 }
 export function pauseSpeak() { if ("speechSynthesis" in window) speechSynthesis.pause(); }
 export function resumeSpeak() { if ("speechSynthesis" in window) speechSynthesis.resume(); }
