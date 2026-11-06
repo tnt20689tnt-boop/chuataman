@@ -289,6 +289,19 @@ export function MainHall() {
           <cylinderGeometry args={[0.6, 0.45, 0.6, 16]} />
           <meshStandardMaterial color="#8a6a2a" metalness={0.8} roughness={0.3} />
         </mesh>
+        {/* Three clearly visible incense sticks standing upright in the bowl. */}
+        {[-0.18, 0, 0.18].map((x, i) => (
+          <group key={i} position={[x, 2.28, -2.4 + (i - 1) * 0.045]} rotation-z={(i - 1) * 0.045}>
+            <mesh castShadow>
+              <cylinderGeometry args={[0.025, 0.032, 0.92, 8]} />
+              <meshStandardMaterial color="#8b3525" roughness={0.82} />
+            </mesh>
+            <mesh position={[0, 0.47, 0]}>
+              <sphereGeometry args={[0.035, 8, 6]} />
+              <meshStandardMaterial color="#ff6a24" emissive="#ff3b0a" emissiveIntensity={1.8} />
+            </mesh>
+          </group>
+        ))}
         <IncenseSmoke />
         <Sparkles position={[0, 2.7, -2.4]} count={12} scale={[0.5, 0.7, 0.5]} size={2} speed={0.15} color="#f5dfaa" opacity={0.35} />
         {/* Cushioned meditation mats facing the Buddha, arranged in calm rows. */}
