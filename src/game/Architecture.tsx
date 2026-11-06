@@ -288,15 +288,29 @@ export function MainHall() {
         <group position={[-18.445, 0, 0]} rotation-y={Math.PI / 2}>
           <DonationBox />
         </group>
-        {/* lanterns */}
-        {[-8, -3, 3, 8].map((x) => (
-          <group key={x} position={[x, 8, 11]}>
-            <mesh>
-              <sphereGeometry args={[0.6, 12, 12]} />
-              <meshStandardMaterial color="#e2512e" emissive="#ff6a2a" emissiveIntensity={0.9} />
+        {/* Rows of warm Vietnamese silk lanterns beneath the main hall eaves. */}
+        {Array.from({ length: 14 }, (_, i) => {
+          const x = -17 + i * (34 / 13);
+          const z = i < 7 ? 11.2 : -10.8;
+          return <group key={i} position={[x, 8.25, z]}>
+            <mesh position={[0, 0.42, 0]}>
+              <cylinderGeometry args={[0.34, 0.42, 0.82, 12]} />
+              <meshStandardMaterial color={i % 3 === 0 ? "#b93625" : "#d9572d"} emissive="#ff6a28" emissiveIntensity={1.15} roughness={0.62} />
             </mesh>
+            <mesh position={[0, 0.86, 0]}><torusGeometry args={[0.34, 0.045, 6, 12]} /><meshStandardMaterial color="#d9ad62" metalness={0.55} /></mesh>
+            <mesh position={[0, -0.02, 0]}><coneGeometry args={[0.12, 0.24, 8]} /><meshStandardMaterial color="#d9ad62" metalness={0.5} /></mesh>
+            {i % 3 === 0 && <pointLight position={[0, 0.35, 0]} intensity={2.2} distance={6} color="#ffb45e" />}
+          </group>;
+        })}
+        {[-1, 1].map(side => Array.from({ length: 4 }, (_, i) => (
+          <group key={side + "-" + i} position={[side * 19.2, 7.4, -8 + i * 5.2]}>
+            <mesh position={[0, 0.35, 0]}>
+              <cylinderGeometry args={[0.3, 0.37, 0.72, 12]} />
+              <meshStandardMaterial color="#c9442b" emissive="#ff6b30" emissiveIntensity={1.05} />
+            </mesh>
+            <pointLight position={[0, 0.3, 0]} intensity={1.5} distance={5} color="#ffbd72" />
           </group>
-        ))}
+        )))}
         <pointLight position={[0, 6, -2]} intensity={60} distance={30} color="#ffcf8a" />
       </group>
     </group>
@@ -715,6 +729,37 @@ export function ReleaseLanterns({ position }: { position: [number, number, numbe
       </group>
     </group>
   );
+}
+
+/** Warm paper sky lanterns rising slowly above the temple grounds. */
+export function SkyLanterns() {
+  const group = useRef<THREE.Group>(null);
+  const colors = ["#e85b32", "#f2a84a", "#d94b35", "#f4c36a", "#dc7138"];
+  useFrame(({ clock }) => {
+    group.current?.children.forEach((lantern, i) => {
+      const t = (clock.elapsedTime * 0.52 + i * 4.1) % 38;
+      lantern.position.y = 17 + t;
+      lantern.position.x += Math.sin(clock.elapsedTime * 0.18 + i) * 0.0018;
+      lantern.rotation.z = Math.sin(clock.elapsedTime * 0.35 + i * 1.7) * 0.035;
+    });
+  });
+  return <group ref={group} name="Đèn hoa đăng bay trên bầu trời">
+    {Array.from({ length: 34 }, (_, i) => {
+      const x = ((i * 37) % 146) - 73;
+      const z = ((i * 53) % 186) - 93;
+      const scale = 0.72 + (i % 4) * 0.12;
+      return <group key={i} position={[x, 18 + (i % 9) * 3.5, z]} scale={scale}>
+        <mesh position={[0, 0.42, 0]}>
+          <cylinderGeometry args={[0.22, 0.34, 0.82, 9, 1, false]} />
+          <meshStandardMaterial color={colors[i % colors.length]} emissive={colors[i % colors.length]} emissiveIntensity={1.35} roughness={0.72} />
+        </mesh>
+        <mesh position={[0, 0.84, 0]}><torusGeometry args={[0.22, 0.035, 5, 9]} /><meshStandardMaterial color="#f6d18a" metalness={0.45} /></mesh>
+        <mesh position={[0, 0.02, 0]}><torusGeometry args={[0.31, 0.035, 5, 9]} /><meshStandardMaterial color="#f6d18a" metalness={0.45} /></mesh>
+        <mesh position={[0, 0.12, 0]}><sphereGeometry args={[0.075, 8, 8]} /><meshBasicMaterial color="#fff0b0" /></mesh>
+        {i % 6 === 0 && <pointLight position={[0, 0.35, 0]} intensity={2.3} distance={8} color="#ffb45e" />}
+      </group>;
+    })}
+  </group>;
 }
 
 export function Pavilion({ position, rot = 0 }: { position: [number, number, number]; rot?: number }) {
