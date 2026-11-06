@@ -6,7 +6,7 @@ import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose }
 import { player, useUI } from "./store";
 import { moveVisitor } from "./collision";
 
-const SKIN = "#f1cfae";
+const SKIN = "#f4d6bd";
 
 /** Body layout per pose: [bodyScaleY, bodyScaleXZ, headY] */
 function layout(p: Pose): [number, number, number] {
@@ -363,16 +363,30 @@ export function PlayerAvatar() {
         </mesh>
       </group>
       <group ref={headRef}>
-        <mesh castShadow>
-          <sphereGeometry args={[0.24, 20, 16]} />
-          <meshStandardMaterial color={SKIN} />
+        <mesh castShadow scale={female ? [0.91, 1.08, 0.94] : [1.02, 1.06, 0.98]}>
+          <sphereGeometry args={[0.24, 32, 24]} />
+          <meshStandardMaterial color={SKIN} roughness={0.62} />
         </mesh>
         {/* eyes (closed in meditation) */}
         {[-0.08, 0.08].map((x) => (
-          <mesh key={x} position={[x, 0.02, 0.22]} scale={[1, action === "thien" ? 0.25 : 1, 1]}>
-            <sphereGeometry args={[0.03, 8, 8]} />
-            <meshStandardMaterial color="#2a1a12" />
-          </mesh>
+          <group key={x} position={[x, 0.025, 0.222]}>
+            <mesh scale={[1.22, action === "thien" ? 0.22 : 1, 0.55]}>
+              <sphereGeometry args={[0.034, 16, 12]} />
+              <meshStandardMaterial color="#fffaf3" roughness={0.45} />
+            </mesh>
+            <mesh position={[0, 0, 0.018]} scale={[0.72, 0.88, 0.72]}>
+              <sphereGeometry args={[0.021, 14, 12]} />
+              <meshStandardMaterial color={female ? "#49302a" : "#241913"} roughness={0.35} />
+            </mesh>
+            <mesh position={[0, 0, 0.031]} scale={[0.34, 0.42, 0.35]}>
+              <sphereGeometry args={[0.011, 10, 8]} />
+              <meshBasicMaterial color="#100d0b" />
+            </mesh>
+            <mesh position={[-0.006, 0.009, 0.038]} scale={0.22}>
+              <sphereGeometry args={[0.012, 8, 8]} />
+              <meshBasicMaterial color="#ffffff" />
+            </mesh>
+          </group>
         ))}
         {hair !== "troc" && (
           <mesh position={[0, 0.05, -0.01]} scale={hair === "dai" ? [1.04, 1.25, 1.08] : hair === "bui" ? [1, 1.18, 1] : [1, 1, 1]}>
@@ -443,33 +457,35 @@ export function PlayerAvatar() {
         {/* Soft, balanced facial features for a more expressive human face. */}
         {[-1, 1].map((side) => (
           <group key={side}>
-            <mesh position={[side * 0.085, 0.035, 0.213]} scale={[1, 0.72, 0.55]}>
-              <sphereGeometry args={[0.035, 12, 10]} />
-              <meshStandardMaterial color="#fff8ed" />
-            </mesh>
-            <mesh position={[side * 0.085, 0.035, 0.242]} scale={[0.72, 0.9, 0.5]}>
-              <sphereGeometry args={[0.021, 10, 8]} />
-              <meshStandardMaterial color="#302019" />
-            </mesh>
-            <mesh position={[side * 0.085, 0.092, 0.205]} rotation-z={side * -0.12} scale={[1, female ? 0.72 : 1.18, 1]}>
-              <capsuleGeometry args={[0.012, 0.055, 3, 6]} />
-              <meshStandardMaterial color="#39251d" />
+            <mesh position={[side * 0.085, 0.105, 0.205]} rotation-z={side * (female ? -0.08 : 0.10)} scale={[1.15, female ? 0.65 : 0.9, 0.7]}>
+              <capsuleGeometry args={[0.012, female ? 0.045 : 0.06, 4, 8]} />
+              <meshStandardMaterial color={female ? "#50352d" : "#34231c"} roughness={0.8} />
             </mesh>
             {female && (
-              <mesh position={[side * 0.09, -0.005, 0.205]} scale={[1.1, 0.48, 0.25]}>
-                <sphereGeometry args={[0.035, 10, 8]} />
-                <meshStandardMaterial color="#e9a6a0" transparent opacity={0.28} />
+              <mesh position={[side * 0.085, 0.005, 0.218]} rotation-z={side * -0.12}>
+                <capsuleGeometry args={[0.006, 0.035, 3, 6]} />
+                <meshStandardMaterial color="#49302a" />
+              </mesh>
+            )}
+            {female && (
+              <mesh position={[side * 0.09, -0.005, 0.205]} scale={[1.15, 0.55, 0.25]}>
+                <sphereGeometry args={[0.035, 12, 10]} />
+                <meshStandardMaterial color="#e99e9a" transparent opacity={0.24} />
               </mesh>
             )}
           </group>
         ))}
-        <mesh position={[0, -0.015, 0.238]} rotation-x={0.18}>
-          <coneGeometry args={[0.035, 0.085, 8]} />
-          <meshStandardMaterial color="#d8a98c" roughness={0.75} />
+        <mesh position={[0, -0.012, 0.242]} rotation-x={0.18} scale={[0.72, 0.9, 0.72]}>
+          <coneGeometry args={[0.035, 0.085, 10]} />
+          <meshStandardMaterial color="#d6a58a" roughness={0.68} />
         </mesh>
-        <mesh position={[0, -0.105, 0.222]} scale={[1, 0.45, 0.45]}>
-          <sphereGeometry args={[0.035, 10, 8]} />
-          <meshStandardMaterial color="#a85f5b" roughness={0.8} />
+        <mesh position={[0, -0.105, 0.222]} scale={[1.15, 0.42, 0.42]}>
+          <sphereGeometry args={[0.035, 14, 10]} />
+          <meshStandardMaterial color={female ? "#b96f75" : "#985b55"} roughness={0.72} />
+        </mesh>
+        <mesh position={[0, -0.13, 0.215]} scale={[0.8, 0.22, 0.3]}>
+          <sphereGeometry args={[0.026, 12, 8]} />
+          <meshStandardMaterial color="#e7b2a1" roughness={0.8} />
         </mesh>
       </group>
       {/* Prayer hands are positioned clearly in front of the chest. */}
