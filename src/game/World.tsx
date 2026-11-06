@@ -73,9 +73,10 @@ function DayNightCycle({ mobile }: { mobile: boolean }) {
     scene.background = bg;
     if (scene.fog instanceof THREE.Fog) scene.fog.color.copy(fogColor);
     if (hemi.current) {
-      hemi.current.intensity = 0.16 + daylight * 1.05;
-      hemi.current.color.set(night > 0.65 ? "#7186b4" : "#e5eef3");
-      hemi.current.groundColor.set(night > 0.65 ? "#202b38" : "#657452");
+      // Keep the temple readable and welcoming after sunset instead of letting the grounds fall into darkness.
+      hemi.current.intensity = 0.42 + daylight * 0.95;
+      hemi.current.color.set(night > 0.65 ? "#a9b9d4" : "#e5eef3");
+      hemi.current.groundColor.set(night > 0.65 ? "#465044" : "#657452");
     }
     if (sun.current) {
       sun.current.intensity = 0.04 + daylight * 2.35;
@@ -330,7 +331,7 @@ export default function World() {
       shadows
       dpr={[1, mobile ? 1.25 : 1.5]}
       camera={{ fov: 55, near: 0.3, far: 600, position: [0, 8, 50] }}
-      gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
+      gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.18 }}
       style={{ touchAction: "none" }}
     >
       <fog attach="fog" args={[C.fog, 140, 400]} />
@@ -376,6 +377,7 @@ export default function World() {
       <Pavilion position={[70, 0, 52]} rot={0} />
       <TempleCampus />
       <StoneLanterns points={lanterns} />
+      <SkyLanterns />
       </Suspense>
       <PlayerAvatar />
       <RemotePlayers />
