@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, Sky, Cloud, Clouds } from "@react-three/drei";
@@ -21,6 +21,11 @@ import { RemotePlayers } from "./RemotePlayers";
 import { ZONES, clamp, rng, stepPlayer } from "./sim";
 import { cam, getUI, input, player, setUI } from "./store";
 import { playFootstep, stopFootsteps } from "./audio";
+import { Surface } from './Materials';
+import { TempleCampus } from './TempleCampus';
+import { SCENE_COLORS as C } from './templeData';
+import { EffectComposer, N8AO } from '@react-three/postprocessing';
+import { teleport } from './store';
 
 function Ground() {
   const grass = useMemo(() => grassTexture(), []);
@@ -38,11 +43,11 @@ function Ground() {
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, -14]} receiveShadow>
         <planeGeometry args={[84, 82]} />
-        <meshStandardMaterial map={stone} roughness={0.9} />
+        <Suspense fallback={<meshStandardMaterial map={stone} roughness={0.9} />}><Surface kind="stone" repeat={18} /></Suspense>
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.03, 70]} receiveShadow>
         <planeGeometry args={[8, 96]} />
-        <meshStandardMaterial map={path} roughness={0.9} />
+        <Suspense fallback={<meshStandardMaterial map={path} roughness={0.9} />}><Surface kind="stone" repeat={16} /></Suspense>
       </mesh>
       {/* side paths */}
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.025, 30]} receiveShadow>
@@ -101,6 +106,16 @@ function Controller() {
   const keys = useRef(new Set<string>());
 
   useEffect(() => {
+    if (import.meta.env.DEV) {
+      const debug = {
+        get state() { return { ...player, camera: { ...cam } }; },
+        visit: (x: number, z: number, yaw = 0, dist = 14) => { teleport(x, z, Math.PI); cam.yaw = yaw; cam.dist = dist; },
+        move: (seconds: number, fwd = 1, right = 0) => {
+          for (let t = 0; t < seconds; t += 1 / 60) stepPlayer(player, { fwd, right, run: false }, cam.yaw, 1 / 60);
+        },
+      };
+      Object.assign(window, { __game: debug });
+    }
     const down = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.closest("input,textarea")) return;
       keys.current.add(e.code);
@@ -181,12 +196,15 @@ function Controller() {
       }
       if (best !== ui.zoneLabel) setUI({ zoneLabel: best });
       if (!ui.sceneReady) setUI({ sceneReady: true });
+      gl.domElement.dataset['sceneReady'] = '1';
     }
   });
   return null;
 }
 
 export default function World() {
+  const [mobile, setMobile] = useState(true);
+  useEffect(() => { setMobile(window.matchMedia('(max-width: 760px)').matches); }, []);
   const trees = useMemo(() => treePoints(), []);
   const lanterns = useMemo(() => {
     const p: [number, number][] = [];
@@ -197,21 +215,21 @@ export default function World() {
   return (
     <Canvas
       shadows
-      dpr={[1, 1.75]}
+      dpr={[1, mobile ? 1.25 : 1.5]}
       camera={{ fov: 55, near: 0.3, far: 600, position: [0, 8, 50] }}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
       style={{ touchAction: "none" }}
     >
-      <color attach="background" args={["#f2d8b8"]} />
-      <fog attach="fog" args={["#f0d6b8", 70, 330]} />
-      <Sky sunPosition={[120, 22, -200]} turbidity={6} rayleigh={2.2} mieCoefficient={0.006} mieDirectionalG={0.85} />
-      <hemisphereLight args={["#ffe9cc", "#4d6a3a", 0.75]} />
+      <color attach="background" args={[C.sky]} />
+      <fog attach="fog" args={[C.fog, 140, 400]} />
+      <Sky sunPosition={[120, 100, -200]} turbidity={2.5} rayleigh={1.2} mieCoefficient={0.003} mieDirectionalG={0.8} />
+      <hemisphereLight args={[C.ambient, C.groundLight, 1.1]} />
       <directionalLight
         position={[60, 45, -40]}
-        intensity={2.6}
-        color="#ffcf9a"
+        intensity={2.4}
+        color={C.sun}
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={mobile ? [1024, 1024] : [2048, 2048]}
         shadow-camera-left={-80}
         shadow-camera-right={80}
         shadow-camera-top={80}
@@ -231,6 +249,7 @@ export default function World() {
       <Ground />
       <Mountains />
       <Forest points={trees} />
+      <Suspense fallback={null}>
       <MainHall />
       <Gate z={112} />
       <Gate z={24} />
@@ -257,11 +276,13 @@ export default function World() {
         })}
       </group>
       <Pavilion position={[70, 0, 52]} rot={0} />
-      <Pavilion position={[-70, 0, 70]} rot={0} />
+      <TempleCampus />
       <StoneLanterns points={lanterns} />
+      </Suspense>
       <PlayerAvatar />
       <RemotePlayers />
       <Controller />
+      {!mobile && <EffectComposer multisampling={0}><N8AO aoRadius={2} intensity={1.2} distanceFalloff={1} halfRes /></EffectComposer>}
     </Canvas>
   );
 }

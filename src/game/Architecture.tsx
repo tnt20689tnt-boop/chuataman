@@ -3,10 +3,13 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Sparkles } from "@react-three/drei";
 import { tileTexture, fallTexture, waterTexture } from "./textures";
+import { Surface } from "./Materials";
+import { CarvedPanel, Inscription } from "./TempleDetails";
+import { SCENE_COLORS as C } from "./templeData";
 
-const WOOD = "#5a2f1c";
-const RED = "#8f2a1c";
-const GOLD = "#d4a640";
+const WOOD = C.wood;
+const RED = C.lacquer;
+const GOLD = C.gold;
 
 let _tile: THREE.Texture | null = null;
 const tile = () => (_tile ??= tileTexture());
@@ -14,40 +17,34 @@ const tile = () => (_tile ??= tileTexture());
 /** Vietnamese-style hipped roof with upturned corner eaves. */
 export function Roof({ w, d, h, y = 0 }: { w: number; d: number; h: number; y?: number }) {
   const geo = useMemo(() => {
-    const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4, 1, true);
-    g.rotateY(Math.PI / 4);
-    return g;
-  }, []);
+    const vertices: number[] = [], uvs: number[] = [], indices: number[] = [];
+    // Four curved roof slopes with lifted eaves, rather than a pyramidal cone.
+    const ridge = w * 0.23;
+    for (let face = 0; face < 4; face++) {
+      const start = vertices.length / 3;
+      for (let row = 0; row <= 16; row++) for (let col = 0; col <= 24; col++) {
+        const t = row / 16, u = col / 24 * 2 - 1;
+        const rise = h * (1 - t) ** 1.65 + h * 0.15 * t ** 8;
+        const corner = h * 0.12 * Math.abs(u) ** 6 * t ** 5;
+        if (face < 2) vertices.push(u * (ridge + (w * 0.57 - ridge) * t), rise + corner, (face === 0 ? 1 : -1) * d * 0.57 * t);
+        else vertices.push((face === 2 ? 1 : -1) * (ridge + (w * 0.57 - ridge) * t), rise + corner, u * d * 0.57 * t);
+        uvs.push(col / 24 * w / 5, t * d / 5);
+      }
+      for (let row = 0; row < 16; row++) for (let col = 0; col < 24; col++) {
+        const a = start + row * 25 + col, b = a + 25;
+        indices.push(a, b, a + 1, b, b + 1, a + 1);
+      }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(indices); g.computeVertexNormals(); return g;
+  }, [w, d, h]);
   const tex = tile();
-  return (
-    <group position={[0, y, 0]}>
-      <mesh geometry={geo} scale={[w * 1.15, h, d * 1.15]} position={[0, h / 2, 0]} castShadow receiveShadow>
-        <meshStandardMaterial map={tex} color="#e0e0e0" roughness={0.7} side={THREE.DoubleSide} />
-      </mesh>
-      {/* ridge */}
-      <mesh position={[0, h * 0.98, 0]} castShadow>
-        <boxGeometry args={[w * 0.35, h * 0.08, 0.35]} />
-        <meshStandardMaterial color="#9a9488" />
-      </mesh>
-      {/* upturned corners */}
-      {([
-        [1, 1],
-        [1, -1],
-        [-1, 1],
-        [-1, -1],
-      ] as [number, number][]).map(([sx, sz], i) => (
-        <mesh
-          key={i}
-          position={[(sx * w * 0.58), h * 0.1, (sz * d * 0.58)]}
-          rotation={[sz * 0.6, 0, -sx * 0.6]}
-          castShadow
-        >
-          <coneGeometry args={[0.25, h * 0.55, 6]} />
-          <meshStandardMaterial color="#b9b2a4" />
-        </mesh>
-      ))}
-    </group>
-  );
+  return <group position={[0, y, 0]}>
+    <mesh geometry={geo} castShadow receiveShadow><meshStandardMaterial map={tex} color={C.roof} roughness={0.92} side={THREE.DoubleSide} /></mesh>
+    <mesh position={[0, h + 0.08, 0]} castShadow><boxGeometry args={[w * 0.5, 0.25, 0.4]} /><meshStandardMaterial color={C.stone} /></mesh>
+    {[-1, 1].map(side => <mesh key={side} position={[side * w * 0.25, h + 0.15, 0]} rotation-z={side * -0.5} castShadow><torusGeometry args={[0.6, 0.12, 6, 16, Math.PI]} /><meshStandardMaterial color={C.stone} /></mesh>)}
+    {[-1, 1].map(side => <mesh key={side} position={[0, -0.15, side * d * 0.48]} castShadow><boxGeometry args={[w, 0.35, 0.35]} /><Surface kind="wood" /></mesh>)}
+  </group>;
 }
 
 function Columns({ w, d, h, n = 6 }: { w: number; d: number; h: number; n?: number }) {
@@ -61,7 +58,7 @@ function Columns({ w, d, h, n = 6 }: { w: number; d: number; h: number; n?: numb
       {pts.map(([x, z], i) => (
         <mesh key={i} position={[x, h / 2, z]} castShadow>
           <cylinderGeometry args={[0.35, 0.4, h, 10]} />
-          <meshStandardMaterial color={RED} roughness={0.5} />
+          <Surface kind="wood" />
         </mesh>
       ))}
     </>
@@ -74,24 +71,19 @@ export function MainHall() {
       {/* platform & steps */}
       <mesh position={[0, 0.6, 0]} receiveShadow castShadow>
         <boxGeometry args={[46, 1.2, 30]} />
-        <meshStandardMaterial color="#b9ad98" />
+        <Surface kind="stone" repeat={4} />
       </mesh>
-      {[0, 1, 2].map((i) => (
-        <mesh key={i} position={[0, 0.2 + i * 0.35, 15.8 + (2 - i) * 0.7]} receiveShadow>
-          <boxGeometry args={[14, 0.35, 1.4]} />
-          <meshStandardMaterial color="#c6bba6" />
-        </mesh>
-      ))}
+      {[0, 1, 2].map(i => <mesh key={i} position={[0, (i + 1) * 0.2, 17.5 - i]} receiveShadow castShadow><boxGeometry args={[14, (i + 1) * 0.4, 1]} /><Surface kind="stone" /></mesh>)}
       <group position={[0, 1.2, 0]}>
         {/* back & side walls (front open so the Buddha is visible) */}
         <mesh position={[0, 5, -12]} castShadow receiveShadow>
           <boxGeometry args={[40, 10, 0.8]} />
-          <meshStandardMaterial color={WOOD} />
+          <Surface kind="wood" repeat={3} />
         </mesh>
         {[-1, 1].map((s) => (
           <mesh key={s} position={[s * 20, 5, 0]} castShadow receiveShadow>
             <boxGeometry args={[0.8, 10, 24]} />
-            <meshStandardMaterial color={WOOD} />
+            <Surface kind="wood" repeat={3} />
           </mesh>
         ))}
         <Columns w={38} d={24} h={10} n={8} />
@@ -100,18 +92,12 @@ export function MainHall() {
         {/* upper tier */}
         <mesh position={[0, 15, 0]} castShadow>
           <boxGeometry args={[24, 4, 14]} />
-          <meshStandardMaterial color={WOOD} />
+          <Surface kind="wood" repeat={3} />
         </mesh>
         <Roof w={28} d={17} h={6} y={16.5} />
-        {/* signboard */}
-        <mesh position={[0, 8.6, 12.6]}>
-          <boxGeometry args={[9, 1.6, 0.3]} />
-          <meshStandardMaterial color="#2a1a10" emissive="#3a1e08" />
-        </mesh>
-        <mesh position={[0, 8.6, 12.78]}>
-          <planeGeometry args={[8.2, 1.1]} />
-          <meshStandardMaterial color={GOLD} metalness={0.7} roughness={0.3} />
-        </mesh>
+        <Inscription text="CHÍNH ĐIỆN" width={10} height={1.6} position={[0, 8.6, 12.6]} />
+        {[-15, -10, 10, 15].map(x => <CarvedPanel key={x} position={[x, 4.5, -11.5]} w={3.8} h={6} />)}
+        {[-1, 1].map(side => <Inscription key={side} text="TÂM AN" width={1} height={3} position={[side * 7.8, 5, 12.4]} small />)}
         {/* altar */}
         <mesh position={[0, 0.8, -4]} castShadow>
           <boxGeometry args={[10, 1.6, 4]} />
@@ -223,7 +209,7 @@ export function Tower({ position, tiers = 3, label }: { position: [number, numbe
           <group key={i} position={[0, y, 0]} scale={[s, 1, s]}>
             <mesh position={[0, 2.2, 0]} castShadow>
               <boxGeometry args={[6, 4.4, 6]} />
-              <meshStandardMaterial color={WOOD} />
+              <Surface kind="wood" repeat={3} />
             </mesh>
             <Columns w={6} d={6} h={4.4} n={3} />
             <Roof w={8} d={8} h={2.2} y={4.2} />
@@ -253,24 +239,17 @@ export function BellTower({ position }: { position: [number, number, number] }) 
 }
 
 export function Gate({ z }: { z: number }) {
-  return (
-    <group position={[0, 0, z]}>
-      {[-6, -2.2, 2.2, 6].map((x) => (
-        <mesh key={x} position={[x, 4, 0]} castShadow>
-          <boxGeometry args={[1.2, 8, 1.2]} />
-          <meshStandardMaterial color="#d8cfbd" />
-        </mesh>
-      ))}
-      <Roof w={6} d={2.5} h={1.6} y={8} />
-      {[-4.1, 4.1].map((x) => (
-        <Roof key={x} w={3.2} d={2} h={1.2} y={6.5} />
-      )).map((r, i) => (
-        <group key={i} position={[i === 0 ? -4.1 : 4.1, 0, 0]}>
-          {r}
-        </group>
-      ))}
-    </group>
-  );
+  return <group position={[0, 0, z]}>
+    {[-8, -3.6, 3.6, 8].map(x => <group key={x} position={[x, 0, 0]}>
+      <mesh position={[0, 4.5, 0]} castShadow><boxGeometry args={[1.1, 9, 1.5]} /><Surface kind="stone" repeat={2} /></mesh>
+      <mesh position={[0, 0.4, 0]} castShadow><boxGeometry args={[1.5, 0.8, 1.9]} /><Surface kind="stone" /></mesh>
+      <Inscription text="TỪ BI" width={0.65} height={3} position={[0, 4, 0.78]} small />
+    </group>)}
+    <Roof w={9} d={4.5} h={2.5} y={9} />
+    {[-5.8, 5.8].map(x => <group key={x} position={[x, 0, 0]}><Roof w={4.5} d={3.5} h={1.8} y={7} /></group>)}
+    <Inscription text="CHÙA TÂM AN" width={7.3} height={1.6} position={[0, 8.4, 1.2]} />
+    <group rotation-y={Math.PI}><Inscription text="CHÙA TÂM AN" width={7.3} height={1.6} position={[0, 8.4, 1.2]} /></group>
+  </group>;
 }
 
 export function Pond({ position, w, d }: { position: [number, number, number]; w: number; d: number }) {
@@ -310,10 +289,10 @@ export function Pond({ position, w, d }: { position: [number, number, number]; w
         <meshStandardMaterial map={tex} roughness={0.08} metalness={0.4} color="#bfe3e3" />
       </mesh>
       {/* stone rim */}
-      {[
+      {([
         [0, d / 2, w + 1.4, 1],
         [0, -d / 2, w + 1.4, 1],
-      ].map(([x, z, l], i) => (
+      ] as [number, number, number, number][]).map(([x, z, l], i) => (
         <mesh key={i} position={[x, 0.4, z]} castShadow receiveShadow>
           <boxGeometry args={[l, 0.8, 0.7]} />
           <meshStandardMaterial color="#56605a" />
@@ -348,13 +327,13 @@ export function Waterfall({ position }: { position: [number, number, number] }) 
   });
   return (
     <group position={position}>
-      {[
+      {([
         [-5, 5, 0, 6],
         [5, 6, 0, 7],
         [0, 9, -3, 7],
         [-3, 3, 2, 4],
         [4, 3, 2, 4],
-      ].map(([x, y, z, r], i) => (
+      ] as [number, number, number, number][]).map(([x, y, z, r], i) => (
         <mesh key={i} position={[x, y, z]} castShadow receiveShadow>
           <dodecahedronGeometry args={[r, 0]} />
           <meshStandardMaterial color="#6b6a63" roughness={1} flatShading />
