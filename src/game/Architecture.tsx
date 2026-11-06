@@ -127,19 +127,12 @@ function DonationBox() {
       <meshBasicMaterial transparent opacity={0} depthWrite={false} />
     </mesh>
     </group>
-    {/* Large sign physically mounted on the inner wall, above the donation box. */}
-    <Html position={[0, 4.35, -1.55]} center distanceFactor={8} transform style={{ pointerEvents: "auto" }}>
-      <div onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }} style={{ width: 300, boxSizing: "border-box", border: "4px solid #d9b96f", borderRadius: 8, padding: "13px 16px", background: "linear-gradient(145deg,#7c241d,#3e1714)", color: "#fff2ce", fontWeight: 900, boxShadow: "0 4px 16px #0008, inset 0 0 0 2px #f0d99b", textAlign: "center", cursor: "pointer" }}>
-        <div style={{ fontSize: 25, letterSpacing: 1.4, lineHeight: 1.2 }}>HÒM CÔNG ĐỨC</div>
-        <div style={{ fontSize: 11, marginTop: 5, color: "#ffe3a1" }}>TÙY TÂM CÚNG DƯỜNG</div>
-      </div>
-    </Html>
     {/* Enlarged invisible hit surface aligned with the front of the wall-mounted box. */}
     <mesh position={[0, 0.82, 1.30]} onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }}>
       <boxGeometry args={[1.55, 1.45, 0.035]} />
       <meshBasicMaterial transparent opacity={0} depthWrite={false} />
     </mesh>
-    {open && <Html position={[0, 4.35, -2.35]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
+    {open && <Html position={[0, 2.5, 2.8]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: 290, boxSizing: "border-box", padding: 16, borderRadius: 16, background: "rgba(255,249,232,.98)", color: "#493024", border: "2px solid #b89555", boxShadow: "0 8px 28px #0007", fontFamily: "Arial,sans-serif", textAlign: "center" }}>
         <div style={{ fontSize: 19, fontWeight: 800, color: "#743b27" }}>CÔNG ĐỨC CHÙA TÂM AN</div>
         <div style={{ fontSize: 12, margin: "6px 0 12px", color: "#76624d" }}>Tùy tâm gieo duyên lành – xin tùy hỷ công đức</div>
