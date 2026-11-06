@@ -76,13 +76,18 @@ const statues = [
   new SAT.Circle(new SAT.Vector(-86, 20), 2.8),
 ];
 const visitor = new SAT.Circle(new SAT.Vector(), PLAYER_RADIUS);
+// Populated from the exact rendered forest positions by World before movement starts.
+let treeTrunks: SAT.Circle[] = [];
+export function setTreeCollisionPoints(points: [number, number, number][]) {
+  treeTrunks = points.map(([x, z, scale]) => new SAT.Circle(new SAT.Vector(x, z), 0.42 * scale));
+}
 export function isBlocked(x: number, z: number) {
   visitor.pos.x = x; visitor.pos.y = z;
   // Foundation sides only impede entry from the outside, not usable hall floor.
   return polygons.some(s => {
     if (s.id.startsWith('foundation') && z < -47.4 && z > -73.1 && Math.abs(x) < 19.2) return false;
     return SAT.testCirclePolygon(visitor, s.shape);
-  }) || statues.some(s => SAT.testCircleCircle(visitor, s));
+  }) || statues.some(s => SAT.testCircleCircle(visitor, s)) || treeTrunks.some(s => SAT.testCircleCircle(visitor, s));
 }
 export function surfaceHeight(x: number, z: number) {
   if (Math.abs(x - HALL.x) < HALL.halfW && z <= -47 && z >= -77) return HALL.floor;
