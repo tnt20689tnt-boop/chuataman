@@ -318,33 +318,33 @@ export function PlayerAvatar() {
     g.current.position.set(player.x, player.y, player.z);
     // Lay the avatar horizontally on the guest-room mattress when resting.
     g.current.rotation.set(pose === "lie" ? Math.PI / 2 : 0, player.rot, 0);
-    const t = clock.elapsedTime;
+    const avatarTime = clock.elapsedTime;
     const walking = pose === "walk";
-    const gait = walking ? Math.sin(t * 8.5) * 0.58 : 0;
-    const breath = Math.sin(t * 2.15);
+    const gait = walking ? Math.sin(avatarTime * 8.5) * 0.58 : 0;
+    const breath = Math.sin(avatarTime * 2.15);
     const smooth = 1 - Math.exp(-delta * 10);
     // Keep the bow phase in the useFrame scope so both body and head can use it.
-    const bowCycle = action === "le" ? (0.5 - 0.5 * Math.cos(t * 1.15)) : 0;
+    const bowCycle = action === "le" ? (0.5 - 0.5 * Math.cos(avatarTime * 1.15)) : 0;
     // Subtle breathing and weight shifts keep the character alive while standing.
     if (robeRef.current) {
-      const stepBounce = walking ? Math.abs(Math.sin(t * 8.5)) * 0.035 : 0;
+      const stepBounce = walking ? Math.abs(Math.sin(avatarTime * 8.5)) * 0.035 : 0;
       robeRef.current.position.y = stepBounce + breath * 0.009;
-      robeRef.current.rotation.z = Math.sin(t * 1.35) * (walking ? 0.035 : 0.012);
+      robeRef.current.rotation.z = Math.sin(avatarTime * 1.35) * (walking ? 0.035 : 0.012);
       robeRef.current.rotation.x += ((bowCycle * 0.20) - robeRef.current.rotation.x) * smooth;
       robeRef.current.scale.y = sy * (1 + breath * 0.006);
     }
-    g.current.position.y = player.y + (walking ? Math.abs(Math.sin(t * 8.5)) * 0.025 : Math.sin(t * 1.8) * 0.008);
+    g.current.position.y = player.y + (walking ? Math.abs(Math.sin(avatarTime * 8.5)) * 0.025 : Math.sin(avatarTime * 1.8) * 0.008);
     const prayerPose = action === "chap" || action === "le" || action === "thien";
     // Arms move from the shoulders toward the sternum, rather than leaving
     // two detached hands floating in front of the robe.
     const inward = prayerPose ? 0.68 : 0;
     if (leftArmRef.current) {
       leftArmRef.current.rotation.x += ((walking ? gait : 0) - leftArmRef.current.rotation.x) * smooth;
-      leftArmRef.current.rotation.z += ((walking ? -0.10 : inward + Math.sin(t * 1.1) * 0.012) - leftArmRef.current.rotation.z) * smooth;
+      leftArmRef.current.rotation.z += ((walking ? -0.10 : inward + Math.sin(avatarTime * 1.1) * 0.012) - leftArmRef.current.rotation.z) * smooth;
     }
     if (rightArmRef.current) {
       rightArmRef.current.rotation.x += ((walking ? -gait : 0) - rightArmRef.current.rotation.x) * smooth;
-      rightArmRef.current.rotation.z += ((walking ? 0.10 : -inward - Math.sin(t * 1.1) * 0.012) - rightArmRef.current.rotation.z) * smooth;
+      rightArmRef.current.rotation.z += ((walking ? 0.10 : -inward - Math.sin(avatarTime * 1.1) * 0.012) - rightArmRef.current.rotation.z) * smooth;
     }
     // Meditation: legs fold outward into a stable cross-legged seat.
     // Kneeling: knees lower and feet tuck beneath the robe.
