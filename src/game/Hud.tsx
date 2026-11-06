@@ -339,6 +339,7 @@ function ChatPanel({ name }: { name: string }) {
   const msgs = useTempleChat();
   const [text, setText] = useState("");
   const multiplayer = useMultiplayer();
+  const connected = useMultiplayerConnected();
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => end.current?.scrollIntoView(), [msgs]);
   const send = () => {
