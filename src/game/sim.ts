@@ -2,7 +2,7 @@
 import { moveVisitor } from './collision';
 import { BUILDINGS } from './templeData';
 
-export type Pose = "stand" | "walk" | "sit" | "kneel" | "pray";
+export type Pose = "stand" | "walk" | "sit" | "kneel" | "pray" | "lie";
 export type Outfit = "lam" | "trang" | "nau" | "tusi" | "vang";
 export type Gender = "nam" | "nu";
 
