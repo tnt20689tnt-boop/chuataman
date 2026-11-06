@@ -235,12 +235,13 @@ export function PlayerAvatar() {
     const gait = walking ? Math.sin(t * 8.5) * 0.58 : 0;
     const breath = Math.sin(t * 2.15);
     const smooth = 1 - Math.exp(-delta * 10);
+    // Keep the bow phase in the useFrame scope so both body and head can use it.
+    const bowCycle = action === "le" ? (0.5 - 0.5 * Math.cos(t * 1.15)) : 0;
     // Subtle breathing and weight shifts keep the character alive while standing.
     if (robeRef.current) {
       const stepBounce = walking ? Math.abs(Math.sin(t * 8.5)) * 0.035 : 0;
       robeRef.current.position.y = stepBounce + breath * 0.009;
       robeRef.current.rotation.z = Math.sin(t * 1.35) * (walking ? 0.035 : 0.012);
-      const bowCycle = action === "le" ? (0.5 - 0.5 * Math.cos(t * 1.15)) : 0;
       robeRef.current.rotation.x += ((bowCycle * 0.20) - robeRef.current.rotation.x) * smooth;
       robeRef.current.scale.y = sy * (1 + breath * 0.006);
     }
