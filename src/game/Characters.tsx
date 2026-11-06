@@ -240,6 +240,8 @@ export function PlayerAvatar() {
       const stepBounce = walking ? Math.abs(Math.sin(t * 8.5)) * 0.035 : 0;
       robeRef.current.position.y = stepBounce + breath * 0.009;
       robeRef.current.rotation.z = Math.sin(t * 1.35) * (walking ? 0.035 : 0.012);
+      const bowCycle = action === "le" ? (0.5 - 0.5 * Math.cos(t * 1.15)) : 0;
+      robeRef.current.rotation.x += ((bowCycle * 0.20) - robeRef.current.rotation.x) * smooth;
       robeRef.current.scale.y = sy * (1 + breath * 0.006);
     }
     g.current.position.y = player.y + (walking ? Math.abs(Math.sin(t * 8.5)) * 0.025 : Math.sin(t * 1.8) * 0.008);
@@ -270,8 +272,9 @@ export function PlayerAvatar() {
     if (headRef.current) {
       const bow = action === "le" ? Math.max(0, Math.sin(t * 1.2)) * 0.4 : 0;
       headRef.current.position.set(0, hy - bow * 0.6 + breath * 0.006, bow);
-      headRef.current.rotation.y = Math.sin(t * 0.72) * 0.045;
-      headRef.current.rotation.z = Math.sin(t * 1.05) * 0.012;
+      headRef.current.rotation.x += (((action === "le" ? 0.20 + bowCycle * 0.24 : action === "thien" ? 0.10 : 0) - headRef.current.rotation.x) * smooth);
+      headRef.current.rotation.y = Math.sin(t * 0.72) * 0.025;
+      headRef.current.rotation.z = Math.sin(t * 1.05) * 0.008;
     }
   });
 
