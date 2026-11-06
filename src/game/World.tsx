@@ -66,21 +66,21 @@ function DayNightCycle({ mobile }: { mobile: boolean }) {
 
   useFrame(() => {
     const { daylight, morning, evening, night } = getVietnamDaylight();
-    const bg = new THREE.Color("#101b2b").lerp(new THREE.Color("#d9e8e8"), daylight);
+    const bg = new THREE.Color("#39485d").lerp(new THREE.Color("#e7f0ed"), daylight);
     const dawn = new THREE.Color("#f3b88e");
     bg.lerp(dawn, Math.max(morning, evening) * 0.22);
-    const fogColor = new THREE.Color("#101827").lerp(new THREE.Color("#d4e1da"), daylight);
+    const fogColor = new THREE.Color("#344253").lerp(new THREE.Color("#e0e9e2"), daylight);
     fogColor.lerp(new THREE.Color("#d99b78"), evening * 0.18);
     scene.background = bg;
     if (scene.fog instanceof THREE.Fog) scene.fog.color.copy(fogColor);
     if (hemi.current) {
       // Keep the temple readable and welcoming after sunset instead of letting the grounds fall into darkness.
-      hemi.current.intensity = 0.42 + daylight * 0.95;
-      hemi.current.color.set(night > 0.65 ? "#a9b9d4" : "#e5eef3");
-      hemi.current.groundColor.set(night > 0.65 ? "#465044" : "#657452");
+      hemi.current.intensity = 1.05 + daylight * 0.75;
+      hemi.current.color.set(night > 0.65 ? "#d7e4ff" : "#f2f7ff");
+      hemi.current.groundColor.set(night > 0.65 ? "#78866f" : "#8b9878");
     }
     if (sun.current) {
-      sun.current.intensity = 0.04 + daylight * 2.35;
+      sun.current.intensity = 0.32 + daylight * 2.15;
       sun.current.color.set(evening > 0.25 ? "#ffc18b" : "#fff3de");
       sun.current.position.set(sunPosition[0], sunPosition[1], sunPosition[2]);
     }
@@ -332,7 +332,7 @@ export default function World() {
       shadows
       dpr={[1, mobile ? 1.25 : 1.5]}
       camera={{ fov: 55, near: 0.3, far: 600, position: [0, 8, 50] }}
-      gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.18 }}
+      gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.38 }}
       style={{ touchAction: "none" }}
     >
       <fog attach="fog" args={[C.fog, 140, 400]} />
