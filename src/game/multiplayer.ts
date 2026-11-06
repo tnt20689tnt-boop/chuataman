@@ -219,11 +219,20 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
       broadcast: { self: false },
     },
   });
+  // Keep a stable reference to this connection. A reconnect can replace the
+  // global channel while an older async subscribe/track callback is still running.
+  const activeChannel = channel;
 
-  channel
-    .on("presence", { event: "sync" }, () => readPresence(channel!))
-    .on("presence", { event: "join" }, () => readPresence(channel!))
-    .on("presence", { event: "leave" }, () => readPresence(channel!))
+  activeChannel
+    .on("presence", { event: "sync" }, () => {
+      if (attempt === connectionAttempt && channel === activeChannel) readPresence(activeChannel);
+    })
+    .on("presence", { event: "join" }, () => {
+      if (attempt === connectionAttempt && channel === activeChannel) readPresence(activeChannel);
+    })
+    .on("presence", { event: "leave" }, () => {
+      if (attempt === connectionAttempt && channel === activeChannel) readPresence(activeChannel);
+    })
     .on("broadcast", { event: "chat_message" }, ({ payload }) => {
       const message = payload as TempleChatMessage;
       if (message && typeof message.id === "string" && typeof message.name === "string" && typeof message.text === "string" && typeof message.at === "number") {
@@ -258,8 +267,8 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
       publish({ connected: snapshot.connected, players, roomId: currentRoomId });
     })
     .subscribe(async (status) => {
-      if (attempt !== connectionAttempt) return;
-      if (status === "SUBSCRIBED" && channel) {
+      if (attempt !== connectionAttempt || channel !== activeChannel) return;
+      if (status === "SUBSCRIBED") {
         // Supabase recovered on its own; cancel any pending full reconnect.
         if (reconnectTimer) clearTimeout(reconnectTimer);
         reconnectTimer = null;
@@ -277,15 +286,17 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           hair: avatar?.hair ?? "ngan",
           hairColor: avatar?.hairColor ?? "#1b1410",
         };
-        const { error: trackError } = await channel.track(initialPresence);
+        const { error: trackError } = await activeChannel.track(initialPresence);
+        // The page may have signed out or reconnected while track() was pending.
+        if (attempt !== connectionAttempt || channel !== activeChannel) return;
         if (trackError) console.warn("Chùa Tâm An: chưa đăng ký được Presence.", trackError);
         let lastPresenceAt = Date.now();
         // Reconcile periodically in case a presence sync event was missed.
-        readPresence(channel);
+        readPresence(activeChannel);
         publish({ ...snapshot, connected: true, roomId: currentRoomId });
         if (presenceTimer) clearInterval(presenceTimer);
         presenceTimer = setInterval(() => {
-          if (channel && attempt === connectionAttempt) readPresence(channel);
+          if (channel === activeChannel && attempt === connectionAttempt) readPresence(activeChannel);
         }, 1500);
         if (timer) clearInterval(timer);
         let lastX = player.x;
@@ -293,7 +304,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
         let lastRot = player.rot;
         let lastBroadcastAt = 0;
         timer = setInterval(() => {
-          if (!channel || attempt !== connectionAttempt) return;
+          if (channel !== activeChannel || attempt !== connectionAttempt) return;
           const now = Date.now();
           const currentAvatar = getUI().avatar;
           const moved = Math.abs(player.x - lastX) > 0.06 || Math.abs(player.z - lastZ) > 0.06 || Math.abs(player.rot - lastRot) > 0.06;
@@ -304,7 +315,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
             // presence-sync events while someone walks or runs.
             if (now - lastPresenceAt >= 3000) {
               lastPresenceAt = now;
-              void channel.track({
+              void activeChannel.track({
                 id: authenticatedUserId,
                 name: currentAvatar?.name || "Phật tử",
                 x: player.x, z: player.z, rot: player.rot, updatedAt: now,
@@ -328,10 +339,10 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           };
           // Broadcast movement frequently enough for smooth remote motion,
           // but update Presence only every 3 seconds to avoid sync storms.
-          void channel.send({ type: "broadcast", event: "player_move", payload });
+          void activeChannel.send({ type: "broadcast", event: "player_move", payload });
           if (now - lastPresenceAt >= 3000) {
             lastPresenceAt = now;
-            void channel.track(payload);
+            void activeChannel.track(payload);
           }
         }, 150);
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
@@ -346,9 +357,10 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           reconnectTimer = setTimeout(() => {
             reconnectTimer = null;
             if (attempt !== connectionAttempt) return;
-            const failedChannel = channel;
+            // Do not let an obsolete channel's retry tear down a newer connection.
+            if (channel !== activeChannel || attempt !== connectionAttempt) return;
             channel = null;
-            if (failedChannel && client) void client.removeChannel(failedChannel);
+            if (client) void client.removeChannel(activeChannel);
             client = null;
             connectMultiplayer();
           }, 2500);
