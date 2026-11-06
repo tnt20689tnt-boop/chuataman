@@ -321,7 +321,7 @@ function RoomsPanel({ currentRoom }: { currentRoom: string }) {
   };
   return (
     <Panel title="Phòng sinh hoạt" onClose={() => setUI({ panel: null })}>
-      <p className="mb-3 text-sm text-muted-foreground">Mọi người mặc định gặp nhau tại phòng chung. Chọn phòng thiền, tụng kinh hoặc nhập tên để tạo một phòng riêng. Ai nhập cùng tên phòng sẽ gặp nhau.</p>
+      <p className="mb-3 text-sm text-muted-foreground">Toàn bộ ngôi chùa là một thế giới chung. Mọi Phật tử đều nhìn thấy nhau dù đang ở sân chùa, khu thiền hay hồ sen.</p>
       <div className="mb-3 grid grid-cols-1 gap-2">
         <button className="hud-tile text-left" data-active={currentRoom === "chung"} onClick={() => join("chung")}>🏯 Phòng chung</button>
         <button className="hud-tile text-left" data-active={currentRoom === "thien"} onClick={() => join("thien")}>🧘 Phòng thiền</button>
