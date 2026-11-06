@@ -85,46 +85,95 @@ function IncenseSmoke() {
   </group>;
 }
 
-function GoldBurner() {
+function VangMaFurnace() {
   const flame = useRef<THREE.Group>(null);
   const glow = useRef<THREE.PointLight>(null);
+  const smoke = useRef<THREE.Mesh[]>([]);
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     if (flame.current) {
-      flame.current.scale.set(0.9 + Math.sin(t * 5) * 0.08, 0.9 + Math.sin(t * 7) * 0.16, 0.9 + Math.cos(t * 4) * 0.08);
-      flame.current.rotation.y = Math.sin(t * 2.2) * 0.16;
+      flame.current.scale.set(0.94 + Math.sin(t * 4.2) * 0.045, 0.92 + Math.sin(t * 6.1) * 0.12, 0.94 + Math.cos(t * 3.8) * 0.04);
+      flame.current.rotation.y = Math.sin(t * 1.7) * 0.08;
     }
-    if (glow.current) glow.current.intensity = 1.8 + (Math.sin(t * 8) + 1) * 0.65;
+    if (glow.current) glow.current.intensity = 1.4 + (Math.sin(t * 7) + 1) * 0.45;
+    smoke.current.forEach((p, i) => {
+      if (!p) return;
+      const phase = (t * 0.12 + i / 5) % 1;
+      p.position.set(Math.sin(t * 0.38 + i) * (0.12 + phase * 0.22), 3.45 + phase * 2.1, -0.48 + Math.cos(t * 0.3 + i) * 0.08);
+      const s = 0.10 + phase * 0.2;
+      p.scale.set(s, s * 1.5, s);
+      (p.material as THREE.MeshStandardMaterial).opacity = (1 - phase) * 0.14;
+    });
   });
-  return <group>
-    {/* A traditional bronze vessel for symbolic vàng mã offerings, centered near the hall entrance. */}
-    <mesh position={[0, 0.22, 0]} castShadow receiveShadow>
-      <cylinderGeometry args={[0.82, 0.62, 0.44, 32]} />
-      <meshStandardMaterial color="#76502b" metalness={0.82} roughness={0.28} />
+  return <group name="Lò hóa vàng ngoài sân Chùa Tâm An">
+    {/* Raised stone foundation and compact masonry firebox: clearly a furnace, not an incense vessel. */}
+    <mesh position={[0, 0.18, 0]} castShadow receiveShadow>
+      <boxGeometry args={[4.3, 0.36, 3.5]} />
+      <meshStandardMaterial color="#b8aa91" roughness={0.88} />
     </mesh>
-    <mesh position={[0, 0.46, 0]} castShadow>
-      <torusGeometry args={[0.78, 0.11, 12, 36]} />
-      <meshStandardMaterial color="#c49a52" metalness={0.86} roughness={0.22} />
+    <mesh position={[0, 1.18, 0]} castShadow receiveShadow>
+      <boxGeometry args={[3.45, 1.72, 2.65]} />
+      <meshStandardMaterial color="#a75a3d" roughness={0.92} />
     </mesh>
-    <mesh position={[0, 0.03, 0]} castShadow>
-      <cylinderGeometry args={[0.72, 0.86, 0.16, 32]} />
-      <meshStandardMaterial color="#493322" metalness={0.7} roughness={0.38} />
+    {/* Light stone corner pilasters and lintel frame a large rectangular fire opening. */}
+    {[-1.48, 1.48].map(x => <mesh key={x} position={[x, 1.2, 1.34]} castShadow>
+      <boxGeometry args={[0.42, 1.62, 0.18]} />
+      <meshStandardMaterial color="#d8c9ad" roughness={0.78} />
+    </mesh>)}
+    <mesh position={[0, 1.98, 1.34]} castShadow>
+      <boxGeometry args={[3.38, 0.28, 0.2]} />
+      <meshStandardMaterial color="#d8c9ad" roughness={0.78} />
     </mesh>
-    <group ref={flame} position={[0, 0.52, 0]}>
-      <mesh position={[0, 0.34, 0]}>
-        <coneGeometry args={[0.34, 0.92, 12]} />
-        <meshStandardMaterial color="#ff8b27" emissive="#ff5b12" emissiveIntensity={2.2} transparent opacity={0.88} />
+    <mesh position={[0, 0.78, 1.345]}>
+      <boxGeometry args={[2.5, 0.95, 0.035]} />
+      <meshStandardMaterial color="#211914" emissive="#3b1708" emissiveIntensity={0.35} roughness={1} />
+    </mesh>
+    <mesh position={[0, 0.28, 1.42]} castShadow>
+      <boxGeometry args={[2.72, 0.16, 0.28]} />
+      <meshStandardMaterial color="#8a7961" roughness={0.9} />
+    </mesh>
+    {/* Subtle ventilation openings on both sides. */}
+    {[-1, 1].map(side => [-0.48, 0.18].map(y => <mesh key={side + ":" + y} position={[side * 1.74, 1.05 + y, 0]}>
+      <boxGeometry args={[0.035, 0.12, 0.72]} />
+      <meshStandardMaterial color="#3a2920" roughness={1} />
+    </mesh>))}
+    {/* Small traditional tiled roof, with gently lifted Vietnamese-style eaves. */}
+    <mesh position={[0, 2.22, 0]} castShadow>
+      <boxGeometry args={[3.95, 0.18, 3.05]} />
+      <meshStandardMaterial color="#554238" roughness={0.9} />
+    </mesh>
+    <Roof w={4.5} d={3.7} h={1.05} y={2.28} />
+    {/* Rear smoke flue, discreetly integrated behind the roof ridge. */}
+    <mesh position={[0, 3.65, -0.82]} castShadow>
+      <boxGeometry args={[0.48, 1.15, 0.48]} />
+      <meshStandardMaterial color="#9c5037" roughness={0.95} />
+    </mesh>
+    <mesh position={[0, 4.25, -0.82]} castShadow>
+      <boxGeometry args={[0.72, 0.14, 0.72]} />
+      <meshStandardMaterial color="#d0bea0" roughness={0.85} />
+    </mesh>
+    {/* A restrained lotus medallion, not a large decorative urn ornament. */}
+    <mesh position={[0, 2.12, 1.47]} rotation-x={Math.PI / 2}>
+      <torusGeometry args={[0.22, 0.035, 8, 28]} />
+      <meshStandardMaterial color="#c49a52" metalness={0.55} roughness={0.42} />
+    </mesh>
+    <group ref={flame} position={[0, 0.45, 1.38]}>
+      <mesh position={[0, 0.42, 0]}>
+        <coneGeometry args={[0.32, 0.78, 10]} />
+        <meshStandardMaterial color="#ff8b27" emissive="#ff5b12" emissiveIntensity={2.0} transparent opacity={0.88} />
       </mesh>
-      <mesh position={[0.08, 0.28, 0.02]} rotation-z={0.22}>
-        <coneGeometry args={[0.2, 0.68, 10]} />
-        <meshStandardMaterial color="#ffe7a0" emissive="#ffb52e" emissiveIntensity={2.6} transparent opacity={0.92} />
+      <mesh position={[0.08, 0.32, 0.02]} rotation-z={0.2}>
+        <coneGeometry args={[0.17, 0.55, 9]} />
+        <meshStandardMaterial color="#ffe7a0" emissive="#ffb52e" emissiveIntensity={2.3} transparent opacity={0.9} />
       </mesh>
     </group>
-    <pointLight ref={glow} position={[0, 1.25, 0]} color="#ff9b42" intensity={2.5} distance={7} />
-    <Sparkles position={[0, 0.9, 0]} count={8} scale={[1.1, 0.8, 1.1]} size={2} speed={0.45} color="#ffd28a" opacity={0.55} />
+    <pointLight ref={glow} position={[0, 1.0, 1.8]} color="#ff9b42" intensity={2} distance={6} />
+    {Array.from({ length: 5 }, (_, i) => <mesh key={i} ref={el => { if (el) smoke.current[i] = el; }}>
+      <sphereGeometry args={[1, 12, 10]} />
+      <meshStandardMaterial color="#dedbd2" transparent opacity={0.13} depthWrite={false} roughness={1} />
+    </mesh>)}
   </group>;
 }
-
 function DonationBox() {
   return <group>
     {/* Traditional lacquered wooden merit box with brass fittings and a visible offering slot. */}
@@ -260,10 +309,6 @@ export function MainHall() {
           </group>
         )))}
         <PrayerAudio />
-        {/* Central ceremonial vàng mã brazier, set in the open front-center aisle. */}
-        <group position={[0, 0, 10.2]}>
-          <GoldBurner />
-        </group>
         {/* Merit box beside the entrance, offset from the central visitor path. */}
         <group position={[-16.2, 0, 10.2]}>
           <DonationBox />
