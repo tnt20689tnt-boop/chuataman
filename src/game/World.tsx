@@ -24,7 +24,6 @@ import { playFootstep, stopFootsteps } from "./audio";
 import { Surface } from './Materials';
 import { TempleCampus } from './TempleCampus';
 import { SCENE_COLORS as C } from './templeData';
-import { EffectComposer, N8AO } from '@react-three/postprocessing';
 import { teleport } from './store';
 
 function Ground() {
@@ -282,7 +281,6 @@ export default function World() {
       <PlayerAvatar />
       <RemotePlayers />
       <Controller />
-      {!mobile && <EffectComposer multisampling={0}><N8AO aoRadius={2} intensity={1.2} distanceFalloff={1} halfRes /></EffectComposer>}
     </Canvas>
   );
 }
