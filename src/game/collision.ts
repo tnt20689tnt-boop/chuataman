@@ -90,6 +90,14 @@ export function isBlocked(x: number, z: number) {
   }) || statues.some(s => SAT.testCircleCircle(visitor, s)) || treeTrunks.some(s => SAT.testCircleCircle(visitor, s));
 }
 export function surfaceHeight(x: number, z: number) {
+  // The eight raised stepping stones in the meditation garden are real walkable
+  // surfaces, matching Garden() in TempleCampus.tsx (garden origin -104, 25).
+  for (let i = 0; i < 8; i++) {
+    const sx = -104 + Math.sin(i * 0.42) * 2.1;
+    const sz = 37 - i * 2.15;
+    const radius = 0.72 + (i % 3) * 0.12;
+    if (Math.hypot(x - sx, z - sz) <= radius * 0.82) return 0.34;
+  }
   if (Math.abs(x - HALL.x) < HALL.halfW && z <= -47 && z >= -77) return HALL.floor;
   // Three 0.4m treads match the visible main-hall staircase exactly.
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
