@@ -14,6 +14,7 @@ import {
   StoneLanterns,
   Tower,
   Waterfall,
+  VangMaFurnace,
   Buddha,
 } from "./Architecture";
 import { PlayerAvatar } from "./Characters";
@@ -319,6 +320,10 @@ export default function World() {
       <Forest points={trees} />
       <Suspense fallback={null}>
       <MainHall />
+      {/* Dedicated outdoor vàng mã furnace in the side courtyard, away from the main hall and central walkway. */}
+      <group position={[17, 0, -36]}>
+        <VangMaFurnace />
+      </group>
       <Gate z={112} />
       <Gate z={24} />
       <BellTower position={[-55, 0, -52]} />
