@@ -24,7 +24,7 @@ import { playFootstep, stopFootsteps, setAudioZone } from "./audio";
 import { Surface } from './Materials';
 import { TempleCampus } from './TempleCampus';
 import { BUILDINGS, SCENE_COLORS as C } from './templeData';
-import { surfaceHeight } from './collision';
+import { surfaceHeight, setTreeCollisionPoints } from './collision';
 import { teleport } from './store';
 
 function getVietnamDaylight() {
@@ -318,7 +318,7 @@ function Controller() {
 export default function World() {
   const [mobile, setMobile] = useState(true);
   useEffect(() => { setMobile(window.matchMedia('(max-width: 760px)').matches); }, []);
-  const trees = useMemo(() => treePoints(), []);
+  const trees = useMemo(() => { const points = treePoints(); setTreeCollisionPoints(points); return points; }, []);
   const lanterns = useMemo(() => {
     const p: [number, number][] = [];
     for (let z = 30; z < 110; z += 10) p.push([-5, z], [5, z]);
