@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
-import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, subscribeAudioSettings, testFootsteps, updateAudioSettings } from "./audio";
+import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, pauseSpeak, resumeSpeak, subscribeAudioSettings, testFootsteps, updateAudioSettings } from "./audio";
 import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useMultiplayerConnected, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
 
@@ -695,12 +695,61 @@ function MeditationOverlay() {
 }
 
 function SutraOverlay() {
+  const [selected, setSelected] = useState<"bannha" | "niemphat">("bannha");
+  const [playing, setPlaying] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const readings = {
+    bannha: {
+      title: "Bát Nhã Tâm Kinh",
+      text: TAM_KINH,
+      note: "Đoạn kinh Bát Nhã hiện có trong thư viện Chùa Tâm An.",
+    },
+    niemphat: {
+      title: "Niệm Phật A Di Đà",
+      text: "Nam mô A Di Đà Phật. Nam mô A Di Đà Phật. Nam mô A Di Đà Phật.",
+      note: "Niệm chậm rãi, giọng đọc nhỏ và trang nghiêm.",
+    },
+  } as const;
+  const reading = readings[selected];
+  const startReading = () => {
+    stopSpeak();
+    setPaused(false);
+    setPlaying(true);
+    speak(reading.text, () => { setPlaying(false); setPaused(false); });
+  };
+  const stopReading = () => {
+    stopSpeak();
+    setPlaying(false);
+    setPaused(false);
+  };
   return (
-    <div className="pointer-events-auto absolute left-1/2 top-24 w-[92vw] max-w-lg -translate-x-1/2">
-      <div className="hud-glass px-5 py-4">
-        <div className="mb-1 text-xs uppercase tracking-widest text-primary">Bát Nhã Tâm Kinh</div>
-        <p className="font-display text-sm italic leading-relaxed text-foreground">{TAM_KINH}</p>
-        <button className="hud-swatch mt-3" onClick={() => { stopSpeak(); setUI({ action: "none", pose: "stand" }); }}>⏹ Dừng</button>
+    <div className="pointer-events-auto absolute left-1/2 top-20 w-[92vw] max-w-xl -translate-x-1/2">
+      <div className="hud-glass max-h-[68vh] overflow-y-auto px-5 py-4">
+        <div className="mb-1 text-xs uppercase tracking-widest text-primary">Thư viện đọc kinh · Chùa Tâm An</div>
+        <label className="mb-3 block text-sm font-semibold text-foreground">
+          Chọn bài đọc
+          <select
+            className="hud-input mt-1 w-full"
+            value={selected}
+            onChange={(e) => { stopReading(); setSelected(e.target.value as "bannha" | "niemphat"); }}
+          >
+            <option value="bannha">Bát Nhã Tâm Kinh</option>
+            <option value="niemphat">Niệm Phật A Di Đà</option>
+          </select>
+        </label>
+        <h3 className="mb-1 font-display text-lg text-foreground">{reading.title}</h3>
+        <p className="mb-3 text-xs text-muted-foreground">{reading.note}</p>
+        <p className="max-h-36 overflow-y-auto whitespace-pre-line font-display text-sm italic leading-relaxed text-foreground">{reading.text}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button className="hud-primary" onClick={startReading}>▶ Đọc kinh</button>
+          <button className="hud-swatch" disabled={!playing || paused} onClick={() => { pauseSpeak(); setPaused(true); }}>Ⅱ Tạm dừng</button>
+          <button className="hud-swatch" disabled={!playing || !paused} onClick={() => { resumeSpeak(); setPaused(false); }}>▶ Tiếp tục</button>
+          <button className="hud-swatch" onClick={stopReading}>⏹ Dừng đọc</button>
+          <button className="hud-swatch" onClick={() => { stopReading(); setUI({ action: "none", pose: "stand" }); }}>Đóng</button>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          {playing ? paused ? "Đang tạm dừng." : "Đang đọc bằng giọng tiếng Việt của thiết bị." : "Chạm Đọc kinh để nghe giọng đọc. Nếu chưa nghe tiếng, hãy kiểm tra âm lượng thiết bị."}
+        </p>
       </div>
     </div>
   );
