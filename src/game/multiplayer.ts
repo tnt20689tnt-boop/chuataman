@@ -116,13 +116,24 @@ export function useMultiplayer() {
 
 function readPresence(channelRef: RealtimeChannel) {
   const state = channelRef.presenceState<RemotePlayer>();
-  // Presence is the source of truth: rebuild from active room members so
-  // departed tabs disappear immediately and stale broadcast entries cannot
-  // inflate the online count.
+  // Supabase Presence groups metadata by its presence key. Use that key as
+  // the stable identity and fall back to it if a client payload lacks id.
+  // This avoids silently dropping a real visitor when metadata is incomplete.
   const uniquePlayers = new Map<string, RemotePlayer>();
-  for (const presenceKey in state) {
-    for (const meta of state[presenceKey] ?? []) {
-      if (meta.id && meta.id !== clientId) uniquePlayers.set(meta.id, meta);
+  for (const [presenceKey, entries] of Object.entries(state)) {
+    if (presenceKey === clientId) continue;
+    for (const meta of entries ?? []) {
+      const id = typeof meta.id === "string" && meta.id ? meta.id : presenceKey;
+      if (id === clientId) continue;
+      uniquePlayers.set(id, {
+        ...meta,
+        id,
+        name: typeof meta.name === "string" && meta.name.trim() ? meta.name.slice(0, 24) : "Phật tử",
+        x: Number.isFinite(meta.x) ? meta.x : 0,
+        z: Number.isFinite(meta.z) ? meta.z : 21,
+        rot: Number.isFinite(meta.rot) ? meta.rot : Math.PI,
+        updatedAt: Date.now(),
+      });
     }
   }
   publish({ connected: true, players: [...uniquePlayers.values()], roomId: currentRoomId });
@@ -153,17 +164,12 @@ export function connectMultiplayer() {
 }
 
 function getGuestId() {
-  try {
-    const key = "tam-an-player-id";
-    let id = sessionStorage.getItem(key);
-    if (!id) {
-      id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      sessionStorage.setItem(key, id);
-    }
-    return id;
-  } catch {
-    return `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  }
+  // Generate a fresh identity for every live page instance. sessionStorage
+  // can be cloned when a tab is duplicated, causing two visitors to share
+  // one Supabase Presence key and appear as a single person.
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 export function getMultiplayerRoom() { return currentRoomId; }
