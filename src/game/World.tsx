@@ -20,7 +20,7 @@ import { PlayerAvatar } from "./Characters";
 import { RemotePlayers } from "./RemotePlayers";
 import { ZONES, clamp, rng, stepPlayer } from "./sim";
 import { cam, getUI, input, player, setUI } from "./store";
-import { playFootstep, stopFootsteps } from "./audio";
+import { playFootstep, stopFootsteps, setAudioZone } from "./audio";
 import { Surface } from './Materials';
 import { TempleCampus } from './TempleCampus';
 import { SCENE_COLORS as C } from './templeData';
@@ -102,6 +102,7 @@ function treePoints(): [number, number, number][] {
 function Controller() {
   const { camera, gl } = useThree();
   const last = useRef(0);
+  const lastAudioZone = useRef("");
   const keys = useRef(new Set<string>());
 
   useEffect(() => {
@@ -185,15 +186,21 @@ function Controller() {
     if (t - last.current > 0.5) {
       last.current = t;
       let best = "Thế giới Tâm An";
+      let bestId = "san";
       let bd = 900;
       for (const z of ZONES) {
         const d = (z.x - player.x) ** 2 + (z.z - player.z) ** 2;
         if (d < bd) {
           bd = d;
           best = z.name;
+          bestId = z.id;
         }
       }
       if (best !== ui.zoneLabel) setUI({ zoneLabel: best });
+      if (bestId !== lastAudioZone.current) {
+        lastAudioZone.current = bestId;
+        setAudioZone(bestId);
+      }
       if (!ui.sceneReady) setUI({ sceneReady: true });
       gl.domElement.dataset['sceneReady'] = '1';
     }
