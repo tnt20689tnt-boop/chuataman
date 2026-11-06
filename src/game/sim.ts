@@ -1,4 +1,6 @@
 // Pure simulation/data for Chùa Tâm An. No React, no three.js.
+import { moveVisitor } from './collision';
+import { BUILDINGS } from './templeData';
 
 export type Pose = "stand" | "walk" | "sit" | "kneel" | "pray";
 export type Outfit = "lam" | "trang" | "nau" | "tusi" | "vang";
@@ -137,32 +139,13 @@ export function stepPlayer(
   const nextX = clamp(p.x + dx * sp * dt, -WORLD_LIMIT, WORLD_LIMIT);
   const nextZ = clamp(p.z + dz * sp * dt, -WORLD_LIMIT, WORLD_LIMIT);
 
-  // Main hall collision: the front is accessible only through the central stairs.
-  // The hall platform spans x=[-23,23], z=[-77,-47]; stairs are centered at x=0.
-  const inHallDepth = nextZ < -47 && nextZ > -77;
-  const inStairLane = Math.abs(nextX) < 6.8 && nextZ >= -49.2 && nextZ <= -42.8;
-  const crossingFront = p.z >= -47 && nextZ < -47;
-  const blockedByFront = crossingFront && !inStairLane;
-  const blockedBySide = inHallDepth && Math.abs(nextX) > 19.2;
-  const blockedByBack = nextZ < -77 && Math.abs(nextX) < 19.2;
-  const blockedByStairSide = nextZ < -43.8 && nextZ >= -49.2 && Math.abs(nextX) > 6.8;
-
-  // Resolve axes independently so the player can slide along walls instead of sticking.
-  if (!blockedBySide && !blockedByBack && !blockedByFront && !blockedByStairSide) p.x = nextX;
-  const canMoveZ = !blockedByFront && !blockedByBack && !blockedByStairSide &&
-    !(inHallDepth && Math.abs(p.x) > 19.2);
-  if (canMoveZ) p.z = nextZ;
-
-  // A gentle height ramp follows the three visible stair treads and the raised hall floor.
-  const stairProgress = clamp((-p.z - 43.8) / 3.2, 0, 1);
-  const onStairs = Math.abs(p.x) < 6.8 && p.z < -43.8 && p.z > -47;
-  p.y = onStairs ? stairProgress * 1.2 : p.z <= -47 ? 1.2 : 0;
+  const moved = moveVisitor(p, nextX - p.x, nextZ - p.z);
   const target = Math.atan2(dx, dz);
   let d = target - p.rot;
   while (d > Math.PI) d -= Math.PI * 2;
   while (d < -Math.PI) d += Math.PI * 2;
   p.rot += d * (1 - Math.exp(-MOVE.TURN * dt));
-  return true;
+  return moved;
 }
 
 export const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -185,6 +168,7 @@ export const ZONES: Zone[] = [
   { id: "kinh", name: "Tháp kinh", x: 50, z: -50, rot: Math.PI },
   { id: "giaoluu", name: "Khu giao lưu Phật tử", x: -70, z: 62, rot: Math.PI },
   { id: "phongsinh", name: "Khu phóng sinh (biểu tượng)", x: 90, z: -20, rot: -Math.PI / 2 },
+  ...BUILDINGS.map(b => ({ id: b.id, name: b.label, x: b.x, z: b.z + b.d / 2 + 3, rot: Math.PI })),
 ];
 
 export const QUOTES = [

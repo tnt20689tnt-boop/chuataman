@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { Hair, Outfit, Pose } from "./sim";
+import { surfaceHeight } from './collision';
 
 // Per-frame mutable state (never put in React state)
 export const player = { x: 0, y: 0, z: 21, rot: Math.PI };
@@ -68,7 +69,7 @@ export function saveAvatar(a: Avatar) {
 
 export function teleport(x: number, z: number, rot: number) {
   player.x = x;
-  player.y = z <= -47 ? 1.2 : 0;
+  player.y = surfaceHeight(x, z);
   player.z = z;
   player.rot = rot;
   cam.yaw = rot + Math.PI;
