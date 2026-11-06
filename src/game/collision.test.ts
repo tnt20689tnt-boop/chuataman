@@ -40,7 +40,10 @@ describe('PR9 visitor access', () => {
     const p = { x: 3.6, z: 25.13, y: 0, rot: Math.PI };
     expect(stepPlayer(p, { fwd: 1, right: 0, run: false }, 0, 0.05)).toBe(false);
   });
-  it('keeps outdoor ground behind the hall at ground height', () => {
+  it('reports raised floor heights used by remote avatars', () => {
+    expect(surfaceHeight(0, -50)).toBe(1.2);
+    expect(surfaceHeight(-70, -15)).toBe(0.3);
     expect(surfaceHeight(40, -90)).toBe(0);
   });
+
 });

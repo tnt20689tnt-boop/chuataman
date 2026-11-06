@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import * as THREE from "three";
 import { HAIR_COLORS, OUTFIT_COLORS, OUTFIT_LABEL, HAIR_LABEL } from "./sim";
 import { useMultiplayer, type RemotePlayer } from "./multiplayer";
+import { surfaceHeight } from "./collision";
 
 function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePlayer[] }) {
   const group = useRef<THREE.Group>(null);
@@ -24,6 +25,8 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
     const dt = Math.min(delta, 0.05);
     group.current.position.x = THREE.MathUtils.damp(group.current.position.x, player.x, 11, dt);
     group.current.position.z = THREE.MathUtils.damp(group.current.position.z, player.z, 11, dt);
+    const targetY = surfaceHeight(player.x, player.z);
+    group.current.position.y = THREE.MathUtils.damp(group.current.position.y, targetY, 12, dt);
     const angleDelta = THREE.MathUtils.euclideanModulo(player.rot - group.current.rotation.y + Math.PI, Math.PI * 2) - Math.PI;
     group.current.rotation.y += angleDelta * (1 - Math.exp(-12 * dt));
     const dx = group.current.position.x - previous.current.x;
@@ -53,7 +56,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
   return (
     <group
       ref={group}
-      position={[player.x, 0, player.z]}
+      position={[player.x, surfaceHeight(player.x, player.z), player.z]}
       onClick={(event) => {
         event.stopPropagation();
         setSelected((value) => !value);
