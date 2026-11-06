@@ -85,6 +85,46 @@ function IncenseSmoke() {
   </group>;
 }
 
+function GoldBurner() {
+  const flame = useRef<THREE.Group>(null);
+  const glow = useRef<THREE.PointLight>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (flame.current) {
+      flame.current.scale.set(0.9 + Math.sin(t * 5) * 0.08, 0.9 + Math.sin(t * 7) * 0.16, 0.9 + Math.cos(t * 4) * 0.08);
+      flame.current.rotation.y = Math.sin(t * 2.2) * 0.16;
+    }
+    if (glow.current) glow.current.intensity = 1.8 + (Math.sin(t * 8) + 1) * 0.65;
+  });
+  return <group>
+    {/* A traditional bronze vessel for symbolic vàng mã offerings, centered near the hall entrance. */}
+    <mesh position={[0, 0.22, 0]} castShadow receiveShadow>
+      <cylinderGeometry args={[0.82, 0.62, 0.44, 32]} />
+      <meshStandardMaterial color="#76502b" metalness={0.82} roughness={0.28} />
+    </mesh>
+    <mesh position={[0, 0.46, 0]} castShadow>
+      <torusGeometry args={[0.78, 0.11, 12, 36]} />
+      <meshStandardMaterial color="#c49a52" metalness={0.86} roughness={0.22} />
+    </mesh>
+    <mesh position={[0, 0.03, 0]} castShadow>
+      <cylinderGeometry args={[0.72, 0.86, 0.16, 32]} />
+      <meshStandardMaterial color="#493322" metalness={0.7} roughness={0.38} />
+    </mesh>
+    <group ref={flame} position={[0, 0.52, 0]}>
+      <mesh position={[0, 0.34, 0]}>
+        <coneGeometry args={[0.34, 0.92, 12]} />
+        <meshStandardMaterial color="#ff8b27" emissive="#ff5b12" emissiveIntensity={2.2} transparent opacity={0.88} />
+      </mesh>
+      <mesh position={[0.08, 0.28, 0.02]} rotation-z={0.22}>
+        <coneGeometry args={[0.2, 0.68, 10]} />
+        <meshStandardMaterial color="#ffe7a0" emissive="#ffb52e" emissiveIntensity={2.6} transparent opacity={0.92} />
+      </mesh>
+    </group>
+    <pointLight ref={glow} position={[0, 1.25, 0]} color="#ff9b42" intensity={2.5} distance={7} />
+    <Sparkles position={[0, 0.9, 0]} count={8} scale={[1.1, 0.8, 1.1]} size={2} speed={0.45} color="#ffd28a" opacity={0.55} />
+  </group>;
+}
+
 function PrayerAudio() {
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
@@ -189,6 +229,10 @@ export function MainHall() {
           </group>
         )))}
         <PrayerAudio />
+        {/* Central ceremonial vàng mã brazier, set in the open front-center aisle. */}
+        <group position={[0, 0, 10.2]}>
+          <GoldBurner />
+        </group>
         {/* lanterns */}
         {[-8, -3, 3, 8].map((x) => (
           <group key={x} position={[x, 8, 11]}>
