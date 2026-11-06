@@ -669,40 +669,67 @@ export function Waterfall({ position }: { position: [number, number, number] }) 
 export function Forest({ points }: { points: [number, number, number][] }) {
   const trunk = useRef<THREE.InstancedMesh>(null);
   const crown = useRef<THREE.InstancedMesh>(null);
+  const crownLeft = useRef<THREE.InstancedMesh>(null);
+  const crownRight = useRef<THREE.InstancedMesh>(null);
+  const crownTop = useRef<THREE.InstancedMesh>(null);
   useLayoutEffect(() => {
-    (() => {
-      const m = new THREE.Object3D();
-      const col = new THREE.Color();
-      points.forEach(([x, z, s], i) => {
-        m.position.set(x, 2 * s, z);
-        m.rotation.set(0, s * 10, 0);
-        m.scale.set(s, s, s);
-        m.updateMatrix();
-        trunk.current?.setMatrixAt(i, m.matrix);
-        m.position.set(x, 5.5 * s, z);
-        m.scale.set(s * 3, s * 2.6, s * 3);
-        m.updateMatrix();
-        crown.current?.setMatrixAt(i, m.matrix);
-        col.setHSL(0.24 + (s % 0.1), 0.45, 0.28 + (s % 0.12));
-        crown.current?.setColorAt(i, col);
-      });
-      if (trunk.current) trunk.current.instanceMatrix.needsUpdate = true;
-      if (crown.current) {
-        crown.current.instanceMatrix.needsUpdate = true;
-        if (crown.current.instanceColor) crown.current.instanceColor.needsUpdate = true;
+    const m = new THREE.Object3D();
+    const col = new THREE.Color();
+    points.forEach(([x, z, s], i) => {
+      m.position.set(x, 2 * s, z);
+      m.rotation.set(0, s * 10, 0);
+      m.scale.set(s, s, s);
+      m.updateMatrix();
+      trunk.current?.setMatrixAt(i, m.matrix);
+
+      // Main rounded canopy with three overlapping foliage clusters for a fuller tree silhouette.
+      m.position.set(x, 5.4 * s, z);
+      m.scale.set(2.65 * s, 2.25 * s, 2.65 * s);
+      m.updateMatrix();
+      crown.current?.setMatrixAt(i, m.matrix);
+      col.setHSL(0.285 + (i % 5) * 0.012, 0.48, 0.27 + (i % 4) * 0.025);
+      crown.current?.setColorAt(i, col);
+
+      m.position.set(x - 1.35 * s, 5.15 * s, z + 0.18 * s);
+      m.scale.set(1.75 * s, 1.75 * s, 1.8 * s);
+      m.updateMatrix();
+      crownLeft.current?.setMatrixAt(i, m.matrix);
+      col.setHSL(0.29 + (i % 4) * 0.012, 0.5, 0.3 + (i % 3) * 0.025);
+      crownLeft.current?.setColorAt(i, col);
+
+      m.position.set(x + 1.35 * s, 5.25 * s, z - 0.16 * s);
+      m.scale.set(1.8 * s, 1.8 * s, 1.75 * s);
+      m.updateMatrix();
+      crownRight.current?.setMatrixAt(i, m.matrix);
+      col.setHSL(0.265 + (i % 5) * 0.012, 0.5, 0.29 + (i % 3) * 0.025);
+      crownRight.current?.setColorAt(i, col);
+
+      m.position.set(x, 7.05 * s, z);
+      m.scale.set(1.75 * s, 1.8 * s, 1.75 * s);
+      m.updateMatrix();
+      crownTop.current?.setMatrixAt(i, m.matrix);
+      col.setHSL(0.30 + (i % 4) * 0.01, 0.46, 0.32 + (i % 3) * 0.025);
+      crownTop.current?.setColorAt(i, col);
+    });
+    [trunk, crown, crownLeft, crownRight, crownTop].forEach(ref => {
+      if (ref.current) {
+        ref.current.instanceMatrix.needsUpdate = true;
+        if (ref.current.instanceColor) ref.current.instanceColor.needsUpdate = true;
       }
-    })();
+    });
   }, [points]);
   return (
     <>
       <instancedMesh ref={trunk} args={[undefined, undefined, points.length]} castShadow>
-        <cylinderGeometry args={[0.25, 0.4, 4, 6]} />
-        <meshStandardMaterial color="#4a3426" />
+        <cylinderGeometry args={[0.25, 0.4, 4, 8]} />
+        <meshStandardMaterial color="#59402b" roughness={1} />
       </instancedMesh>
-      <instancedMesh ref={crown} args={[undefined, undefined, points.length]} castShadow>
-        <icosahedronGeometry args={[1, 1]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.9} flatShading />
-      </instancedMesh>
+      {[crown, crownLeft, crownRight, crownTop].map((ref, i) => (
+        <instancedMesh key={i} ref={ref} args={[undefined, undefined, points.length]} castShadow receiveShadow>
+          <sphereGeometry args={[1, 9, 7]} />
+          <meshStandardMaterial color="#ffffff" roughness={0.94} flatShading />
+        </instancedMesh>
+      ))}
     </>
   );
 }
@@ -736,11 +763,17 @@ export function SkyLanterns() {
   const group = useRef<THREE.Group>(null);
   const colors = ["#e85b32", "#f2a84a", "#d94b35", "#f4c36a", "#dc7138"];
   useFrame(({ clock }) => {
-    group.current?.children.forEach((lantern, i) => {
-      const t = (clock.elapsedTime * 0.52 + i * 4.1) % 38;
-      lantern.position.y = 17 + t;
-      lantern.position.x += Math.sin(clock.elapsedTime * 0.18 + i) * 0.0018;
-      lantern.rotation.z = Math.sin(clock.elapsedTime * 0.35 + i * 1.7) * 0.035;
+    const time = clock.elapsedTime;
+    group.current?.children.forEach((lantern) => {
+      const data = lantern.userData as { baseX: number; baseY: number; baseZ: number; phase: number };
+      const travel = (time * 0.72 + data.phase) % 54;
+      lantern.position.set(
+        data.baseX + Math.sin(time * 0.22 + data.phase) * 1.8,
+        17 + travel,
+        data.baseZ + Math.cos(time * 0.17 + data.phase) * 1.2,
+      );
+      lantern.rotation.z = Math.sin(time * 0.42 + data.phase) * 0.045;
+      lantern.rotation.x = Math.cos(time * 0.3 + data.phase) * 0.025;
     });
   });
   return <group ref={group} name="Đèn hoa đăng bay trên bầu trời">
@@ -748,15 +781,26 @@ export function SkyLanterns() {
       const x = ((i * 37) % 146) - 73;
       const z = ((i * 53) % 186) - 93;
       const scale = 0.72 + (i % 4) * 0.12;
-      return <group key={i} position={[x, 18 + (i % 9) * 3.5, z]} scale={scale}>
-        <mesh position={[0, 0.42, 0]}>
-          <cylinderGeometry args={[0.22, 0.34, 0.82, 9, 1, false]} />
-          <meshStandardMaterial color={colors[i % colors.length]} emissive={colors[i % colors.length]} emissiveIntensity={1.35} roughness={0.72} />
+      const phase = (i * 7.3) % 54;
+      return <group key={i} position={[x, 17 + phase, z]} scale={scale}
+        userData={{ baseX: x, baseY: 17 + phase, baseZ: z, phase }}>
+        <mesh position={[0, 0.42, 0]} castShadow>
+          <cylinderGeometry args={[0.22, 0.34, 0.82, 12, 1, false]} />
+          <meshStandardMaterial color={colors[i % colors.length]} emissive={colors[i % colors.length]} emissiveIntensity={1.7} roughness={0.68} />
         </mesh>
-        <mesh position={[0, 0.84, 0]}><torusGeometry args={[0.22, 0.035, 5, 9]} /><meshStandardMaterial color="#f6d18a" metalness={0.45} /></mesh>
-        <mesh position={[0, 0.02, 0]}><torusGeometry args={[0.31, 0.035, 5, 9]} /><meshStandardMaterial color="#f6d18a" metalness={0.45} /></mesh>
-        <mesh position={[0, 0.12, 0]}><sphereGeometry args={[0.075, 8, 8]} /><meshBasicMaterial color="#fff0b0" /></mesh>
-        {i % 6 === 0 && <pointLight position={[0, 0.35, 0]} intensity={2.3} distance={8} color="#ffb45e" />}
+        <mesh position={[0, 0.84, 0]}>
+          <torusGeometry args={[0.22, 0.035, 6, 12]} />
+          <meshStandardMaterial color="#f6d18a" metalness={0.45} />
+        </mesh>
+        <mesh position={[0, 0.02, 0]}>
+          <torusGeometry args={[0.31, 0.035, 6, 12]} />
+          <meshStandardMaterial color="#f6d18a" metalness={0.45} />
+        </mesh>
+        <mesh position={[0, 0.16, 0]}>
+          <sphereGeometry args={[0.12, 10, 8]} />
+          <meshBasicMaterial color="#fff0b0" />
+        </mesh>
+        {i % 5 === 0 && <pointLight position={[0, 0.35, 0]} intensity={2.8} distance={10} color="#ffb45e" />}
       </group>;
     })}
   </group>;
