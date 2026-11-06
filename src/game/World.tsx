@@ -12,6 +12,7 @@ import {
   Pond,
   ReleaseLanterns,
   StoneLanterns,
+  SkyLanterns,
   Tower,
   Waterfall,
   Buddha,
