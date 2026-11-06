@@ -229,7 +229,8 @@ export function PlayerAvatar() {
   useFrame(({ clock }, delta) => {
     if (!g.current) return;
     g.current.position.set(player.x, player.y, player.z);
-    g.current.rotation.y = player.rot;
+    // Lay the avatar horizontally on the guest-room mattress when resting.
+    g.current.rotation.set(pose === "lie" ? Math.PI / 2 : 0, player.rot, 0);
     const t = clock.elapsedTime;
     const walking = pose === "walk";
     const gait = walking ? Math.sin(t * 8.5) * 0.58 : 0;
