@@ -18,6 +18,8 @@ export interface RemotePlayer {
   z: number;
   rot: number;
   updatedAt: number;
+  // Monotonic per-session sequence; unlike Date.now(), this is not affected by clock skew between devices.
+  seq?: number;
   outfit?: Outfit;
   hair?: Hair;
   hairColor?: string;
@@ -42,6 +44,7 @@ let channel: RealtimeChannel | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let presenceTimer: ReturnType<typeof setInterval> | null = null;
 let clientId = "";
+let movementSeq = 0;
 let connectionAttempt = 0;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -140,8 +143,8 @@ function readPresence(channelRef: RealtimeChannel) {
       const id = typeof meta.id === "string" && meta.id ? meta.id : presenceKey;
       if (id === clientId) continue;
       const previous = merged.get(id);
-      const receivedAt = Number.isFinite(meta.updatedAt) ? meta.updatedAt : Date.now();
-      if (previous && previous.updatedAt > receivedAt) continue;
+      const receivedSeq = Number.isFinite(meta.seq) ? Number(meta.seq) : 0;
+      if (previous && Number(previous.seq ?? 0) > receivedSeq) continue;
       merged.set(id, {
         ...meta,
         id,
@@ -149,7 +152,9 @@ function readPresence(channelRef: RealtimeChannel) {
         x: Number.isFinite(meta.x) ? meta.x : previous?.x ?? 0,
         z: Number.isFinite(meta.z) ? meta.z : previous?.z ?? 21,
         rot: Number.isFinite(meta.rot) ? meta.rot : previous?.rot ?? Math.PI,
-        updatedAt: receivedAt,
+        // Store local receipt time for stale-peer cleanup; never compare device clocks.
+        updatedAt: Date.now(),
+        seq: receivedSeq,
       });
     }
   }
@@ -204,6 +209,7 @@ export function switchMultiplayerRoom(roomId: string) {
 function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUserId: string, attempt: number) {
   if (channel) return;
   clientId = authenticatedUserId;
+  movementSeq = 0;
 
   client = authenticatedClient;
 
@@ -235,15 +241,17 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
       if (!incoming || typeof incoming.id !== "string" || !incoming.id || incoming.id === clientId ||
           !Number.isFinite(incoming.x) || !Number.isFinite(incoming.z)) return;
       const previous = snapshot.players.find((peer) => peer.id === incoming.id);
-      const receivedAt = Number.isFinite(incoming.updatedAt) ? incoming.updatedAt : Date.now();
-      if (previous && previous.updatedAt > receivedAt) return;
+      const receivedSeq = Number.isFinite(incoming.seq) ? Number(incoming.seq) : 0;
+      if (previous && Number(previous.seq ?? 0) > receivedSeq) return;
       const next: RemotePlayer = {
         ...incoming,
         name: typeof incoming.name === "string" && incoming.name.trim() ? incoming.name.slice(0, 24) : "Phật tử",
         x: incoming.x,
         z: incoming.z,
         rot: Number.isFinite(incoming.rot) ? incoming.rot : previous?.rot ?? Math.PI,
-        updatedAt: receivedAt,
+        // Local receipt time drives expiry; sender clocks may differ.
+        updatedAt: Date.now(),
+        seq: receivedSeq,
       };
       const players = snapshot.players.filter((peer) => peer.id !== next.id);
       players.push(next);
@@ -264,6 +272,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           z: player.z,
           rot: player.rot,
           updatedAt: Date.now(),
+          seq: movementSeq,
           outfit: avatar?.outfit ?? "lam",
           hair: avatar?.hair ?? "ngan",
           hairColor: avatar?.hairColor ?? "#1b1410",
@@ -302,6 +311,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
                 outfit: currentAvatar?.outfit ?? "lam",
                 hair: currentAvatar?.hair ?? "ngan",
                 hairColor: currentAvatar?.hairColor ?? "#1b1410",
+                seq: movementSeq,
               } satisfies RemotePlayer);
             }
             return;
@@ -311,6 +321,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
             id: authenticatedUserId,
             name: currentAvatar?.name || "Phật tử",
             x: player.x, z: player.z, rot: player.rot, updatedAt: now,
+            seq: ++movementSeq,
             outfit: currentAvatar?.outfit ?? "lam",
             hair: currentAvatar?.hair ?? "ngan",
             hairColor: currentAvatar?.hairColor ?? "#1b1410",
