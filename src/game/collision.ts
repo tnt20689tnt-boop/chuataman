@@ -11,8 +11,8 @@ const solids: Solid[] = [
   { id: 'foundation-left', x: -15, z: -62, w: 16, d: 30 },
   { id: 'foundation-right', x: 15, z: -62, w: 16, d: 30 },
   { id: 'altar', x: 0, z: -67, w: 13, d: 10 },
-  // Donation box beside the main-hall entrance (local x=-16.2, z=10.2).
-  { id: 'main-hall-donation-box', x: -16.2, z: -51.8, w: 1.9, d: 1.5 },
+  // Double-size donation box mounted along the left inner wall of the main hall.
+  { id: 'main-hall-donation-box', x: -18.4, z: -62, w: 2.2, d: 3.0 },
   { id: 'bell', x: -55, z: -52, w: 10, d: 10 },
   { id: 'tower', x: 50, z: -62, w: 10, d: 10 },
   { id: 'waterfall', x: 76, z: -32, w: 20, d: 17 },
