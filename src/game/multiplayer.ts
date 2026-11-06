@@ -114,6 +114,19 @@ export function useMultiplayer() {
   );
 }
 
+// Subscribe only to connection status so text-entry panels do not re-render
+// for every remote player's movement update.
+export function useMultiplayerConnected() {
+  return useSyncExternalStore(
+    (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    () => snapshot.connected,
+    () => false,
+  );
+}
+
 function readPresence(channelRef: RealtimeChannel) {
   const state = channelRef.presenceState<RemotePlayer>();
   // Supabase Presence groups metadata by its presence key. Use that key as
