@@ -26,6 +26,76 @@ import { TempleCampus } from './TempleCampus';
 import { SCENE_COLORS as C } from './templeData';
 import { teleport } from './store';
 
+function getVietnamDaylight() {
+  const now = new Date();
+  const hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  // Sunrise around 05:30, sunset around 18:15 (Vietnam local device time).
+  const daylight = THREE.MathUtils.clamp((hour - 5.5) / 1.1, 0, 1) *
+    (1 - THREE.MathUtils.clamp((hour - 17.2) / 1.1, 0, 1));
+  const morning = THREE.MathUtils.clamp(1 - Math.abs(hour - 8.0) / 4.5, 0, 1);
+  const evening = THREE.MathUtils.clamp(1 - Math.abs(hour - 17.4) / 2.2, 0, 1);
+  const night = 1 - daylight;
+  return { hour, daylight, morning, evening, night };
+}
+
+function DayNightCycle({ mobile }: { mobile: boolean }) {
+  const hemi = useRef<THREE.HemisphereLight>(null);
+  const sun = useRef<THREE.DirectionalLight>(null);
+  const { scene } = useThree();
+  const [sunPosition, setSunPosition] = useState<[number, number, number]>([120, 100, -200]);
+
+  useEffect(() => {
+    const updateSun = () => {
+      const { hour } = getVietnamDaylight();
+      const angle = ((hour - 6) / 12) * Math.PI;
+      setSunPosition([Math.cos(angle) * 180, Math.max(-18, Math.sin(angle) * 150), -80]);
+    };
+    updateSun();
+    const timer = window.setInterval(updateSun, 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useFrame(() => {
+    const { daylight, morning, evening, night } = getVietnamDaylight();
+    const bg = new THREE.Color("#101b2b").lerp(new THREE.Color("#d9e8e8"), daylight);
+    const dawn = new THREE.Color("#f3b88e");
+    bg.lerp(dawn, Math.max(morning, evening) * 0.22);
+    const fogColor = new THREE.Color("#101827").lerp(new THREE.Color("#d4e1da"), daylight);
+    fogColor.lerp(new THREE.Color("#d99b78"), evening * 0.18);
+    scene.background = bg;
+    if (scene.fog instanceof THREE.Fog) scene.fog.color.copy(fogColor);
+    if (hemi.current) {
+      hemi.current.intensity = 0.16 + daylight * 1.05;
+      hemi.current.color.set(night > 0.65 ? "#7186b4" : "#e5eef3");
+      hemi.current.groundColor.set(night > 0.65 ? "#202b38" : "#657452");
+    }
+    if (sun.current) {
+      sun.current.intensity = 0.04 + daylight * 2.35;
+      sun.current.color.set(evening > 0.25 ? "#ffc18b" : "#fff3de");
+      sun.current.position.set(sunPosition[0], sunPosition[1], sunPosition[2]);
+    }
+  });
+
+  return <>
+    <Sky sunPosition={sunPosition} turbidity={2.5} rayleigh={1.2} mieCoefficient={0.003} mieDirectionalG={0.8} />
+    <hemisphereLight ref={hemi} args={["#e5eef3", "#657452", 1.1]} />
+    <directionalLight
+      ref={sun}
+      position={sunPosition}
+      intensity={2.4}
+      color="#fff3de"
+      castShadow
+      shadow-mapSize={mobile ? [1024, 1024] : [2048, 2048]}
+      shadow-camera-left={-80}
+      shadow-camera-right={80}
+      shadow-camera-top={80}
+      shadow-camera-bottom={-80}
+      shadow-camera-far={250}
+      shadow-bias={-0.0005}
+    />
+  </>;
+}
+
 function Ground() {
   const grass = useMemo(() => grassTexture(), []);
   const stone = useMemo(() => stoneTexture(), []);
@@ -226,23 +296,8 @@ export default function World() {
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
       style={{ touchAction: "none" }}
     >
-      <color attach="background" args={[C.sky]} />
       <fog attach="fog" args={[C.fog, 140, 400]} />
-      <Sky sunPosition={[120, 100, -200]} turbidity={2.5} rayleigh={1.2} mieCoefficient={0.003} mieDirectionalG={0.8} />
-      <hemisphereLight args={[C.ambient, C.groundLight, 1.1]} />
-      <directionalLight
-        position={[60, 45, -40]}
-        intensity={2.4}
-        color={C.sun}
-        castShadow
-        shadow-mapSize={mobile ? [1024, 1024] : [2048, 2048]}
-        shadow-camera-left={-80}
-        shadow-camera-right={80}
-        shadow-camera-top={80}
-        shadow-camera-bottom={-80}
-        shadow-camera-far={250}
-        shadow-bias={-0.0005}
-      />
+      <DayNightCycle mobile={mobile} />
       <Environment resolution={64}>
         <Lightformer intensity={2} position={[0, 5, 0]} scale={[10, 10, 1]} color="#ffe2bd" />
         <Lightformer intensity={1} color="#bcd6e0" position={[-5, 1, -1]} rotation-y={Math.PI / 2} scale={[20, 1, 1]} />
