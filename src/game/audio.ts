@@ -58,9 +58,14 @@ function syncLoops() {
     const shouldPlay = settings.enabled && wanted.has(id) && level(id) > 0;
     const el = elements.get(id) ?? (shouldPlay ? getAudio(id) : undefined);
     if (!el) return;
-    el.volume = level(id) * (speechActive ? 0.24 : 1);
-    if (!shouldPlay) el.pause();
-    else if (el.paused) void el.play().catch(() => undefined);
+    // During Dharma narration, silence every ambient loop completely.
+    // A quiet background track under speech was still distracting on phones.
+    if (!shouldPlay || speechActive) {
+      el.pause();
+      return;
+    }
+    el.volume = level(id);
+    if (el.paused) void el.play().catch(() => undefined);
   });
 }
 function stopZoneRitualSounds() {
@@ -203,7 +208,7 @@ export function speak(text: string, onEnd?: () => void) {
   };
   speechActive = true;
   syncLoops();
-  speechTimer = window.setInterval(() => { if (speechActive) woodBlock(); }, 1250);
+  // Dharma narration is voice-only: no music, birds, bell, or wooden-fish accompaniment.
   // Let the browser finish processing cancel() before queuing the first phrase.
   window.setTimeout(speakNext, 120);
   return true;
