@@ -92,7 +92,8 @@ function DonationBox() {
   const amounts = [5000, 10000, 20000, 50000, 100000, 200000];
   const money = (n: number) => n.toLocaleString("vi-VN") + "đ";
   return <group>
-    {/* Traditional lacquered wooden merit box with brass fittings and a visible offering slot. */}
+    <group scale={2}>
+    {/* Double-size lacquered merit box, mounted close to the left wall. */}
     <mesh position={[0, 0.72, 0]} castShadow receiveShadow
       onClick={(e) => { e.stopPropagation(); setOpen(v => !v); setAmount(null); }}>
       <boxGeometry args={[1.45, 1.35, 1.05]} />
@@ -125,15 +126,16 @@ function DonationBox() {
       <boxGeometry args={[1.9, 0.55, 0.12]} />
       <meshBasicMaterial transparent opacity={0} depthWrite={false} />
     </mesh>
-    {/* Large, highly visible clickable merit sign above the donation box. */}
-    <Html position={[0, 2.55, 0.72]} center distanceFactor={7} transform={false} style={{ pointerEvents: "auto" }}>
+    </group>
+    {/* Separate large sign board suspended above the enlarged donation box. */}
+    <Html position={[0, 3.45, 0.72]} center distanceFactor={7} transform={false} style={{ pointerEvents: "auto" }}>
       <button onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
         style={{ width: 330, minHeight: 104, boxSizing: "border-box", border: "4px solid #d9b96f", borderRadius: 14, padding: "13px 16px", background: "linear-gradient(145deg,#7c241d,#3e1714)", color: "#fff2ce", fontWeight: 800, whiteSpace: "normal", cursor: "pointer", boxShadow: "0 5px 22px #0009, inset 0 0 0 2px #f0d99b", textAlign: "center" }}>
         <div style={{ fontSize: 25, letterSpacing: 1.5, lineHeight: 1.2 }}>HÒM CÔNG ĐỨC</div>
         <div style={{ fontSize: 15, marginTop: 8, color: "#ffe3a1" }}>{open ? "CHẠM ĐỂ ĐÓNG BẢNG" : "🙏 CHẠM VÀO ĐÂY ĐỂ PHÁT TÂM"}</div>
       </button>
     </Html>
-    {open && <Html position={[0, 2.45, 0.78]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
+    {open && <Html position={[0, 4.15, 0.78]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: 290, boxSizing: "border-box", padding: 16, borderRadius: 16, background: "rgba(255,249,232,.98)", color: "#493024", border: "2px solid #b89555", boxShadow: "0 8px 28px #0007", fontFamily: "Arial,sans-serif", textAlign: "center" }}>
         <div style={{ fontSize: 19, fontWeight: 800, color: "#743b27" }}>CÔNG ĐỨC CHÙA TÂM AN</div>
         <div style={{ fontSize: 12, margin: "6px 0 12px", color: "#76624d" }}>Tùy tâm gieo duyên lành – xin tùy hỷ công đức</div>
@@ -278,8 +280,8 @@ export function MainHall() {
           </group>
         )))}
         <PrayerAudio />
-        {/* Merit box beside the entrance, offset from the central visitor path. */}
-        <group position={[-16.2, 0, 10.2]}>
+        {/* Enlarged merit box mounted against the left inner wall; its sign hangs separately above it. */}
+        <group position={[-18.4, 0, 0]} rotation-y={Math.PI / 2}>
           <DonationBox />
         </group>
         {/* lanterns */}
