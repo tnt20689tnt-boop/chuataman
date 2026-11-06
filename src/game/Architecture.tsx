@@ -124,52 +124,140 @@ export function MainHall() {
 }
 
 export function Buddha(props: { position: [number, number, number]; scale?: number }) {
-  const gold = <meshStandardMaterial color="#b58d49" metalness={0.72} roughness={0.34} />;
-  const darkGold = <meshStandardMaterial color="#51402b" metalness={0.42} roughness={0.62} />;
-  const curls = useMemo(() => Array.from({ length: 48 }, (_, i) => {
-    const y = 5.35 + (i / 48) * 0.82;
-    const ring = Math.acos(THREE.MathUtils.clamp((y - 5.76) / 0.82, -0.95, 0.95));
-    const a = i * 2.399963;
-    return [Math.sin(ring) * Math.cos(a) * 0.67, y, Math.sin(ring) * Math.sin(a) * 0.58] as [number, number, number];
+  const gold = useMemo(() => new THREE.MeshStandardMaterial({
+    color: "#c49a52", metalness: 0.48, roughness: 0.42,
   }), []);
+  const robe = useMemo(() => new THREE.MeshStandardMaterial({
+    color: "#b87932", metalness: 0.34, roughness: 0.5,
+  }), []);
+  const skin = useMemo(() => new THREE.MeshStandardMaterial({
+    color: "#d8b879", metalness: 0.22, roughness: 0.58,
+  }), []);
+  const shadowGold = useMemo(() => new THREE.MeshStandardMaterial({
+    color: "#785326", metalness: 0.38, roughness: 0.58,
+  }), []);
+  const folds = useMemo(() => {
+    const paths: THREE.Vector3[][] = [];
+    for (let i = -3; i <= 3; i++) {
+      const x = i * 0.22;
+      paths.push([
+        new THREE.Vector3(x * 0.55, 3.9, 0.66),
+        new THREE.Vector3(x * 0.78, 3.25, 0.83),
+        new THREE.Vector3(x * 1.35, 2.5, 1.0),
+        new THREE.Vector3(x * 2.1, 1.65, 1.13),
+      ]);
+    }
+    return paths.map(points => new THREE.CatmullRomCurve3(points));
+  }, []);
+  const curls = useMemo(() => {
+    const pts: [number, number, number][] = [];
+    for (let row = 0; row < 7; row++) {
+      const y = 5.48 + row * 0.105;
+      const radius = Math.sqrt(Math.max(0.05, 1 - ((y - 5.82) / 0.48) ** 2));
+      const count = Math.max(8, Math.round(30 * radius));
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2 + row * 0.16;
+        pts.push([Math.cos(a) * 0.57 * radius, y, Math.sin(a) * 0.49 * radius]);
+      }
+    }
+    return pts;
+  }, []);
   return (
-    <group position={props.position} scale={props.scale ?? 1}>
-      {/* Layered lotus pedestal, with individually formed petals. */}
-      <mesh position={[0, 0.42, 0]}><cylinderGeometry args={[2.25, 2.0, 0.84, 48]} />{gold}</mesh>
-      {Array.from({ length: 20 }).map((_, i) => {
-        const a = (i / 20) * Math.PI * 2;
-        return <mesh key={i} position={[Math.cos(a) * 2.05, 0.82, Math.sin(a) * 2.05]} rotation={[0.25, -a, 0.35]} scale={[0.72, 0.34, 0.42]}>
-          <sphereGeometry args={[1, 18, 12]} />{gold}
+    <group position={props.position} scale={props.scale ?? 1} name="Tượng Phật Thích Ca trang nghiêm">
+      {/* Wide, finely layered lotus throne */}
+      <mesh position={[0, 0.28, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[2.35, 2.55, 0.52, 64]} /><primitive object={shadowGold} attach="material" />
+      </mesh>
+      <mesh position={[0, 0.62, 0]} castShadow>
+        <cylinderGeometry args={[2.2, 2.36, 0.22, 64]} /><primitive object={gold} attach="material" />
+      </mesh>
+      {Array.from({ length: 28 }).map((_, i) => {
+        const a = (i / 28) * Math.PI * 2;
+        return <group key={i} position={[Math.cos(a) * 2.02, 0.82, Math.sin(a) * 2.02]} rotation-y={-a}>
+          <mesh rotation-x={-0.28} rotation-z={0.12} scale={[0.48, 0.72, 0.22]} castShadow>
+            <sphereGeometry args={[1, 24, 18]} /><primitive object={gold} attach="material" />
+          </mesh>
+          <mesh position={[0, -0.18, 0.04]} scale={[0.25, 0.34, 0.16]}>
+            <sphereGeometry args={[1, 18, 12]} /><primitive object={shadowGold} attach="material" />
+          </mesh>
+        </group>;
+      })}
+      <mesh position={[0, 1.02, 0]}><cylinderGeometry args={[1.82, 2.12, 0.3, 64]} /><primitive object={gold} attach="material" /></mesh>
+      {/* Cross-legged meditative posture, sculpted robe and natural shoulder line */}
+      <mesh position={[0, 1.48, 0.12]} scale={[1.9, 0.62, 1.25]} castShadow>
+        <sphereGeometry args={[1, 48, 32]} /><primitive object={robe} attach="material" />
+      </mesh>
+      <mesh position={[0, 1.88, 0.03]} scale={[1.25, 0.45, 0.92]} castShadow>
+        <sphereGeometry args={[1, 40, 28]} /><primitive object={gold} attach="material" />
+      </mesh>
+      <mesh position={[0, 3.05, -0.02]} scale={[0.91, 1.38, 0.72]} castShadow>
+        <sphereGeometry args={[1, 48, 36]} /><primitive object={robe} attach="material" />
+      </mesh>
+      <mesh position={[0, 3.56, 0.02]} rotation-z={-0.08} scale={[1.02, 0.72, 0.76]} castShadow>
+        <sphereGeometry args={[1, 40, 28]} /><primitive object={robe} attach="material" />
+      </mesh>
+      {/* Draped robe over the left shoulder and across the chest */}
+      <mesh position={[-0.48, 3.35, 0.55]} rotation-z={0.22} rotation-x={-0.16} scale={[0.48, 1.12, 0.22]} castShadow>
+        <sphereGeometry args={[1, 32, 24]} /><primitive object={gold} attach="material" />
+      </mesh>
+      {folds.map((curve, i) => <mesh key={i} geometry={new THREE.TubeGeometry(curve, 24, 0.018, 7, false)}>
+        <primitive object={shadowGold} attach="material" />
+      </mesh>)}
+      {/* Hands rest gently in dhyana mudra */}
+      <mesh position={[-0.78, 2.05, 0.86]} rotation-z={-0.35} scale={[0.28, 0.55, 0.28]} castShadow>
+        <capsuleGeometry args={[0.5, 1, 8, 16]} /><primitive object={skin} attach="material" />
+      </mesh>
+      <mesh position={[0.72, 2.05, 0.86]} rotation-z={0.35} scale={[0.28, 0.55, 0.28]} castShadow>
+        <capsuleGeometry args={[0.5, 1, 8, 16]} /><primitive object={skin} attach="material" />
+      </mesh>
+      <mesh position={[0, 2.2, 1.02]} scale={[0.64, 0.16, 0.23]} castShadow>
+        <sphereGeometry args={[1, 32, 20]} /><primitive object={skin} attach="material" />
+      </mesh>
+      {/* Calm oval face, softly rounded cheeks, long ears and serene closed eyes */}
+      <mesh position={[0, 4.86, 0.08]} scale={[0.59, 0.76, 0.52]} castShadow>
+        <sphereGeometry args={[1, 56, 40]} /><primitive object={skin} attach="material" />
+      </mesh>
+      {[-1, 1].map(s => <group key={s}>
+        <mesh position={[s * 0.57, 4.86, 0.02]} scale={[0.14, 0.34, 0.16]}>
+          <sphereGeometry args={[1, 24, 18]} /><primitive object={skin} attach="material" />
+        </mesh>
+        <mesh position={[s * 0.22, 4.91, 0.548]} rotation-z={s * -0.08} scale={[0.145, 0.022, 0.025]}>
+          <sphereGeometry args={[1, 28, 16]} /><primitive object={shadowGold} attach="material" />
+        </mesh>
+        <mesh position={[s * 0.22, 5.02, 0.53]} rotation-z={s * -0.16} scale={[0.17, 0.035, 0.035]}>
+          <sphereGeometry args={[1, 24, 16]} /><primitive object={skin} attach="material" />
+        </mesh>
+        <mesh position={[s * 0.66, 4.8, -0.01]} scale={[0.12, 0.43, 0.16]} castShadow>
+          <capsuleGeometry args={[0.5, 1, 8, 12]} /><primitive object={skin} attach="material" />
+        </mesh>
+      </group>)}
+      <mesh position={[0, 4.83, 0.59]} rotation-x={-0.12} scale={[0.09, 0.25, 0.12]}>
+        <capsuleGeometry args={[0.5, 1, 8, 12]} /><primitive object={skin} attach="material" />
+      </mesh>
+      <mesh position={[0, 4.59, 0.57]} scale={[0.15, 0.035, 0.025]}>
+        <sphereGeometry args={[1, 24, 14]} /><primitive object={shadowGold} attach="material" />
+      </mesh>
+      <mesh position={[0, 4.62, 0.585]} scale={[0.1, 0.018, 0.02]}>
+        <sphereGeometry args={[1, 20, 12]} /><primitive object={skin} attach="material" />
+      </mesh>
+      {curls.map(([x, y, z], i) => <mesh key={i} position={[x, y, z]} scale={0.068}>
+        <sphereGeometry args={[1, 12, 10]} /><primitive object={shadowGold} attach="material" />
+      </mesh>)}
+      <mesh position={[0, 5.78, 0.02]} scale={[0.23, 0.32, 0.23]}>
+        <sphereGeometry args={[1, 28, 20]} /><primitive object={gold} attach="material" />
+      </mesh>
+      <mesh position={[0, 5.08, 0.57]} scale={[0.045, 0.045, 0.025]}>
+        <sphereGeometry args={[1, 16, 12]} /><primitive object={gold} attach="material" />
+      </mesh>
+      {/* Double ornamental halo behind the head */}
+      <mesh position={[0, 4.92, -0.68]}><torusGeometry args={[1.13, 0.055, 12, 80]} /><primitive object={gold} attach="material" /></mesh>
+      <mesh position={[0, 4.92, -0.72]}><torusGeometry args={[1.29, 0.018, 8, 80]} /><primitive object={shadowGold} attach="material" /></mesh>
+      {Array.from({ length: 24 }).map((_, i) => {
+        const a = i / 24 * Math.PI * 2;
+        return <mesh key={i} position={[Math.cos(a) * 1.28, 4.92 + Math.sin(a) * 1.28, -0.7]} scale={0.055}>
+          <sphereGeometry args={[1, 12, 10]} /><primitive object={gold} attach="material" />
         </mesh>;
       })}
-      <mesh position={[0, 1.12, 0]}><cylinderGeometry args={[1.85, 2.05, 0.34, 48]} />{gold}</mesh>
-      {/* Balanced seated posture and softly modelled robe silhouette. */}
-      <mesh position={[0, 1.62, 0.24]} scale={[2.0, 0.64, 1.28]}><sphereGeometry args={[1, 40, 28]} />{gold}</mesh>
-      <mesh position={[0, 2.9, -0.02]} scale={[1.02, 1.55, 0.78]}><sphereGeometry args={[1, 40, 32]} />{gold}</mesh>
-      <mesh position={[0, 3.18, 0.02]} rotation-x={0.12} scale={[1.08, 1.24, 0.82]}>
-        <sphereGeometry args={[1, 36, 28]} />{gold}
-      </mesh>
-      {[-1, 1].map((s) => <group key={s}>
-        <mesh position={[s * 0.88, 2.7, 0.38]} rotation={[0.22, 0, s * 0.32]} scale={[0.31, 0.95, 0.34]}><capsuleGeometry args={[0.5, 1, 8, 16]} />{gold}</mesh>
-        <mesh position={[s * 0.46, 2.14, 0.83]} rotation-z={s * -0.08} scale={[0.26, 0.48, 0.22]}><sphereGeometry args={[1, 24, 18]} />{gold}</mesh>
-      </group>)}
-      {/* Calm face: cheek volume, closed eyelids, nose bridge and a subtle smile. */}
-      <mesh position={[0, 5.0, 0.04]} scale={[0.62, 0.78, 0.58]}><sphereGeometry args={[1, 48, 36]} />{gold}</mesh>
-      {[-1, 1].map((s) => <group key={s}>
-        <mesh position={[s * 0.61, 4.98, 0.02]} scale={[0.15, 0.37, 0.18]}><sphereGeometry args={[1, 24, 18]} />{gold}</mesh>
-        <mesh position={[s * 0.22, 5.05, 0.555]} rotation-z={s * -0.04} scale={[0.15, 0.035, 0.035]}><sphereGeometry args={[1, 24, 12]} />{darkGold}</mesh>
-        <mesh position={[s * 0.22, 5.16, 0.55]} rotation-z={s * -0.12} scale={[0.16, 0.035, 0.035]}><sphereGeometry args={[1, 20, 12]} />{gold}</mesh>
-      </group>)}
-      <mesh position={[0, 4.91, 0.59]} rotation-x={-0.12} scale={[0.105, 0.27, 0.12]}><capsuleGeometry args={[0.5, 1, 8, 12]} />{gold}</mesh>
-      <mesh position={[0, 4.67, 0.58]} scale={[0.18, 0.045, 0.035]}><sphereGeometry args={[1, 24, 12]} />{darkGold}</mesh>
-      <mesh position={[0, 4.64, 0.585]} scale={[0.12, 0.025, 0.025]}><sphereGeometry args={[1, 20, 12]} />{gold}</mesh>
-      {/* Long earlobes and traditional curled ushnisha. */}
-      {[-1, 1].map((s) => <mesh key={s} position={[s * 0.68, 4.88, 0]} scale={[0.13, 0.42, 0.19]}><capsuleGeometry args={[0.5, 1, 8, 12]} />{gold}</mesh>)}
-      {curls.map(([x, y, z], i) => <mesh key={i} position={[x, y, z]} scale={0.075}><sphereGeometry args={[1, 10, 8]} />{darkGold}</mesh>)}
-      <mesh position={[0, 5.96, -0.02]}><sphereGeometry args={[0.29, 28, 20]} />{gold}</mesh>
-      <mesh position={[0, 5.18, 0.62]}><sphereGeometry args={[0.045, 16, 12]} /><meshStandardMaterial color="#e6c37b" metalness={0.65} roughness={0.28} /></mesh>
-      {/* Halo remains behind the head, never in front of the face. */}
-      <mesh position={[0, 5.0, -0.78]}><torusGeometry args={[1.18, 0.065, 12, 64]} /><meshStandardMaterial color="#d9b66f" metalness={0.72} roughness={0.3} emissive="#6f4a16" emissiveIntensity={0.16} /></mesh>
     </group>
   );
 }
