@@ -36,7 +36,12 @@ for (let i = 0; i < 8; i++) for (const z of [-50, -74]) {
   solids.push({ id: 'hall-column', x: -19 + i * 38 / 7, z, w: 0.8, d: 0.8 });
 }
 const polygons = solids.map(s => ({ ...s, shape: new SAT.Box(new SAT.Vector(s.x - s.w / 2, s.z - s.d / 2), s.w, s.d).toPolygon() }));
-const statues = [new SAT.Circle(new SAT.Vector(-86, 20), 2.5)];
+// Keep a respectful buffer around both Buddha statues. The main-hall altar
+// is also solid, but this explicit statue volume protects the full seated form.
+const statues = [
+  new SAT.Circle(new SAT.Vector(0, -68.5), 3.8),
+  new SAT.Circle(new SAT.Vector(-86, 20), 2.8),
+];
 const visitor = new SAT.Circle(new SAT.Vector(), PLAYER_RADIUS);
 export function isBlocked(x: number, z: number) {
   visitor.pos.x = x; visitor.pos.y = z;
