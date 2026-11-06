@@ -355,6 +355,7 @@ export function PlayerAvatar() {
 
   return (
     <group ref={g}>
+      {externalModel ? <primitive object={externalModel} /> : <group>
       <mesh ref={robeRef} position={[0, 0, 0]} scale={[sxz, sy, sxz]} castShadow>
         <primitive object={robeGeometry} attach="geometry" />
         <meshStandardMaterial color={color} roughness={0.8} />
