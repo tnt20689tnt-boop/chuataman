@@ -116,9 +116,10 @@ export function useMultiplayer() {
 
 function readPresence(channelRef: RealtimeChannel) {
   const state = channelRef.presenceState<RemotePlayer>();
-  // Several tabs may publish metas for one identity. Count each identity once
-  // and never include the current client.
-  const uniquePlayers = new Map<string, RemotePlayer>(snapshot.players.map((p) => [p.id, p]));
+  // Presence is the source of truth: rebuild from active room members so
+  // departed tabs disappear immediately and stale broadcast entries cannot
+  // inflate the online count.
+  const uniquePlayers = new Map<string, RemotePlayer>();
   for (const presenceKey in state) {
     for (const meta of state[presenceKey] ?? []) {
       if (meta.id && meta.id !== clientId) uniquePlayers.set(meta.id, meta);
@@ -142,7 +143,7 @@ export function connectMultiplayer() {
     // Ignore a late session response if the user signed out or auth changed
     // while the request was still in flight.
     if (attempt !== connectionAttempt || channel) return;
-    startMultiplayer(authClient, data.session?.user.id ?? getGuestId(), attempt);
+    startMultiplayer(authClient, getGuestId(), attempt);
   }).catch((error: unknown) => {
     if (attempt !== connectionAttempt) return;
     publish({ ...empty, roomId: currentRoomId });
@@ -153,7 +154,7 @@ export function connectMultiplayer() {
 
 function getGuestId() {
   try {
-    const key = "tam-an-guest-id";
+    const key = "tam-an-player-id";
     let id = sessionStorage.getItem(key);
     if (!id) {
       id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -191,15 +192,9 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
   });
 
   channel
-    .on("presence", { event: "sync" }, () => {
-      if (channel) readPresence(channel);
-    })
-    .on("presence", { event: "join" }, () => {
-      if (channel) readPresence(channel);
-    })
-    .on("presence", { event: "leave" }, () => {
-      if (channel) readPresence(channel);
-    })
+    .on("presence", { event: "sync" }, () => readPresence(channel!))
+    .on("presence", { event: "join" }, () => readPresence(channel!))
+    .on("presence", { event: "leave" }, () => readPresence(channel!))
     .on("broadcast", { event: "chat_message" }, ({ payload }) => {
       const message = payload as TempleChatMessage;
       if (message && typeof message.id === "string" && typeof message.name === "string" && typeof message.text === "string" && typeof message.at === "number") {
@@ -223,7 +218,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
       if (attempt !== connectionAttempt) return;
       if (status === "SUBSCRIBED" && channel) {
         const avatar = getUI().avatar;
-        await channel.track({
+        const initialPresence: RemotePlayer = {
           id: authenticatedUserId,
           name: avatar?.name || "Phật tử",
           x: player.x,
@@ -233,8 +228,11 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           outfit: avatar?.outfit ?? "lam",
           hair: avatar?.hair ?? "ngan",
           hairColor: avatar?.hairColor ?? "#1b1410",
-        } satisfies RemotePlayer);
-        publish({ connected: true, players: snapshot.players, roomId: currentRoomId });
+        };
+        await channel.track(initialPresence);
+        // Read the room immediately after our own presence is registered.
+        readPresence(channel);
+        publish({ ...snapshot, connected: true, roomId: currentRoomId });
         if (timer) clearInterval(timer);
         let lastX = player.x;
         let lastZ = player.z;
@@ -245,7 +243,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           const now = Date.now();
           const currentAvatar = getUI().avatar;
           const moved = Math.abs(player.x - lastX) > 0.035 || Math.abs(player.z - lastZ) > 0.035 || Math.abs(player.rot - lastRot) > 0.035;
-          if (!moved && now - lastHeartbeat < 1800) return;
+          if (!moved && now - lastHeartbeat < 1500) return;
           lastX = player.x; lastZ = player.z; lastRot = player.rot; lastHeartbeat = now;
           const payload: RemotePlayer = {
             id: authenticatedUserId,
@@ -255,6 +253,9 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
             hair: currentAvatar?.hair ?? "ngan",
             hairColor: currentAvatar?.hairColor ?? "#1b1410",
           };
+          // Refresh Presence as well as broadcasting movement. A person who
+          // enters later then receives our latest position and appearance.
+          void channel.track(payload);
           void channel.send({ type: "broadcast", event: "player_move", payload });
         }, 120);
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
