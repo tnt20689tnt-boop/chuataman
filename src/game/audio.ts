@@ -74,10 +74,10 @@ export function speak(text: string, onEnd?: () => void) {
   const u = new SpeechSynthesisUtterance(text); u.lang = "vi-VN"; u.rate = 0.82; u.pitch = 0.9;
   const vi = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("vi")); if (vi) u.voice = vi;
   u.onend = () => { stopSpeak(); onEnd?.(); }; u.onerror = () => { stopSpeak(); onEnd?.(); };
-  speechSynthesis.speak(u); speechActive = true;
+  speechSynthesis.speak(u); speechActive = true; syncLoops();
   speechTimer = window.setInterval(() => { if (speechActive) woodBlock(); }, 1250); return true;
 }
-export function stopSpeak() { speechActive = false; if (speechTimer !== null) clearInterval(speechTimer); speechTimer = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); const el = elements.get("mokugyo"); if (el) { el.pause(); el.currentTime = 0; } }
+export function stopSpeak() { speechActive = false; syncLoops(); if (speechTimer !== null) clearInterval(speechTimer); speechTimer = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); const el = elements.get("mokugyo"); if (el) { el.pause(); el.currentTime = 0; } }
 export async function checkAudioFiles() {
   const result: Record<string, "Đã tải được" | "Không tải được"> = {};
   await Promise.all((Object.keys(SOURCES) as SoundId[]).map(async (id) => {
