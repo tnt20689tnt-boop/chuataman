@@ -234,18 +234,21 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
       if (attempt === connectionAttempt && channel === activeChannel) readPresence(activeChannel);
     })
     .on("broadcast", { event: "chat_message" }, ({ payload }) => {
+      if (attempt !== connectionAttempt || channel !== activeChannel) return;
       const message = payload as TempleChatMessage;
       if (message && typeof message.id === "string" && typeof message.name === "string" && typeof message.text === "string" && typeof message.at === "number") {
         addChatMessage({ id: message.id, name: message.name.slice(0, 24), text: message.text.slice(0, 300), at: message.at });
       }
     })
     .on("broadcast", { event: "prayer_message" }, ({ payload }) => {
+      if (attempt !== connectionAttempt || channel !== activeChannel) return;
       const prayer = payload as TemplePrayer;
       if (prayer && typeof prayer.id === "string" && typeof prayer.name === "string" && typeof prayer.text === "string" && typeof prayer.at === "number") {
         addPrayer({ id: prayer.id, name: prayer.name.slice(0, 24), text: prayer.text.slice(0, 200), at: prayer.at });
       }
     })
     .on("broadcast", { event: "player_move" }, ({ payload }) => {
+      if (attempt !== connectionAttempt || channel !== activeChannel) return;
       const incoming = payload as RemotePlayer;
       if (!incoming || typeof incoming.id !== "string" || !incoming.id || incoming.id === clientId ||
           !Number.isFinite(incoming.x) || !Number.isFinite(incoming.z)) return;
