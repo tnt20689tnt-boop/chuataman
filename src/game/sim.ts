@@ -163,7 +163,7 @@ export const ZONES: Zone[] = [
   { id: "dien", name: "Đại điện – Lễ Phật", x: 0, z: -50, rot: Math.PI },
   { id: "thien", name: "Khu thiền định", x: -70, z: 20, rot: Math.PI / 2 },
   { id: "phap", name: "Giảng đường thuyết pháp", x: 70, z: 40, rot: Math.PI },
-  { id: "ho", name: "Hồ sen & vườn hoa", x: 72, z: -12, rot: -Math.PI / 2 },
+  { id: "ho", name: "Hồ sen & vườn hoa", x: 76, z: -14, rot: -Math.PI / 2 },
   { id: "chuong", name: "Tháp chuông", x: -55, z: -40, rot: Math.PI },
   { id: "kinh", name: "Tháp kinh", x: 50, z: -50, rot: Math.PI },
   { id: "giaoluu", name: "Khu giao lưu Phật tử", x: -70, z: 62, rot: Math.PI },
