@@ -87,6 +87,10 @@ function IncenseSmoke() {
 
 
 function DonationBox() {
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState<number | null>(null);
+  const amounts = [5000, 10000, 20000, 50000, 100000, 200000];
+  const money = (n: number) => n.toLocaleString("vi-VN") + "đ";
   return <group>
     {/* Traditional lacquered wooden merit box with brass fittings and a visible offering slot. */}
     <mesh position={[0, 0.72, 0]} castShadow receiveShadow>
@@ -114,6 +118,29 @@ function DonationBox() {
       <boxGeometry args={[0.16, 0.24, 0.16]} />
       <meshStandardMaterial color="#b78b4b" metalness={0.72} roughness={0.35} />
     </mesh>)}
+    <mesh position={[0, 1.75, 0.62]} onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}>
+      <boxGeometry args={[1.9, 0.55, 0.12]} />
+      <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+    </mesh>
+    <Html position={[0, 1.95, 0.72]} center distanceFactor={9} transform={false} style={{ pointerEvents: "auto" }}>
+      <button onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+        style={{ border: "1px solid #d6bd83", borderRadius: 18, padding: "7px 13px", background: "rgba(75,35,25,.96)", color: "#fff1cf", fontWeight: 700, whiteSpace: "nowrap", cursor: "pointer", boxShadow: "0 2px 10px #0006" }}>
+        {open ? "Đóng bảng công đức" : "🙏 Bấm để công đức"}
+      </button>
+    </Html>
+    {open && <Html position={[0, 2.45, 0.78]} center distanceFactor={8} transform={false} zIndexRange={[100, 0]} style={{ pointerEvents: "auto" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 290, boxSizing: "border-box", padding: 16, borderRadius: 16, background: "rgba(255,249,232,.98)", color: "#493024", border: "2px solid #b89555", boxShadow: "0 8px 28px #0007", fontFamily: "Arial,sans-serif", textAlign: "center" }}>
+        <div style={{ fontSize: 19, fontWeight: 800, color: "#743b27" }}>CÔNG ĐỨC CHÙA TÂM AN</div>
+        <div style={{ fontSize: 12, margin: "6px 0 12px", color: "#76624d" }}>Tùy tâm gieo duyên lành – xin tùy hỷ công đức</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {amounts.map(value => <button key={value} onClick={() => setAmount(value)} style={{ border: amount === value ? "2px solid #8d4a2e" : "1px solid #c9b58e", borderRadius: 9, padding: "10px 4px", background: amount === value ? "#ead5ad" : "#fffdf7", color: "#563524", fontWeight: 700, cursor: "pointer" }}>{money(value)}</button>)}
+        </div>
+        <div style={{ minHeight: 35, marginTop: 11, fontSize: 12, lineHeight: 1.45 }}>
+          {amount ? <>Bạn đã chọn mức công đức <b>{money(amount)}</b>.<br/>Phần thanh toán trực tuyến sẽ được kết nối sau.</> : "Vui lòng chọn mức công đức tùy tâm."}
+        </div>
+        <button onClick={() => { setOpen(false); setAmount(null); }} style={{ marginTop: 7, border: 0, borderRadius: 9, padding: "9px 18px", background: "#75412d", color: "#fff7e8", fontWeight: 700, cursor: "pointer" }}>Đóng</button>
+      </div>
+    </Html>}
   </group>;
 }
 
