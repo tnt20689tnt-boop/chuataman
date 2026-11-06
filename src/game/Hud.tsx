@@ -25,6 +25,7 @@ export function Hud() {
   const panel = useUI((s) => s.panel);
   const action = useUI((s) => s.action);
   const zone = useUI((s) => s.zoneLabel);
+  const pose = useUI((s) => s.pose);
   const ready = useUI((s) => s.sceneReady);
   const multiplayer = useMultiplayer();
   const connected = useMultiplayerConnected();
@@ -110,6 +111,15 @@ export function Hud() {
         <ActBtn icon="📿" label="Nghe kinh" active={action === "kinh"} onClick={() => doAction("kinh")} />
         <ActBtn icon="🧭" label="Tham quan" active={panel === "tour"} onClick={() => setUI({ panel: panel === "tour" ? null : "tour" })} />
       </div>
+
+      {(zone.toUpperCase().includes("NHÀ KHÁCH") || pose === "lie") && (
+        <button
+          className="hud-primary pointer-events-auto absolute bottom-28 right-24 md:bottom-24 md:right-8"
+          onClick={() => window.dispatchEvent(new Event("guest-bed-toggle"))}
+        >
+          {pose === "lie" ? "🧍 Đứng dậy" : "🛏️ Nằm nghỉ"}
+        </button>
+      )}
 
       <div className="absolute bottom-28 left-1/2 hidden -translate-x-1/2 text-xs text-muted-foreground md:block">
         <span className="hud-chip">WASD / phím mũi tên để đi · Shift chạy · kéo chuột xoay · cuộn để phóng to</span>
