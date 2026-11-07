@@ -104,11 +104,13 @@ export function AnimatedAvatarAppearance({
       const target = item.kind === "spine" && !walking
         ? Math.sin(clock.elapsedTime * 2) * 0.008
         : 0;
+      // The uploaded avatar rests in a T-pose. Rotate each upper arm down
+      // from the shoulder in opposite directions so both arms hang beside
+      // the torso instead of sticking straight out at shoulder height.
+      const armDrop = item.kind === "arm" ? item.side * 0.85 : 0;
       item.bone.rotation.x += ((item.base.x + target) - item.bone.rotation.x) * smooth;
-      if (walking) {
-        item.bone.rotation.y += (item.base.y - item.bone.rotation.y) * smooth;
-        item.bone.rotation.z += (item.base.z - item.bone.rotation.z) * smooth;
-      }
+      item.bone.rotation.y += (item.base.y - item.bone.rotation.y) * smooth;
+      item.bone.rotation.z += ((item.base.z + armDrop) - item.bone.rotation.z) * smooth;
     }
   });
 
