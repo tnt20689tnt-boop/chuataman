@@ -1,9 +1,9 @@
 // Shared architectural footprint: rendering and collision use the same placement.
 export const HALL = { x: 0, z: -62, floor: 1.2, halfW: 23, halfD: 15, stairW: 14 };
 export const BUILDINGS = [
-  { id: "to", label: "NHÀ THỜ TỔ", x: 0, z: -101, w: 26, d: 17, h: 7, kind: "ancestral" },
+  { id: "to", label: "NHÀ THỜ TỔ", x: -60, z: -62, w: 26, d: 17, h: 7, kind: "ancestral" },
   { id: "thienDuong", label: "THIỀN ĐƯỜNG", x: -70, z: -15, w: 24, d: 18, h: 6, kind: "meditation" },
-  { id: "thuVien", label: "THƯ VIỆN PHẬT GIÁO", x: 82, z: -64, w: 25, d: 18, h: 7, kind: "library" },
+  { id: "nhaGiang", label: "NHÀ GIẢNG PHÁP", x: 60, z: -62, w: 26, d: 18, h: 7, kind: "lecture" },
   { id: "nhaKhach", label: "NHÀ KHÁCH", x: -76, z: 70, w: 25, d: 16, h: 6, kind: "guest" },
 ] as const;
 export const SCENE_COLORS = {
