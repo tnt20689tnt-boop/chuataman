@@ -3,12 +3,13 @@ import * as THREE from "three";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { OUTFIT_COLORS, type Outfit, type Hair, type Pose } from "./sim";
+import { MOVE, OUTFIT_COLORS, type Outfit, type Hair, type Pose } from "./sim";
 import { input, type Action } from "./store";
 import { isRootMotionBoneName, stabilizeRootPositionTrack } from "./rootMotion";
 import { interactionActionForCompletedClip, type CompletedInteractionAction } from "./interactionAnimation";
 
 export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
+const GAIT_REFERENCE_SPEED = { walk: 1.2, run: 4 };
 
 export function AnimatedAvatarAppearance({
   modelId, outfit, hair, hairColor, accessory, pose = "stand", action = "none", onActionComplete,
@@ -124,7 +125,13 @@ export function AnimatedAvatarAppearance({
     // In that case keep the walk cycle and speed up its cadence to match
     // the faster world movement instead of letting the feet lag behind.
     const selected = desired === "run" && !actions["run"] ? "walk" : desired;
-    const playbackRate = desired === "run" ? (selected === "walk" ? 1.85 : 1.25) : 1;
+    const playbackRate = desired === "run"
+      ? selected === "walk"
+        ? MOVE.RUN / GAIT_REFERENCE_SPEED.walk
+        : 1.25 * (MOVE.RUN / GAIT_REFERENCE_SPEED.run)
+      : desired === "walk"
+        ? MOVE.SPEED / GAIT_REFERENCE_SPEED.walk
+        : 1;
 
     // Run may use the same walk clip, so update its playback rate even when
     // the selected clip name has not changed.
