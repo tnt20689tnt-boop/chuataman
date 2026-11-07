@@ -18,10 +18,10 @@ const solids: Solid[] = [
   { id: 'bell', x: 55, z: -112, w: 10, d: 10 },
   { id: 'tower', x: -55, z: -112, w: 10, d: 10 },
   { id: 'waterfall', x: -38, z: -12, w: 20, d: 17 },
-  // Pond has an accessible bridge across its center, not walkable water.
-  { id: 'pond-left', x: -8, z: 12, w: 14, d: 22 },
-  { id: 'pond-right', x: 8, z: 12, w: 14, d: 22 },
-  { id: 'release-pond', x: 28, z: 12, w: 18, d: 14 },
+  // Wider lotus pond (22m) with a clear 3.2m stone-bridge corridor.
+  // Water is blocked from both sides; the bridge itself remains walkable.
+  { id: 'pond-left', x: -6.75, z: 11, w: 11.3, d: 24 },
+  { id: 'pond-right', x: 6.75, z: 11, w: 11.3, d: 24 },
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
   { id: 'perimeter-back', x: 0, z: -185, w: 240, d: 1.8 },
   { id: 'perimeter-left', x: -120, z: -36.5, w: 1.8, d: 297 },
@@ -114,7 +114,11 @@ export function surfaceHeight(x: number, z: number) {
   if (Math.abs(x - HALL.x) < HALL.halfW && z <= -47 && z >= -77) return HALL.floor;
   // Three 0.4m treads match the visible main-hall staircase exactly.
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
-  if (Math.abs(x) < 1.6 && z > 0 && z < 24) return 0.45 + Math.sin((z + 26) / 24 * Math.PI) * 1.1;
+  // Match the 24 individual stone slabs of Bridge(): each deck top follows the arch.
+  // The avatar's center stays within the safe walking width of the 3.2m bridge.
+  if (Math.abs(x) <= 1.1 && z >= -0.5 && z <= 22.5) {
+    return 0.45 + Math.sin(((z + 1) / 24) * Math.PI) * 1.1;
+  }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
   if (Math.abs(x - 70) < 8 && Math.abs(z - 52) < 6) return 0.6;
   return 0;
