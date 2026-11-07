@@ -123,7 +123,13 @@ export function surfaceHeight(x: number, z: number) {
     return 0.45 + Math.sin(((z - 1) / 24) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
-  if (Math.abs(x - 70) < 8 && Math.abs(z - 52) < 6) return 0.6;
+  // Pavilion deck is elevated 0.6m; match the three visible approach steps.
+  if (Math.abs(x) <= 7.5 && z >= -18 && z <= -6) return 0.6;
+  if (Math.abs(x) <= 2.6) {
+    if (z > -4.55 && z <= -3.45) return 0.2;
+    if (z > -5.55 && z <= -4.45) return 0.4;
+    if (z > -6.6 && z <= -5.45) return 0.6;
+  }
   return 0;
 }
 
