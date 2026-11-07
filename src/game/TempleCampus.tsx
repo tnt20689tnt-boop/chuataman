@@ -258,7 +258,6 @@ export function TempleCampus() {
     {BUILDINGS.map(b => <CampusBuilding key={b.id} building={b} />)}
     <Bridge /><Garden />
     <Inscription text="NHÀ GIẢNG PHÁP" width={9} height={1} position={[60, 4.4, -51.8]} />
-    <Inscription text="HỒ SEN" width={5} height={1} position={[0, 1.6, 26]} stone />
     <group position={[-12, 0, 42]}>
       <mesh position={[0, 1.7, 0]} castShadow><boxGeometry args={[5, 3.4, 0.7]} /><Surface kind="stone" /></mesh>
       <Inscription text="CHÙA TÂM AN" width={4.3} height={0.8} position={[0, 2.8, 0.4]} stone />
