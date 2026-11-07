@@ -124,13 +124,18 @@ function Ground() {
         <planeGeometry args={[84, 82]} />
         <Suspense fallback={<meshStandardMaterial map={stone} roughness={0.9} />}><Surface kind="stone" repeat={18} /></Suspense>
       </mesh>
+      {/* Main ceremonial stone avenue, split around the lotus pond and bridge. */}
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.03, 70]} receiveShadow>
-        <planeGeometry args={[8, 96]} />
-        <Suspense fallback={<meshStandardMaterial map={path} roughness={0.9} />}><Surface kind="stone" repeat={16} /></Suspense>
+        <planeGeometry args={[12, 72]} />
+        <Suspense fallback={<meshStandardMaterial map={path} roughness={0.9} />}><Surface kind="stone" repeat={18} /></Suspense>
       </mesh>
-      {/* side paths */}
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.03, -25]} receiveShadow>
+        <planeGeometry args={[12, 50]} />
+        <Suspense fallback={<meshStandardMaterial map={path} roughness={0.9} />}><Surface kind="stone" repeat={14} /></Suspense>
+      </mesh>
+      {/* Broad cross-avenue links the main hall forecourt to both side wings. */}
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.025, 30]} receiveShadow>
-        <planeGeometry args={[170, 5]} />
+        <planeGeometry args={[170, 6]} />
         <meshStandardMaterial map={path} roughness={0.9} />
       </mesh>
     </>
@@ -360,7 +365,8 @@ export default function World() {
   const trees = useMemo(() => { const points = treePoints(); setTreeCollisionPoints(points); return points; }, []);
   const lanterns = useMemo(() => {
     const p: [number, number][] = [];
-    for (let z = 30; z < 110; z += 10) p.push([-5, z], [5, z]);
+    for (let z = 34; z < 108; z += 12) p.push([-8, z], [8, z]);
+    for (let z = -42; z <= -6; z += 12) p.push([-8, z], [8, z]);
     for (let x = -36; x <= 36; x += 12) p.push([x, 24]);
     return p;
   }, []);
