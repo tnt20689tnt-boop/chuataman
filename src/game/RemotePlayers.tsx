@@ -12,10 +12,8 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
   const group = useRef<THREE.Group>(null);
   const bodyRef = useRef<THREE.Group>(null);
   const [externalModel, setExternalModel] = useState<THREE.Group | null>(null);
-  const modelPath = player.modelId === "nam2" ? "/models/nhan-vat-nam-2.glb"
-    : player.modelId === "nu1" ? "/models/nhan-vat-nu-1.glb"
-    : player.modelId === "nu2" ? "/models/nhan-vat-nu-2.glb"
-    : player.modelId === "nam1" ? "/models/nhan-vat-nam-1.glb" : null;
+  const modelPath = player.modelId === "female_animated" ? "/models/female_animated.glb"
+    : player.modelId === "male_animated" ? "/models/male_animated.glb" : null;
 
   useEffect(() => {
     if (!modelPath) { setExternalModel(null); return; }
