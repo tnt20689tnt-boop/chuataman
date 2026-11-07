@@ -273,9 +273,15 @@ export function PlayerAvatar() {
           }
         });
         mixerRef.current = new THREE.AnimationMixer(model);
-        externalRigRef.current = captureAvatarRig(model);
-        setExternalClips(gltf.animations ?? []);
-        setExternalModel(model);
+        const rig = captureAvatarRig(model);
+        externalRigRef.current = rig;
+        const clips = gltf.animations ?? [];
+        setExternalClips(clips);
+        // Nam 1 / Nu 1 are currently static, unrigged GLBs. Do not render
+        // them as frozen floating meshes: use the articulated procedural
+        // avatar below until a fully skinned rigged export is supplied.
+        if (rig.size > 0 || clips.length > 0) setExternalModel(model);
+        else setExternalModel(null);
       },
       undefined,
       () => {
