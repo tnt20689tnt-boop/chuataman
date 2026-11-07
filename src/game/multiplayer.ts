@@ -337,7 +337,6 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
                 outfit: currentAvatar?.outfit ?? "lam",
                 hair: currentAvatar?.hair ?? "ngan",
                 hairColor: currentAvatar?.hairColor ?? "#1b1410",
-            modelId: currentAvatar?.modelId ?? (currentAvatar?.gender === "nu" ? "nu1" : "nam1"),
                 modelId: currentAvatar?.modelId ?? (currentAvatar?.gender === "nu" ? "nu1" : "nam1"),
                 seq: movementSeq,
               } satisfies RemotePlayer);
@@ -353,6 +352,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
             outfit: currentAvatar?.outfit ?? "lam",
             hair: currentAvatar?.hair ?? "ngan",
             hairColor: currentAvatar?.hairColor ?? "#1b1410",
+            modelId: currentAvatar?.modelId ?? (currentAvatar?.gender === "nu" ? "nu1" : "nam1"),
           };
           // Broadcast movement frequently enough for smooth remote motion,
           // but update Presence only every 3 seconds to avoid sync storms.
