@@ -60,7 +60,15 @@ const AV_KEY = "tam-an-avatar";
 export function loadAvatar(): Avatar | null {
   try {
     const raw = localStorage.getItem(AV_KEY);
-    return raw ? (JSON.parse(raw) as Avatar) : null;
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Avatar;
+    // Retire the two unwanted models and move existing visitors to the remaining model of their gender.
+    if (saved.modelId === "nam2" || saved.modelId === "nu2") {
+      saved.modelId = saved.gender === "nu" || saved.modelId === "nu2" ? "nu1" : "nam1";
+      saved.gender = saved.modelId === "nu1" ? "nu" : "nam";
+      localStorage.setItem(AV_KEY, JSON.stringify(saved));
+    }
+    return saved;
   } catch {
     return null;
   }
