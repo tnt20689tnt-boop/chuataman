@@ -15,13 +15,13 @@ const solids: Solid[] = [
   { id: 'attendant-right', x: 7.2, z: -68.1, w: 4.35, d: 3.35 },
   // Double-size donation box mounted along the left inner wall of the main hall.
   { id: 'main-hall-donation-box', x: -18.445, z: -62, w: 2.5, d: 3.4 },
-  { id: 'bell', x: -55, z: -52, w: 10, d: 10 },
-  { id: 'tower', x: 50, z: -62, w: 10, d: 10 },
-  { id: 'waterfall', x: 76, z: -32, w: 20, d: 17 },
+  { id: 'bell', x: 55, z: -112, w: 10, d: 10 },
+  { id: 'tower', x: -55, z: -112, w: 10, d: 10 },
+  { id: 'waterfall', x: 0, z: -12, w: 20, d: 17 },
   // Pond has an accessible bridge across its center, not walkable water.
-  { id: 'pond-left', x: 68, z: -14, w: 14, d: 22 },
-  { id: 'pond-right', x: 84, z: -14, w: 14, d: 22 },
-  { id: 'release-pond', x: 100, z: -20, w: 18, d: 14 },
+  { id: 'pond-left', x: -8, z: 12, w: 14, d: 22 },
+  { id: 'pond-right', x: 8, z: 12, w: 14, d: 22 },
+  { id: 'release-pond', x: 28, z: 12, w: 18, d: 14 },
 ];
 for (const b of BUILDINGS) {
   solids.push(
@@ -108,7 +108,7 @@ export function surfaceHeight(x: number, z: number) {
   if (Math.abs(x - HALL.x) < HALL.halfW && z <= -47 && z >= -77) return HALL.floor;
   // Three 0.4m treads match the visible main-hall staircase exactly.
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
-  if (Math.abs(x - 76) < 1.6 && z > -26 && z < -2) return 0.45 + Math.sin((z + 26) / 24 * Math.PI) * 1.1;
+  if (Math.abs(x) < 1.6 && z > 0 && z < 24) return 0.45 + Math.sin((z + 26) / 24 * Math.PI) * 1.1;
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
   if (Math.abs(x - 70) < 8 && Math.abs(z - 52) < 6) return 0.6;
   return 0;
