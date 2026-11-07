@@ -85,8 +85,10 @@ export function AnimatedAvatarAppearance({
       : action === "thien" || pose === "sit" ? /sit|meditat/i
       : action === "chap" ? /pray|idle|stand/i
       : /idle|stand|breath/i;
+    // Never fall back to an arbitrary imported clip: some GLB files contain
+    // preview/fly/dance clips that spread the arms or rotate the whole rig.
     const chosen = pose === "walk" ? undefined
-      : all.find((item) => preferred.test(item.name)) ?? all[0];
+      : all.find((item) => preferred.test(item.name));
     if (chosen?.action) chosen.action.reset().fadeIn(0.2).play();
     return () => { chosen?.action?.fadeOut(0.15); };
   }, [actions, names, pose, action]);
@@ -113,7 +115,11 @@ export function AnimatedAvatarAppearance({
   return (
     <group ref={root}>
       <group position={[-center.x * unitScale, -bounds.min.y * unitScale, -center.z * unitScale]} scale={unitScale}>
-        <primitive object={model} />
+        {/* This GLB faces left at the controller's forward heading; rotate the
+            visual rig 90 degrees without changing player movement/collision yaw. */}
+        <group rotation-y={-Math.PI / 2}>
+          <primitive object={model} />
+        </group>
         {hair === "bui" && <mesh position={[center.x, bounds.max.y - size.y * 0.045, center.z - size.z * 0.12]} castShadow>
           <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
           <meshStandardMaterial color={hairColor} roughness={0.9} />
