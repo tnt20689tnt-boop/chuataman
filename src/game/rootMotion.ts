@@ -1,3 +1,13 @@
+export function isRootMotionBoneName(target: string): boolean {
+  const name = target.trim();
+  if (!name) return false;
+  return (
+    /(^|[^a-z])(?:root|hips|pelvis)(?:[^a-z]|$)/i.test(name) ||
+    /(?:root|hips|pelvis)$/i.test(name) ||
+    /^(armature|skeleton|rootnode|rootjoint)$/i.test(name)
+  );
+}
+
 export function stabilizeRootPositionTrack(
   values: Float32Array,
   times: ArrayLike<number>,

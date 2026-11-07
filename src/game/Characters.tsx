@@ -3,11 +3,17 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html, useGLTF, useAnimations } from "@react-three/drei";
 import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose } from "./sim";
-import { player, useUI } from "./store";
+import { getUI, player, setUI, useUI } from "./store";
 import { moveVisitor } from "./collision";
 import { AnimatedAvatarAppearance } from "./AvatarAppearance";
+import type { CompletedInteractionAction } from "./interactionAnimation";
 
 const SKIN = "#f4d6bd";
+
+function completePlayerInteraction(action: CompletedInteractionAction) {
+  if (getUI().action !== action) return;
+  setUI({ action: "none", pose: "stand" });
+}
 
 /** Body layout per pose: [bodyScaleY, bodyScaleXZ, headY] */
 function layout(p: Pose): [number, number, number] {
@@ -297,6 +303,7 @@ export function PlayerAvatar() {
           accessory={avatar.accessory ?? "neck_mala"}
           pose={pose}
           action={action}
+          onActionComplete={completePlayerInteraction}
         />
       ) : (
       <group>

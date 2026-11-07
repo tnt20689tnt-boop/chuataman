@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { stabilizeRootPositionTrack } from "./rootMotion";
+import { isRootMotionBoneName, stabilizeRootPositionTrack } from "./rootMotion";
 
 interface GlbAccessor {
   bufferView: number;
@@ -71,6 +71,13 @@ function readFloatAccessor(
 }
 
 describe("stabilizeRootPositionTrack", () => {
+  it("recognizes namespaced and camelCase root/hips names without matching limbs", () => {
+    expect(isRootMotionBoneName("mixamorigHips")).toBe(true);
+    expect(isRootMotionBoneName("mixamorig:Hips")).toBe(true);
+    expect(isRootMotionBoneName("Armature_Hips")).toBe(true);
+    expect(isRootMotionBoneName("mixamorigLeftFoot")).toBe(false);
+  });
+
   it("removes net vertical drift while preserving cyclic bounce and horizontal locking", () => {
     const values = new Float32Array([2, 0, 5, 2.5, -0.8, 5.4, 1.5, -0.2, 4.7, 2, -1.2, 5]);
 
@@ -127,6 +134,12 @@ describe("stabilizeRootPositionTrack", () => {
         );
         expect(hipChannel, `${path} ${clipName} hips track`).toBeDefined();
         if (!clip || !hipChannel) continue;
+        const hipsName = document.nodes[hipChannel.target.node]?.name ?? "";
+        expect(isRootMotionBoneName(hipsName), `${path} ${clipName} target name`).toBe(true);
+        expect(
+          isRootMotionBoneName(hipsName.replace(/[^a-z0-9]/gi, "")),
+          `${path} ${clipName} sanitized target name`,
+        ).toBe(true);
 
         const sampler = clip.samplers[hipChannel.sampler];
         expect(sampler).toBeDefined();
@@ -142,6 +155,33 @@ describe("stabilizeRootPositionTrack", () => {
         expect(values[0]).toBeCloseTo(values[(keyCount - 1) * 3]!, 5);
         expect(values[1]).toBeCloseTo(values[(keyCount - 1) * 3 + 1]!, 5);
         expect(values[2]).toBeCloseTo(values[(keyCount - 1) * 3 + 2]!, 5);
+      }
+    }
+  });
+
+  it("keeps matching skeletons and all interaction clips in both gender assets", () => {
+    const requiredClips = ["idle", "walk", "run", "prayer", "kneel", "meditation"];
+    const requiredBones = ["mixamorig:Hips", "mixamorig:LeftArm", "mixamorig:RightArm"];
+
+    for (const path of [
+      "public/models/male_custom_poses.glb",
+      "public/models/female_custom_poses.glb",
+    ]) {
+      const { document } = readGlb(path);
+      const nodeNames = new Set(document.nodes.map((node) => node.name).filter(Boolean));
+      const clipNames = new Set(document.animations.map((animation) => animation.name));
+
+      for (const clipName of requiredClips)
+        expect(clipNames.has(clipName), `${path}: ${clipName}`).toBe(true);
+      for (const boneName of requiredBones)
+        expect(nodeNames.has(boneName), `${path}: ${boneName}`).toBe(true);
+      for (const animation of document.animations) {
+        for (const channel of animation.channels) {
+          expect(
+            document.nodes[channel.target.node],
+            `${path}: ${animation.name} target`,
+          ).toBeDefined();
+        }
       }
     }
   });

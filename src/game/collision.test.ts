@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { isBlocked, moveVisitor, surfaceHeight } from './collision';
-import { stepPlayer } from './sim';
+import { MOVE, stepPlayer } from './sim';
 
 describe('PR9 visitor access', () => {
   it('keeps both attendant plinths solid', () => {
@@ -49,6 +49,14 @@ describe('PR9 visitor access', () => {
   it('does not report walking when pressed into a solid gate column', () => {
     const p = { x: 3.6, z: 25.13, y: 0, rot: Math.PI };
     expect(stepPlayer(p, { fwd: 1, right: 0, run: false }, 0, 0.05)).toBe(false);
+  });
+  it('uses gait-matched walk and run world speeds at the tested movement timestep', () => {
+    const walker = { x: 0, y: 0, z: 34, rot: Math.PI };
+    const runner = { x: 0, y: 0, z: 34, rot: Math.PI };
+    expect(stepPlayer(walker, { fwd: 1, right: 0, run: false }, 0, 0.05)).toBe(true);
+    expect(stepPlayer(runner, { fwd: 1, right: 0, run: true }, 0, 0.05)).toBe(true);
+    expect(34 - walker.z).toBeCloseTo(MOVE.SPEED * 0.05, 5);
+    expect(34 - runner.z).toBeCloseTo(MOVE.RUN * 0.05, 5);
   });
   it('reports raised floor heights used by remote avatars', () => {
     expect(surfaceHeight(0, -50)).toBe(1.2);

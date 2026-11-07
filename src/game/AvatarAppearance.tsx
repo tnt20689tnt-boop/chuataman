@@ -1,16 +1,17 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { OUTFIT_COLORS, type Outfit, type Hair, type Pose } from "./sim";
 import { input, type Action } from "./store";
-import { stabilizeRootPositionTrack } from "./rootMotion";
+import { isRootMotionBoneName, stabilizeRootPositionTrack } from "./rootMotion";
+import { interactionActionForCompletedClip, type CompletedInteractionAction } from "./interactionAnimation";
 
 export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
 
 export function AnimatedAvatarAppearance({
-  modelId, outfit, hair, hairColor, accessory, pose = "stand", action = "none",
+  modelId, outfit, hair, hairColor, accessory, pose = "stand", action = "none", onActionComplete,
 }: {
   modelId: "male_animated" | "female_animated";
   outfit: Outfit;
@@ -19,10 +20,15 @@ export function AnimatedAvatarAppearance({
   accessory: AvatarAccessory;
   pose?: Pose;
   action?: Action;
+  onActionComplete?: (action: CompletedInteractionAction) => void;
 }) {
   const path = modelId === "female_animated" ? "/models/female_custom_poses.glb" : "/models/male_custom_poses.glb";
   const gltf = useGLTF(path);
   const root = useRef<THREE.Group>(null);
+  const actionRef = useRef(action);
+  const onActionCompleteRef = useRef(onActionComplete);
+  actionRef.current = action;
+  onActionCompleteRef.current = onActionComplete;
 
   // Keep the skinned model instance stable when the user changes clothes.
   // Replacing the cloned skeleton after useAnimations has bound its tracks leaves
@@ -72,11 +78,9 @@ export function AnimatedAvatarAppearance({
         const parsed = THREE.PropertyBinding.parseTrackName(track.name);
         target = [parsed.nodeName, parsed.objectIndex].filter(Boolean).join(" ").toLowerCase();
       } catch {
-        target = track.name.toLowerCase().split(/[|/]/).pop() ?? "";
+        target = track.name.toLowerCase().replace(/\.(position|quaternion|scale)$/i, "").split(/[|/]/).pop() ?? "";
       }
-      const isRootMotion =
-        /(^|[^a-z])(root|hips|pelvis)([^a-z]|$)/i.test(target) ||
-        /^(armature|skeleton|rootnode)$/i.test(target.trim());
+      const isRootMotion = isRootMotionBoneName(target);
       if (!isRootMotion) return true;
       const values = track.values as Float32Array;
       const stride = track.getValueSize();
@@ -88,13 +92,25 @@ export function AnimatedAvatarAppearance({
     });
     return clip;
   }), [gltf.animations]);
-  const { actions } = useAnimations(clips, root);
+  const { actions, mixer } = useAnimations(clips, root);
   const activeClip = useRef("");
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     activeClip.current = "";
     return () => Object.values(actions).forEach((clip) => clip?.stop());
   }, [actions]);
+
+  useEffect(() => {
+    const handleFinished = (event: { action: THREE.AnimationAction }) => {
+      const completedAction = interactionActionForCompletedClip(event.action.getClip().name);
+      if (!completedAction) return;
+      const expectedClip = completedAction === "chap" ? actions["prayer"] : actions["kneel"];
+      if (event.action !== expectedClip || actionRef.current !== completedAction) return;
+      onActionCompleteRef.current?.(completedAction);
+    };
+    mixer.addEventListener("finished", handleFinished);
+    return () => mixer.removeEventListener("finished", handleFinished);
+  }, [actions, mixer]);
 
   useFrame(() => {
     const desired =
