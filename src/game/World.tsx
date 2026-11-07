@@ -238,6 +238,17 @@ function Controller() {
   }, [gl]);
 
   const target = useMemo(() => new THREE.Vector3(), []);
+  // The camera ray must not treat the controlled avatar as a wall.
+  // Otherwise it can hit the avatar's own head/body and suddenly pull the
+  // camera toward the character, which looks like a backward snap.
+  const isControlledAvatar = (object: THREE.Object3D) => {
+    let current: THREE.Object3D | null = object;
+    while (current) {
+      if (current.userData?.cameraIgnore === true) return true;
+      current = current.parent;
+    }
+    return false;
+  };
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
     const k = keys.current;
@@ -297,6 +308,8 @@ function Controller() {
       cameraRay.far = Math.max(0.5, desiredDistance - 0.2);
       const hits = cameraRay.intersectObjects(scene.children, true);
       const obstruction = hits.find((hit) => {
+        // Ignore every descendant of the local avatar, not just its root.
+        if (isControlledAvatar(hit.object)) return false;
         const mesh = hit.object as THREE.Mesh;
         if (hit.distance <= 0.35 || !mesh.visible || !mesh.isMesh) return false;
         const material = mesh.material;
