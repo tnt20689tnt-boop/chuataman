@@ -79,21 +79,12 @@ export function AnimatedAvatarAppearance({
   }, [model]);
 
   useLayoutEffect(() => {
-    const all = names.map((name) => ({ name, clip: actions[name] })).filter((item) => item.clip);
-    all.forEach(({ clip }) => clip!.stop());
-    const walk = pose === "walk"
-      ? all.find(({ name }) => /walk|walking|run|locomotion/i.test(name))
-      : undefined;
-    const preferred = action === "le" || pose === "kneel" ? /kneel|bow|prostrate/i
-      : action === "thien" || pose === "sit" ? /sit|meditat/i
-      : action === "chap" || pose === "pray" ? /pray|idle|stand/i
-      : /idle|stand|breath/i;
-    const idle = pose === "walk" ? undefined : all.find(({ name }) => preferred.test(name));
-    const chosen = walk ?? idle;
-    proceduralWalk.current = pose === "walk" && !walk;
-    if (chosen?.clip) chosen.clip.reset().fadeIn(0.18).play();
-    return () => { chosen?.clip?.fadeOut(0.12); };
-  }, [actions, names, pose, action]);
+    // Do not play imported GLB clips yet: some contain root-motion tracks
+    // that move the whole character independently of the game controller.
+    Object.values(actions).forEach((clip) => clip?.stop());
+    proceduralWalk.current = pose === "walk";
+    return () => Object.values(actions).forEach((clip) => clip?.stop());
+  }, [actions, pose, action]);
 
   useFrame(({ clock }, delta) => {
     if (!proceduralWalk.current) return;
@@ -115,10 +106,9 @@ export function AnimatedAvatarAppearance({
   return (
     <group ref={root}>
       <group position={[-center.x * unitScale, -bounds.min.y * unitScale, -center.z * unitScale]} scale={unitScale}>
-        {/* The supplied GLBs are authored facing the model's local +X axis.
-            Rotate the complete avatar once so local forward matches the game's +Z heading. */}
-        <group rotation-y={Math.PI / 2}>
-          <primitive object={model} />
+        {/* Keep the imported model's authored orientation unchanged until its
+            actual front axis has been inspected. */}
+        <primitive object={model} />
           {hair === "bui" && <mesh position={[center.x, bounds.max.y - size.y * 0.045, center.z - size.z * 0.12]} castShadow>
             <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
             <meshStandardMaterial color={hairColor} roughness={0.9} />
@@ -145,7 +135,6 @@ export function AnimatedAvatarAppearance({
             <boxGeometry args={[Math.max(size.x * 0.16, 0.035), size.y * 0.40, Math.max(size.z * 0.055, 0.018)]} />
             <meshStandardMaterial color="#c49a54" roughness={0.75} />
           </mesh>}
-        </group>
       </group>
     </group>
   );
