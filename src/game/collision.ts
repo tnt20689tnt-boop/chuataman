@@ -22,6 +22,12 @@ const solids: Solid[] = [
   { id: 'pond-left', x: -8, z: 12, w: 14, d: 22 },
   { id: 'pond-right', x: 8, z: 12, w: 14, d: 22 },
   { id: 'release-pond', x: 28, z: 12, w: 18, d: 14 },
+  // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
+  { id: 'perimeter-back', x: 0, z: -185, w: 240, d: 1.8 },
+  { id: 'perimeter-left', x: -120, z: -36.5, w: 1.8, d: 297 },
+  { id: 'perimeter-right', x: 120, z: -36.5, w: 1.8, d: 297 },
+  { id: 'perimeter-front-left', x: -65, z: 112, w: 110, d: 1.8 },
+  { id: 'perimeter-front-right', x: 65, z: 112, w: 110, d: 1.8 },
 ];
 for (const b of BUILDINGS) {
   solids.push(
