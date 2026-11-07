@@ -379,7 +379,7 @@ export default function World() {
       <Gate z={24} />
       <BellTower position={[55, 0, -112]} />
       <Tower position={[-55, 0, -112]} tiers={5} label="Bảo tháp" />
-      <Pond position={[0, 0, 8]} w={22} d={24} />
+      <Pond position={[0, 0, 5]} w={22} d={24} />
       {/* Meditation zone: stone platform with an outdoor Buddha */}
       <group position={[0, 0, -155]}>
         <mesh position={[0, 0.25, 0]} receiveShadow>
@@ -397,7 +397,7 @@ export default function World() {
           );
         })}
       </group>
-      <Pavilion position={[0, 0, -12]} rot={0} />
+      <Pavilion position={[0, 0, -15]} rot={0} />
       <TempleCampus />
       <StoneLanterns points={lanterns} />
       <SkyLanterns />
