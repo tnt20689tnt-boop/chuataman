@@ -219,23 +219,48 @@ export function MainHall() {
             </mesh>)}
           </group>
         )))}
-        {/* A layered lotus mandala forms a ceremonial focal backdrop behind the Buddha. */}
-        <group position={[0, 5.75, -11.35]} name="Đài sen phù điêu thếp vàng sau tượng Phật">
-          <mesh><torusGeometry args={[3.25, 0.12, 10, 96]} /><meshStandardMaterial color={C.gold} metalness={0.68} roughness={0.3} /></mesh>
-          <mesh><torusGeometry args={[2.92, 0.045, 8, 96]} /><meshStandardMaterial color="#e6c987" metalness={0.58} roughness={0.34} /></mesh>
-          {Array.from({ length: 16 }, (_, i) => {
-            const a = (i / 16) * Math.PI * 2;
+        {/* Grand gilded lotus aureole and carved sanctuary backdrop behind the principal Buddha. */}
+        <group position={[0, 6.05, -11.25]} name="Đài hào quang liên hoa đại tự">
+          <mesh><torusGeometry args={[4.45, 0.2, 12, 128]} /><meshStandardMaterial color={C.gold} metalness={0.76} roughness={0.26} /></mesh>
+          <mesh><torusGeometry args={[4.08, 0.075, 10, 128]} /><meshStandardMaterial color="#f0d69b" metalness={0.62} roughness={0.3} /></mesh>
+          <mesh><torusGeometry args={[3.68, 0.045, 8, 128]} /><meshStandardMaterial color="#9c4b2b" metalness={0.34} roughness={0.42} /></mesh>
+          {Array.from({ length: 24 }, (_, i) => {
+            const a = (i / 24) * Math.PI * 2;
             return <group key={i} rotation-z={a}>
-              <mesh position={[0, 2.45, 0]} rotation-z={-0.12} scale={[0.38, 0.82, 0.1]} castShadow>
-                <sphereGeometry args={[1, 20, 14]} />
-                <meshStandardMaterial color={i % 2 ? "#c9a45e" : "#e1c17d"} metalness={0.48} roughness={0.38} />
+              <mesh position={[0, 3.28, 0]} rotation-z={-0.1} scale={[0.48, 1.05, 0.13]} castShadow>
+                <sphereGeometry args={[1, 24, 18]} />
+                <meshStandardMaterial color={i % 2 ? "#c49a52" : "#f0d69b"} metalness={0.58} roughness={0.3} />
+              </mesh>
+              <mesh position={[0, 4.0, 0]} rotation-z={-0.1} scale={[0.23, 0.46, 0.09]}>
+                <sphereGeometry args={[1, 18, 12]} />
+                <meshStandardMaterial color="#8c3024" metalness={0.3} roughness={0.42} />
               </mesh>
             </group>;
           })}
-          <mesh position={[0, 0, 0.08]}><circleGeometry args={[0.34, 48]} /><meshStandardMaterial color="#8c3024" /></mesh>
-          <mesh position={[0, 0, 0.12]}><torusGeometry args={[0.42, 0.055, 8, 48]} /><meshStandardMaterial color={C.gold} metalness={0.68} roughness={0.28} /></mesh>
+          <mesh position={[0, 0, 0.08]}><circleGeometry args={[0.48, 64]} /><meshStandardMaterial color="#8c3024" /></mesh>
+          <mesh position={[0, 0, 0.12]}><torusGeometry args={[0.58, 0.075, 10, 64]} /><meshStandardMaterial color={C.gold} metalness={0.78} roughness={0.24} /></mesh>
+          {Array.from({ length: 12 }, (_, i) => {
+            const a = (i / 12) * Math.PI * 2;
+            return <mesh key={i} position={[Math.cos(a) * 0.35, Math.sin(a) * 0.35, 0.16]} scale={0.09}>
+              <sphereGeometry args={[1, 16, 12]} /><meshStandardMaterial color="#f6dfaa" metalness={0.58} roughness={0.28} />
+            </mesh>;
+          })}
         </group>
-        {/* Continuous carved-looking gold cornices enrich the otherwise plain side and rear walls. */}
+        {/* Deep-red carved sanctuary panels and gilded vertical framing make the altar wall monumental. */}
+        {[-9.2, 9.2].map((x) => (
+          <group key={x} position={[x, 5.4, -11.32]}>
+            <mesh castShadow><boxGeometry args={[5.4, 8.2, 0.32]} /><meshStandardMaterial color="#54251f" roughness={0.62} /></mesh>
+            <mesh position={[0, 0, 0.2]}><boxGeometry args={[4.95, 7.75, 0.08]} /><meshStandardMaterial color="#783629" roughness={0.55} /></mesh>
+            {[-2.25, 2.25].map((dx) => <mesh key={dx} position={[dx, 0, 0.27]}>
+              <boxGeometry args={[0.1, 7.5, 0.08]} /><meshStandardMaterial color={C.gold} metalness={0.7} roughness={0.3} />
+            </mesh>)}
+            {[-3.65, 3.65].map((dy) => <mesh key={dy} position={[0, dy, 0.27]}>
+              <boxGeometry args={[4.8, 0.1, 0.08]} /><meshStandardMaterial color={C.gold} metalness={0.7} roughness={0.3} />
+            </mesh>)}
+            <mesh position={[0, 0, 0.34]}><torusGeometry args={[1.35, 0.055, 8, 64]} /><meshStandardMaterial color="#d8b36c" metalness={0.68} roughness={0.3} /></mesh>
+          </group>
+        ))}
+        {/* More layered architectural trim, red-gold pilasters and a ceremonial upper frieze. */}
         {[1.15, 2.05, 8.72].map((y) => (
           <group key={y}>
             <mesh position={[0, y, -11.48]}>
@@ -260,12 +285,44 @@ export function MainHall() {
         <Inscription text="CHÍNH ĐIỆN" width={10} height={1.6} position={[0, 8.6, 12.6]} />
         {[-15, -10, 10, 15].map(x => <CarvedPanel key={x} position={[x, 4.5, -11.5]} w={3.8} h={6} />)}
         {[-1, 1].map(side => <Inscription key={side} text="TÂM AN" width={1} height={3} position={[side * 7.8, 5, 12.4]} small />)}
-        {/* altar */}
-        <mesh position={[0, 0.8, -4]} castShadow>
-          <boxGeometry args={[10, 1.6, 4]} />
-          <meshStandardMaterial color={C.altarRed} roughness={0.42} metalness={0.18} />
-        </mesh>
-        <Buddha position={[0, 1.6, -6.5]} scale={1.1} />
+        {/* Monumental multi-tier lacquer-and-gold altar, raised above the worship floor. */}
+        <group position={[0, 0, -5.0]} name="Bệ thờ chính điện đại tự">
+          <mesh position={[0, 0.48, 0]} castShadow receiveShadow>
+            <boxGeometry args={[16.5, 0.96, 7.2]} />
+            <meshStandardMaterial color="#54231d" roughness={0.42} metalness={0.16} />
+          </mesh>
+          <mesh position={[0, 1.02, 0.05]} castShadow>
+            <boxGeometry args={[15.8, 0.22, 6.8]} />
+            <meshStandardMaterial color={C.gold} metalness={0.72} roughness={0.28} />
+          </mesh>
+          <mesh position={[0, 1.45, -0.35]} castShadow>
+            <boxGeometry args={[13.2, 0.72, 5.6]} />
+            <meshStandardMaterial color="#713027" roughness={0.4} metalness={0.18} />
+          </mesh>
+          <mesh position={[0, 1.86, -0.35]}>
+            <boxGeometry args={[13.7, 0.12, 5.9]} />
+            <meshStandardMaterial color="#e0bd79" metalness={0.72} roughness={0.26} />
+          </mesh>
+          <mesh position={[0, 2.18, -1.0]} castShadow>
+            <boxGeometry args={[9.8, 0.58, 4.4]} />
+            <meshStandardMaterial color="#5b241e" roughness={0.38} metalness={0.2} />
+          </mesh>
+          <mesh position={[0, 2.5, -1.0]}>
+            <boxGeometry args={[10.2, 0.1, 4.65]} />
+            <meshStandardMaterial color={C.gold} metalness={0.72} roughness={0.28} />
+          </mesh>
+          {/* Repeated gold relief panels across the front of the altar. */}
+          {[-6.2, -3.1, 0, 3.1, 6.2].map((x) => (
+            <group key={x} position={[x, 0.52, 3.64]}>
+              <mesh><boxGeometry args={[2.25, 0.62, 0.06]} /><meshStandardMaterial color="#7d3025" roughness={0.45} /></mesh>
+              <mesh position={[0, 0, 0.05]}><torusGeometry args={[0.3, 0.045, 8, 32]} /><meshStandardMaterial color={C.gold} metalness={0.75} roughness={0.26} /></mesh>
+              <mesh position={[0, 0, 0.09]}><circleGeometry args={[0.16, 32]} /><meshStandardMaterial color="#e7c77f" metalness={0.55} roughness={0.3} /></mesh>
+            </group>
+          ))}
+          <mesh position={[0, 1.42, 3.68]}><boxGeometry args={[15.1, 0.07, 0.08]} /><meshStandardMaterial color={C.gold} metalness={0.7} roughness={0.3} /></mesh>
+        </group>
+        {/* Principal Shakyamuni Buddha, enlarged and elevated as the visual heart of the hall. */}
+        <Buddha position={[0, 2.55, -6.55]} scale={1.28} />
 
         {/* Two smaller attendant Bodhisattva statues, symmetrically flanking the main Buddha. */}
         {[-1, 1].map((side) => (
@@ -278,7 +335,7 @@ export function MainHall() {
               <boxGeometry args={[4.35, 0.12, 3.35]} />
               <meshStandardMaterial color="#c49a52" metalness={0.42} roughness={0.48} />
             </mesh>
-            <Buddha position={[0, 1.7, 0]} scale={0.62} />
+            <Buddha position={[0, 1.7, 0]} scale={0.7} />
             <pointLight position={[0, 4.1, 1.2]} intensity={5} distance={8} color="#ffd99b" />
           </group>
         ))}
