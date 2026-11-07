@@ -23,8 +23,8 @@ const solids: Solid[] = [
   { id: 'pond-left', x: -5.3, z: 8, w: 7.4, d: 24 },
   { id: 'pond-right', x: 5.3, z: 8, w: 7.4, d: 24 },
   // Side rails guide visitors along the bridge; there are no barriers across either end.
-  { id: 'lotus-bridge-rail-left', x: -1.55, z: 8, w: 0.2, d: 24 },
-  { id: 'lotus-bridge-rail-right', x: 1.55, z: 8, w: 0.2, d: 24 },
+  { id: 'lotus-bridge-rail-left', x: -1.55, z: 5, w: 0.2, d: 24 },
+  { id: 'lotus-bridge-rail-right', x: 1.55, z: 5, w: 0.2, d: 24 },
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
   { id: 'perimeter-back', x: 0, z: -185, w: 240, d: 1.8 },
   { id: 'perimeter-left', x: -120, z: -36.5, w: 1.8, d: 297 },
@@ -72,7 +72,7 @@ for (const z of [24, 112]) for (const x of [-8, -3.6, 3.6, 8]) {
   solids.push({ id: 'gate-column', x, z, w: 1.25, d: 1.65 });
 }
 // Pavilion posts are solid in the rendered scene; prevent walking through them.
-for (const x of [-7, -2.333, 2.333, 7]) for (const z of [-17, -7]) {
+for (const x of [-7, -2.333, 2.333, 7]) for (const z of [-20, -10]) {
   solids.push({ id: 'pavilion-post', x, z, w: 1.1, d: 1.1 });
 }
 for (let i = 0; i < 8; i++) for (const z of [-50, -74]) {
@@ -119,16 +119,16 @@ export function surfaceHeight(x: number, z: number) {
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
   // Match the 24 stone slabs: the bridge stays behind the gate and reaches the pavilion steps.
   // Bridge center is z=8; leave a clear landing between the bridge and the inner gate.
-  if (Math.abs(x) <= 1.0 && z >= -4 && z <= 20) {
-    return 0.45 + Math.sin(((z + 4) / 24) * Math.PI) * 1.1;
+  if (Math.abs(x) <= 1.0 && z >= -7 && z <= 17) {
+    return 0.45 + Math.sin(((z + 7) / 24) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
   // Pavilion deck is elevated 0.6m; match the three visible approach steps.
-  if (Math.abs(x) <= 7.5 && z >= -18 && z <= -6) return 0.6;
+  if (Math.abs(x) <= 7.5 && z >= -21 && z <= -9) return 0.6;
   if (Math.abs(x) <= 2.6) {
-    if (z > -4.55 && z <= -3.45) return 0.2;
-    if (z > -5.55 && z <= -4.45) return 0.4;
-    if (z > -6.6 && z <= -5.45) return 0.6;
+    if (z > -7.55 && z <= -6.45) return 0.2;
+    if (z > -8.55 && z <= -7.45) return 0.4;
+    if (z > -9.6 && z <= -8.45) return 0.6;
   }
   return 0;
 }
