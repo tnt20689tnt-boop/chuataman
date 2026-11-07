@@ -240,9 +240,7 @@ export function PlayerAvatar() {
   const modelId = avatar?.modelId ?? (female ? "nu1" : "nam1");
   const modelPath = ({
     nam1: "/models/nhan-vat-nam-1.glb",
-    nam2: "/models/nhan-vat-nam-2.glb",
     nu1: "/models/nhan-vat-nu-1.glb",
-    nu2: "/models/nhan-vat-nu-2.glb",
   } as const)[modelId];
 
   useEffect(() => {
