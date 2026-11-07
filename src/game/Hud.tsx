@@ -1,8 +1,6 @@
 import { memo, Suspense, useEffect, useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import { Bounds, Center, OrbitControls, useGLTF } from "@react-three/drei";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
-import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar, type AvatarModelId } from "./store";
+import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, pauseSpeak, resumeSpeak, subscribeAudioSettings, testFootsteps, updateAudioSettings } from "./audio";
 import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useMultiplayerConnected, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
@@ -611,55 +609,10 @@ function AuthPanel() {
   );
 }
 
-const AVATAR_MODEL_PATHS: Record<AvatarModelId, string> = {
-  nam1: "/models/nhan-vat-nam-1.glb",
-  nu1: "/models/nhan-vat-nu-1.glb",
-};
-
-function AvatarModelPreview({ modelId }: { modelId: AvatarModelId }) {
-  const { scene } = useGLTF(AVATAR_MODEL_PATHS[modelId]);
-  return <Center><primitive object={scene} /></Center>;
-}
-
-function AvatarChoiceCard({ model, selected, gender, onSelect }: {
-  model: { id: AvatarModelId; label: string; description: string };
-  selected: boolean;
-  gender: "nam" | "nu";
-  onSelect: () => void;
-}) {
-  return (
-    <button type="button" onClick={onSelect}
-      className="hud-tile flex min-w-0 flex-col overflow-hidden p-2 text-left"
-      data-active={selected} aria-pressed={selected}>
-      <div className="relative h-32 w-full overflow-hidden rounded-lg bg-gradient-to-b from-amber-50/10 to-amber-900/10">
-        <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-30" aria-hidden>
-          {gender === "nam" ? "👨" : "👩"}
-        </div>
-        <Canvas camera={{ position: [0, 1.2, 3.2], fov: 34 }} dpr={[1, 1.5]}>
-          <ambientLight intensity={1.4} />
-          <directionalLight position={[3, 5, 4]} intensity={2} />
-          <Suspense fallback={null}>
-            <Bounds fit clip observe margin={1.25}>
-              <AvatarModelPreview modelId={model.id} />
-            </Bounds>
-          </Suspense>
-          <OrbitControls enablePan={false} enableZoom={false} minPolarAngle={Math.PI / 3} maxPolarAngle={Math.PI / 1.8} />
-        </Canvas>
-      </div>
-      <span className="mt-2 w-full text-center font-semibold">{model.label}</span>
-      <span className="w-full text-center text-[10px] text-muted-foreground">{model.description}</span>
-      {selected && <span className="mt-1 text-center text-xs font-semibold text-primary">✓ Đang chọn</span>}
-    </button>
-  );
-}
-
 function AvatarPanel({ initial }: { initial: Avatar | null }) {
   const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "nam1", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
   const gender = a.gender ?? "nam";
-  const modelOptions: { id: AvatarModelId; label: string; description: string }[] = gender === "nam"
-    ? [{ id: "nam1", label: "Nam", description: "Mẫu nam" }]
-    : [{ id: "nu1", label: "Nữ", description: "Mẫu nữ" }];
-  const selectedModel = a.modelId ?? (gender === "nu" ? "nu1" : "nam1");
+  const selectedModel = gender === "nu" ? "nu1" : "nam1";
   const ok = a.name.trim().length >= 2;
   return (
     <Panel title={initial ? "Tùy chỉnh Avatar" : "Tạo Avatar của bạn"} {...(initial ? { onClose: () => setUI({ panel: null }) } : {})}>
@@ -674,12 +627,8 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
           </button>
         ))}
       </div>
-      <div className="mb-2 grid grid-cols-2 gap-2">
-        {modelOptions.map((model) => (
-          <AvatarChoiceCard key={model.id} model={model} gender={gender}
-            selected={selectedModel === model.id}
-            onSelect={() => setA({ ...a, gender, modelId: model.id })} />
-        ))}
+      <div className="mb-4 rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+        Nhân vật 3D mặc định của chùa · có chuyển động đi lại, chắp tay và thiền.
       </div>
       <div className="mb-1 text-sm font-semibold text-foreground">Trang phục</div>
       <div className="mb-4 flex flex-wrap gap-2">
