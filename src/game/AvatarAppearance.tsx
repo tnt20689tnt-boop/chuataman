@@ -58,10 +58,18 @@ export function AnimatedAvatarAppearance({
     model.traverse((object) => {
       if (!(object instanceof THREE.Bone)) return;
       const n = object.name.toLowerCase().replace(/[^a-z]/g, "");
-      const side = /left|(^|)l(upper|lower|arm|leg|hand|foot)/.test(n) ? 1 : /right|(^|)r(upper|lower|arm|leg|hand|foot)/.test(n) ? -1 : 0;
+      // Only swing the main upper-limb bones. Driving every forearm, hand,
+      // calf and foot with the same angle makes imported rigs look as if
+      // they are flailing or dancing.
+      const isLeft = n.includes("left") || /(^|)l(upperarm|arm|upleg|thigh)/.test(n);
+      const isRight = n.includes("right") || /(^|)r(upperarm|arm|upleg|thigh)/.test(n);
+      const side = isLeft ? 1 : isRight ? -1 : 0;
       if (!side) return;
-      if (/arm|shoulder|forearm|hand/.test(n)) found.push({ bone: object, base: object.rotation.clone(), side, kind: "arm" });
-      else if (/upleg|thigh|leg|calf|foot/.test(n)) found.push({ bone: object, base: object.rotation.clone(), side, kind: "leg" });
+      if (/upperarm|mixamorigleftarm|mixamorigrightarm/.test(n) || /^(leftarm|rightarm)$/.test(n)) {
+        found.push({ bone: object, base: object.rotation.clone(), side, kind: "arm" });
+      } else if (/upleg|thigh/.test(n)) {
+        found.push({ bone: object, base: object.rotation.clone(), side, kind: "leg" });
+      }
     });
     const spine = model.getObjectByName("mixamorigSpine2") ?? model.getObjectByName("Spine2") ?? model.getObjectByName("spine");
     if (spine instanceof THREE.Bone) found.push({ bone: spine, base: spine.rotation.clone(), side: 0, kind: "spine" });
