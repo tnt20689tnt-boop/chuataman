@@ -379,42 +379,7 @@ export default function World() {
       <Gate z={24} />
       <BellTower position={[55, 0, -112]} />
       <Tower position={[-55, 0, -112]} tiers={5} label="Bảo tháp" />
-      <Pond position={[0, 0, 13]} w={18} d={20} />
-      {/* A continuous stone approach links the lotus pond bridge to the main sanctuary. */}
-      <group name="Sân cảnh quan nối ao sen với chính điện">
-        <mesh position={[0, 0.12, -19.5]} receiveShadow>
-          <boxGeometry args={[13.5, 0.22, 45]} />
-          <meshStandardMaterial color="#b8b09f" roughness={0.94} />
-        </mesh>
-        {Array.from({ length: 18 }, (_, i) => (
-          <mesh key={i} position={[0, 0.245, 2 - i * 2.45]} receiveShadow>
-            <boxGeometry args={[12.8, 0.035, 0.075]} />
-            <meshStandardMaterial color="#8d887c" roughness={0.95} />
-          </mesh>
-        ))}
-        {[-1, 1].map((side) => (
-          <group key={side}>
-            <mesh position={[side * 7.15, 0.22, -19.5]} receiveShadow>
-              <boxGeometry args={[0.38, 0.38, 45]} />
-              <meshStandardMaterial color="#858579" roughness={0.92} />
-            </mesh>
-            {[-9, -23, -36].map((z, i) => (
-              <group key={z} position={[side * 9.2, 0, z]}>
-                <mesh position={[0, 0.22, 0]} receiveShadow>
-                  <cylinderGeometry args={[1.25, 1.45, 0.42, 10]} />
-                  <meshStandardMaterial color="#999486" roughness={0.96} />
-                </mesh>
-                {Array.from({ length: 5 }, (_, n) => (
-                  <mesh key={n} position={[Math.cos(n * Math.PI * 2 / 5) * 0.58, 0.72 + (n % 2) * 0.12, Math.sin(n * Math.PI * 2 / 5) * 0.58]} scale={[0.72, 0.62, 0.72]} castShadow>
-                    <sphereGeometry args={[0.72, 10, 8]} />
-                    <meshStandardMaterial color={i % 2 ? "#58734b" : "#6b8054"} roughness={0.96} />
-                  </mesh>
-                ))}
-              </group>
-            ))}
-          </group>
-        ))}
-      </group>
+      <Pond position={[0, 0, 13]} w={22} d={24} />
       {/* Meditation zone: stone platform with an outdoor Buddha */}
       <group position={[0, 0, -155]}>
         <mesh position={[0, 0.25, 0]} receiveShadow>
