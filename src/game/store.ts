@@ -9,7 +9,7 @@ export const input = { fwd: 0, right: 0, run: false, joyF: 0, joyR: 0 };
 
 export type Action = "none" | "le" | "chap" | "thien" | "kinh";
 
-export type AvatarModelId = "nam1" | "nam2" | "nu1" | "nu2";
+export type AvatarModelId = "male_animated" | "female_animated";
 
 export interface Avatar {
   name: string;
