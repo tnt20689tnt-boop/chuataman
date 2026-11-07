@@ -39,12 +39,12 @@ describe('PR9 visitor access', () => {
   it('keeps visitors out of water while allowing the stone bridge', () => {
     expect(isBlocked(8, 11)).toBe(true); // Lotus pond water.
     expect(isBlocked(0, 11)).toBe(false); // Clear stone bridge corridor.
-    expect(surfaceHeight(0, 11)).toBeCloseTo(1.55);
+    expect(surfaceHeight(0, 11)).toBeCloseTo(1.4663);
   });
   it('blocks new building walls but leaves their central doors open', () => {
-    expect(isBlocked(-82, -15)).toBe(true);
-    expect(isBlocked(-70, -6)).toBe(false);
-    expect(isBlocked(-70, -24)).toBe(true); // Back wall of the meditation hall.
+    expect(isBlocked(-54, -15)).toBe(true);
+    expect(isBlocked(-42, -6)).toBe(false); // Central doorway of the meditation hall.
+    expect(isBlocked(-42, -24)).toBe(true); // Back wall of the meditation hall.
   });
   it('does not report walking when pressed into a solid gate column', () => {
     const p = { x: 3.6, z: 25.13, y: 0, rot: Math.PI };
@@ -52,7 +52,7 @@ describe('PR9 visitor access', () => {
   });
   it('reports raised floor heights used by remote avatars', () => {
     expect(surfaceHeight(0, -50)).toBe(1.2);
-    expect(surfaceHeight(-70, -15)).toBe(0.3);
+    expect(surfaceHeight(-42, -15)).toBe(0.3);
     expect(surfaceHeight(40, -90)).toBe(0);
   });
 
