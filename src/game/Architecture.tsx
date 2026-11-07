@@ -775,10 +775,24 @@ export function Waterfall({ position }: { position: [number, number, number] }) 
           <meshStandardMaterial color="#6b6a63" roughness={1} flatShading />
         </mesh>
       ))}
+      {/* Broad main cascade with two narrower side streams for a layered natural fall. */}
       <mesh position={[0, 6, 3.3]} rotation-x={-0.12}>
         <planeGeometry args={[3.2, 12]} />
-        <meshStandardMaterial map={tex} transparent opacity={0.85} emissive="#cfeff5" emissiveIntensity={0.3} />
+        <meshStandardMaterial map={tex} transparent opacity={0.85} emissive="#cfeff5" emissiveIntensity={0.3} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
+      {[-2.15, 2.15].map((x, i) => <mesh key={i} position={[x, 4.8 + i * 0.35, 3.05]} rotation-x={-0.1}>
+        <planeGeometry args={[1.05, 8.8]} />
+        <meshStandardMaterial map={tex} transparent opacity={0.68} emissive="#d8f4f5" emissiveIntensity={0.22} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>)}
+      {/* Shallow reflective basin and concentric stone ledges at the foot of the falls. */}
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.18, 4.1]} receiveShadow>
+        <circleGeometry args={[6.2, 48]} />
+        <meshStandardMaterial color="#71999a" roughness={0.2} metalness={0.28} transparent opacity={0.82} />
+      </mesh>
+      {[5.8, 6.6].map((radius, i) => <mesh key={i} rotation-x={Math.PI / 2} position={[0, 0.22 + i * 0.025, 4.1]}>
+        <torusGeometry args={[radius, 0.18, 8, 64]} />
+        <meshStandardMaterial color={i ? "#77766c" : "#a69b85"} roughness={0.9} />
+      </mesh>)}
       <Sparkles position={[0, 0.8, 4.5]} count={50} scale={[5, 1.5, 3]} size={5} speed={0.8} color="#ffffff" />
     </group>
   );
