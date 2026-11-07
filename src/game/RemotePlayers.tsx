@@ -17,9 +17,8 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const activeClipRef = useRef<THREE.AnimationAction | null>(null);
   const rigRef = useRef<AvatarRig | null>(null);
-  const modelPath = player.modelId === "nam2" ? "/models/nhan-vat-nam-2.glb"
-    : player.modelId === "nu1" ? "/models/nhan-vat-nu-1.glb"
-    : player.modelId === "nu2" ? "/models/nhan-vat-nu-2.glb"
+  // Only the approved first male/female models are allowed for remote visitors.
+  const modelPath = player.modelId === "nu1" ? "/models/nhan-vat-nu-1.glb"
     : player.modelId === "nam1" ? "/models/nhan-vat-nam-1.glb" : null;
 
   useEffect(() => {
@@ -42,9 +41,19 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
           (node as THREE.Mesh).receiveShadow = true;
         }
       });
+      mixerRef.current = new THREE.AnimationMixer(model);
+      rigRef.current = captureAvatarRig(model);
+      setExternalClips(gltf.animations ?? []);
       setExternalModel(model);
     }, undefined, () => { if (alive) setExternalModel(null); });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+      activeClipRef.current?.stop();
+      mixerRef.current?.stopAllAction();
+      mixerRef.current = null;
+      activeClipRef.current = null;
+      rigRef.current = null;
+    };
   }, [modelPath]);
   const leftArm = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
