@@ -950,8 +950,20 @@ export function Pavilion({ position, rot = 0 }: { position: [number, number, num
         <boxGeometry args={[16, 0.6, 12]} />
         <meshStandardMaterial color="#b3a68f" />
       </mesh>
-      {/* Three broad stone steps face the lotus bridge so visitors can climb onto the pavilion. */}
-      {Array.from({ length: 3 }, (_, i) => <mesh key={i} position={[0, (i + 1) * 0.1, 8 - i]} receiveShadow castShadow>
+      {/* Three broad stone steps on all four sides let visitors enter the pavilion from any direction. */}
+      {Array.from({ length: 3 }, (_, i) => <mesh key={`front-${i}`} position={[0, (i + 1) * 0.1, 8 - i]} receiveShadow castShadow>
+        <boxGeometry args={[5.2, (i + 1) * 0.2, 1.15]} />
+        <meshStandardMaterial color="#a99d89" roughness={0.94} />
+      </mesh>)}
+      {Array.from({ length: 3 }, (_, i) => <mesh key={`back-${i}`} position={[0, (i + 1) * 0.1, -8 + i]} receiveShadow castShadow>
+        <boxGeometry args={[5.2, (i + 1) * 0.2, 1.15]} />
+        <meshStandardMaterial color="#a99d89" roughness={0.94} />
+      </mesh>)}
+      {Array.from({ length: 3 }, (_, i) => <mesh key={`left-${i}`} position={[-10 + i, (i + 1) * 0.1, 0]} rotation-y={Math.PI / 2} receiveShadow castShadow>
+        <boxGeometry args={[5.2, (i + 1) * 0.2, 1.15]} />
+        <meshStandardMaterial color="#a99d89" roughness={0.94} />
+      </mesh>)}
+      {Array.from({ length: 3 }, (_, i) => <mesh key={`right-${i}`} position={[10 - i, (i + 1) * 0.1, 0]} rotation-y={Math.PI / 2} receiveShadow castShadow>
         <boxGeometry args={[5.2, (i + 1) * 0.2, 1.15]} />
         <meshStandardMaterial color="#a99d89" roughness={0.94} />
       </mesh>)}
