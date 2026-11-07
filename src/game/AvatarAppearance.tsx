@@ -59,63 +59,36 @@ export function AnimatedAvatarAppearance({
   const unitScale = 1.8 / Math.max(size.y, 0.001);
   const neckY = bounds.min.y + size.y * 0.72;
 
-  const clips = useMemo(() => {
-    // Collect the scene/armature ancestors and skeleton root/hips bones.
-    // Exporters do not use one consistent name for the node carrying root motion.
-    const rootMotionNames = new Set<string>();
-    model.traverse((object) => {
-      if (!(object instanceof THREE.SkinnedMesh)) return;
-      let parent: THREE.Object3D | null = object;
-      while (parent && parent !== model) {
-        if (parent.name) rootMotionNames.add(parent.name.toLowerCase());
-        parent = parent.parent;
+  const clips = useMemo(() => gltf.animations.map((source) => {
+    const clip = source.clone();
+    // Only lock the actual root/hips/pelvis channel. Never match the full
+    // track path: exporters often prefix every bone with "Armature".
+    clip.tracks = clip.tracks.filter((track) => {
+      if (!/\.position$/i.test(track.name)) return true;
+      let target = "";
+      try {
+        const parsed = THREE.PropertyBinding.parseTrackName(track.name);
+        target = [parsed.nodeName, parsed.objectIndex].filter(Boolean).join(" ").toLowerCase();
+      } catch {
+        target = track.name.toLowerCase().split(/[|/]/).pop() ?? "";
       }
-      const bones = object.skeleton?.bones ?? [];
-      bones.forEach((bone) => {
-        const parentIsBone = bone.parent && bones.includes(bone.parent as THREE.Bone);
-        if (!parentIsBone || /root|hips/i.test(bone.name)) {
-          if (bone.name) rootMotionNames.add(bone.name.toLowerCase());
-        }
-      });
+      const isRootMotion =
+        /(^|[^a-z])(root|hips|pelvis)([^a-z]|$)/i.test(target) ||
+        /^(armature|skeleton|rootnode)$/i.test(target.trim());
+      if (!isRootMotion) return true;
+      const values = track.values as Float32Array;
+      const stride = track.getValueSize();
+      if (stride < 3 || values.length < stride) return false;
+      const firstX = values[0];
+      const firstZ = values[2];
+      for (let i = 0; i + 2 < values.length; i += stride) {
+        values[i] = firstX;
+        values[i + 2] = firstZ;
+      }
+      return true;
     });
-
-    return gltf.animations.map((source) => {
-      const clip = source.clone();
-      // The game controller owns world X/Z position. Lock horizontal translation
-      // on root/hips/armature nodes and on ancestors of the skinned mesh. Preserve
-      // vertical hip motion so the walk cycle still has its natural body bounce.
-      clip.tracks = clip.tracks.filter((track) => {
-        if (!/\.position$/i.test(track.name)) return true;
-
-        let nodeName = "";
-        let objectIndex = "";
-        try {
-          const parsed = THREE.PropertyBinding.parseTrackName(track.name);
-          nodeName = String(parsed.nodeName ?? "").toLowerCase();
-          objectIndex = String(parsed.objectIndex ?? "").toLowerCase();
-        } catch {
-          // Fall back to the full track name for unusual exporter track paths.
-        }
-        const target = [nodeName, objectIndex, track.name.toLowerCase()].join(" ");
-        const isRootMotion =
-          /(root|hips|armature)/i.test(target) ||
-          [...rootMotionNames].some((name) => name.length > 0 && target.includes(name));
-        if (!isRootMotion) return true;
-
-        const values = track.values as Float32Array;
-        const stride = track.getValueSize();
-        if (stride < 3 || values.length < stride) return false;
-        const firstX = values[0];
-        const firstZ = values[2];
-        for (let i = 0; i + 2 < values.length; i += stride) {
-          values[i] = firstX;
-          values[i + 2] = firstZ;
-        }
-        return true;
-      });
-      return clip;
-    });
-  }, [gltf.animations, model]);
+    return clip;
+  }), [gltf.animations]);
   const { actions } = useAnimations(clips, root);
   const activeClip = useRef("");
 
