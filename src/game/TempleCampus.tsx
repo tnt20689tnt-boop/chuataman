@@ -147,9 +147,57 @@ function Garden() {
   </group>;
 }
 
+
+function BoundaryWalls() {
+  // A continuous Vietnamese temple enclosure with a wide central entrance.
+  // The front opening aligns with the existing Tam Quan at z=112.
+  const runs = [
+    { x: 0, z: -185, length: 240, rotation: 0 },
+    { x: -120, z: -36.5, length: 297, rotation: Math.PI / 2 },
+    { x: 120, z: -36.5, length: 297, rotation: Math.PI / 2 },
+    { x: -65, z: 112, length: 110, rotation: 0 },
+    { x: 65, z: 112, length: 110, rotation: 0 },
+  ];
+  return <group name="Tường bao khuôn viên Chùa Tâm An">
+    {runs.map((run, index) => <group key={index} position={[run.x, 0, run.z]} rotation-y={run.rotation}>
+      <mesh position={[0, 1.25, 0]} castShadow receiveShadow>
+        <boxGeometry args={[run.length, 2.5, 1.15]} />
+        <Surface kind="stone" repeat={Math.max(2, Math.round(run.length / 8))} />
+      </mesh>
+      <mesh position={[0, 2.53, 0]} castShadow>
+        <boxGeometry args={[run.length + 0.25, 0.16, 1.35]} />
+        <meshStandardMaterial color={C.gold} roughness={0.72} metalness={0.18} />
+      </mesh>
+      {Array.from({ length: Math.floor(run.length / 12) + 1 }, (_, i) => {
+        const offset = -run.length / 2 + i * 12;
+        return <group key={i} position={[offset, 0, 0]}>
+          <mesh position={[0, 1.45, 0]} castShadow receiveShadow>
+            <boxGeometry args={[0.9, 2.9, 1.45]} />
+            <Surface kind="stone" />
+          </mesh>
+          <mesh position={[0, 2.95, 0]} castShadow>
+            <boxGeometry args={[1.25, 0.22, 1.75]} />
+            <meshStandardMaterial color={C.lacquer} roughness={0.82} />
+          </mesh>
+          <mesh position={[0, 3.1, 0]}>
+            <boxGeometry args={[0.7, 0.08, 1.2]} />
+            <meshStandardMaterial color={C.gold} metalness={0.45} roughness={0.5} />
+          </mesh>
+        </group>;
+      })}
+    </group>)}
+    {/* Low stone entrance markers flank the main approach. */}
+    {[-1, 1].map(side => <group key={side} position={[side * 12.5, 0, 112]}>
+      <mesh position={[0, 0.55, 0]} castShadow><boxGeometry args={[1.5, 1.1, 2]} /><Surface kind="stone" /></mesh>
+      <mesh position={[0, 1.18, 0]}><boxGeometry args={[1.9, 0.18, 2.3]} /><meshStandardMaterial color={C.gold} /></mesh>
+      <Inscription text={side < 0 ? "TỪ BI" : "AN LẠC"} width={1.1} height={0.65} position={[0, 0.62, 1.02]} stone small />
+    </group>)}
+  </group>;
+}
+
 export function TempleCampus() {
   return <>
-    {BUILDINGS.map(b => <CampusBuilding key={b.id} building={b} />)}
+    <BoundaryWalls />\n    {BUILDINGS.map(b => <CampusBuilding key={b.id} building={b} />)}
     <Bridge /><Garden />
     <Inscription text="NHÀ GIẢNG PHÁP" width={9} height={1} position={[60, 4.4, -51.8]} />
     <Inscription text="HỒ SEN" width={5} height={1} position={[0, 1.6, 26]} stone />
