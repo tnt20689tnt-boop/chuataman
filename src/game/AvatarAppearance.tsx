@@ -97,18 +97,17 @@ export function AnimatedAvatarAppearance({
     const walking = pose === "walk";
     const smooth = 1 - Math.exp(-delta * 14);
     for (const item of bonePoses) {
-      // The uploaded rigs do not share a verified bone-axis convention.
-      // Procedural X-axis swings can lift the arms sideways or twist them
-      // unnaturally. Keep limbs at their authored rest pose while walking
-      // until a compatible walk clip / rig mapping is verified.
+      const phase = clock.elapsedTime * 7.2;
+      const legStep = walking && item.kind === "leg"
+        ? Math.sin(phase) * item.side * 0.34
+        : 0;
       const target = item.kind === "spine" && !walking
         ? Math.sin(clock.elapsedTime * 2) * 0.008
         : 0;
-      // The uploaded avatar rests in a T-pose. Rotate each upper arm down
-      // from the shoulder in opposite directions so both arms hang beside
-      // the torso instead of sticking straight out at shoulder height.
+      // The GLB starts with arms spread in a T-pose. Lower them at the
+      // shoulders; swing only the upper legs in alternating opposition.
       const armDrop = item.kind === "arm" ? item.side * 0.85 : 0;
-      item.bone.rotation.x += ((item.base.x + target) - item.bone.rotation.x) * smooth;
+      item.bone.rotation.x += ((item.base.x + target + legStep) - item.bone.rotation.x) * smooth;
       item.bone.rotation.y += (item.base.y - item.bone.rotation.y) * smooth;
       item.bone.rotation.z += ((item.base.z + armDrop) - item.bone.rotation.z) * smooth;
     }
@@ -117,11 +116,9 @@ export function AnimatedAvatarAppearance({
   return (
     <group ref={root}>
       <group position={[-center.x * unitScale, -bounds.min.y * unitScale, -center.z * unitScale]} scale={unitScale}>
-        {/* This GLB faces left at the controller's forward heading; rotate the
-            visual rig 90 degrees without changing player movement/collision yaw. */}
-        <group rotation-y={-Math.PI / 2}>
-          <primitive object={model} />
-        </group>
+        {/* Keep the GLB's authored forward axis aligned with the controller.
+            The previous 90-degree correction turned the avatar sideways. */}
+        <primitive object={model} />
         {hair === "bui" && <mesh position={[center.x, bounds.max.y - size.y * 0.045, center.z - size.z * 0.12]} castShadow>
           <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
           <meshStandardMaterial color={hairColor} roughness={0.9} />
