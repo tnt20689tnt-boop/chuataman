@@ -612,10 +612,8 @@ function AuthPanel() {
 }
 
 const AVATAR_MODEL_PATHS: Record<AvatarModelId, string> = {
-  nam1: "/models/nhan-vat-nam-1.glb",
-  nam2: "/models/nhan-vat-nam-2.glb",
-  nu1: "/models/nhan-vat-nu-1.glb",
-  nu2: "/models/nhan-vat-nu-2.glb",
+  male_animated: "/models/male_animated.glb",
+  female_animated: "/models/female_animated.glb",
 };
 
 function AvatarModelPreview({ modelId }: { modelId: AvatarModelId }) {
@@ -656,18 +654,12 @@ function AvatarChoiceCard({ model, selected, gender, onSelect }: {
 }
 
 function AvatarPanel({ initial }: { initial: Avatar | null }) {
-  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "nam1", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
+  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "male_animated", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
   const gender = a.gender ?? "nam";
+  const selectedModel: AvatarModelId = gender === "nu" ? "female_animated" : "male_animated";
   const modelOptions: { id: AvatarModelId; label: string; description: string }[] = gender === "nam"
-    ? [
-        { id: "nam1", label: "Nam 1", description: "Mẫu nam thứ nhất" },
-        { id: "nam2", label: "Nam 2", description: "Mẫu nam thứ hai" },
-      ]
-    : [
-        { id: "nu1", label: "Nữ 1", description: "Mẫu nữ thứ nhất" },
-        { id: "nu2", label: "Nữ 2", description: "Mẫu nữ thứ hai" },
-      ];
-  const selectedModel = a.modelId ?? (gender === "nu" ? "nu1" : "nam1");
+    ? [{ id: "male_animated", label: "Nam", description: "Nhân vật nam có chuyển động" }]
+    : [{ id: "female_animated", label: "Nữ", description: "Nhân vật nữ có chuyển động" }];
   const ok = a.name.trim().length >= 2;
   return (
     <Panel title={initial ? "Tùy chỉnh Avatar" : "Tạo Avatar của bạn"} {...(initial ? { onClose: () => setUI({ panel: null }) } : {})}>
@@ -677,7 +669,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       <div className="mb-3 flex gap-2">
         {(["nam", "nu"] as const).map((nextGender) => (
           <button key={nextGender} className="hud-swatch" data-active={gender === nextGender}
-            onClick={() => setA({ ...a, gender: nextGender, modelId: nextGender === "nam" ? "nam1" : "nu1" })}>
+            onClick={() => setA({ ...a, gender: nextGender, modelId: nextGender === "nam" ? "male_animated" : "female_animated" })}>
             {nextGender === "nam" ? "👨 Nam" : "👩 Nữ"}
           </button>
         ))}
