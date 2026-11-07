@@ -72,7 +72,7 @@ for (const z of [24, 112]) for (const x of [-8, -3.6, 3.6, 8]) {
   solids.push({ id: 'gate-column', x, z, w: 1.25, d: 1.65 });
 }
 // Pavilion posts are solid in the rendered scene; prevent walking through them.
-for (const x of [-7, -2.333, 2.333, 7]) for (const z of [-20, -10]) {
+for (const x of [-7, -2.333, 2.333, 7]) for (const z of [-26, -16]) {
   solids.push({ id: 'pavilion-post', x, z, w: 1.1, d: 1.1 });
 }
 for (let i = 0; i < 8; i++) for (const z of [-50, -74]) {
@@ -124,19 +124,19 @@ export function surfaceHeight(x: number, z: number) {
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
   // Raised pavilion deck and three walkable steps on all four sides.
-  if (Math.abs(x) <= 7.5 && z >= -21 && z <= -9) return 0.6;
+  if (Math.abs(x) <= 7.5 && z >= -27 && z <= -15) return 0.6;
   // Front side (faces the lotus bridge).
   if (Math.abs(x) <= 2.6) {
-    if (z > -7.55 && z <= -6.45) return 0.2;
-    if (z > -8.55 && z <= -7.45) return 0.4;
-    if (z > -9.6 && z <= -8.45) return 0.6;
+    if (z > -13.55 && z <= -12.45) return 0.2;
+    if (z > -14.55 && z <= -13.45) return 0.4;
+    if (z > -15.6 && z <= -14.45) return 0.6;
     // Back side.
-    if (z >= -23.55 && z < -22.45) return 0.2;
-    if (z >= -22.55 && z < -21.45) return 0.4;
-    if (z >= -21.55 && z < -20.45) return 0.6;
+    if (z >= -29.55 && z < -28.45) return 0.2;
+    if (z >= -28.55 && z < -27.45) return 0.4;
+    if (z >= -27.55 && z < -26.45) return 0.6;
   }
   // Left side steps, progressing inward toward the deck.
-  if (Math.abs(z + 15) <= 2.6) {
+  if (Math.abs(z + 21) <= 2.6) {
     if (x >= -10.6 && x < -9.4) return 0.2;
     if (x >= -9.6 && x < -8.4) return 0.4;
     if (x >= -8.6 && x < -7.4) return 0.6;
