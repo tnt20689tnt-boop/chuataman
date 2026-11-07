@@ -31,9 +31,9 @@ export function AnimatedAvatarAppearance({
       const materials = (Array.isArray(object.material) ? object.material : [object.material]).map((original) => {
         const material = original.clone();
         const label = meshName + " " + material.name.toLowerCase();
-        if (/hair|toc|ponytail|bun/.test(label) && "color" in material) {
+        if (!material.map && /hair|toc|ponytail|bun/.test(label) && "color" in material) {
           (material as THREE.MeshStandardMaterial).color.set(hairColor);
-        } else if (!/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
+        } else if (!material.map && !/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
           (material as THREE.MeshStandardMaterial).color.set(OUTFIT_COLORS[outfit]);
         }
         return material;
@@ -65,7 +65,7 @@ export function AnimatedAvatarAppearance({
   }, [actions]);
 
   useFrame(() => {
-    const desired = pose === "walk" ? (input.run ? "run" : "walk") : "idle";
+    const desired = action === "none" && pose === "walk" ? (input.run ? "run" : "walk") : "idle";
     if (activeClip.current === desired) return;
     actions[activeClip.current]?.fadeOut(0.18);
     const next = actions[desired];
