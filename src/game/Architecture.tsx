@@ -950,6 +950,11 @@ export function Pavilion({ position, rot = 0 }: { position: [number, number, num
         <boxGeometry args={[16, 0.6, 12]} />
         <meshStandardMaterial color="#b3a68f" />
       </mesh>
+      {/* Three broad stone steps face the lotus bridge so visitors can climb onto the pavilion. */}
+      {Array.from({ length: 3 }, (_, i) => <mesh key={i} position={[0, (i + 1) * 0.1, 8 - i]} receiveShadow castShadow>
+        <boxGeometry args={[5.2, (i + 1) * 0.2, 1.15]} />
+        <meshStandardMaterial color="#a99d89" roughness={0.94} />
+      </mesh>)}
       <Columns w={14} d={10} h={5} n={4} />
       <group position={[0, 0.3, 0]}>
         <Roof w={16} d={12} h={3.5} y={5} />
