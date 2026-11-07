@@ -763,18 +763,21 @@ export function Waterfall({ position }: { position: [number, number, number] }) 
   });
   return (
     <group position={position}>
-      {([
-        [-5, 5, 0, 6],
-        [5, 6, 0, 7],
-        [0, 9, -3, 7],
-        [-3, 3, 2, 4],
-        [4, 3, 2, 4],
-      ] as [number, number, number, number][]).map(([x, y, z, r], i) => (
-        <mesh key={i} position={[x, y, z]} castShadow receiveShadow>
-          <dodecahedronGeometry args={[r, 0]} />
-          <meshStandardMaterial color="#6b6a63" roughness={1} flatShading />
-        </mesh>
-      ))}
+      {/* Move the rocky cliff well to the outer side so it cannot block the temple facade behind the lotus pond. */}
+      <group position={[-18, 0, -2]}>
+        {([
+          [-5, 5, 0, 6],
+          [5, 6, 0, 7],
+          [0, 9, -3, 7],
+          [-3, 3, 2, 4],
+          [4, 3, 2, 4],
+        ] as [number, number, number, number][]).map(([x, y, z, r], i) => (
+          <mesh key={i} position={[x, y, z]} castShadow receiveShadow>
+            <dodecahedronGeometry args={[r, 0]} />
+            <meshStandardMaterial color="#6b6a63" roughness={1} flatShading />
+          </mesh>
+        ))}
+      </group>
       {/* Broad main cascade with two narrower side streams for a layered natural fall. */}
       <mesh position={[0, 6, 3.3]} rotation-x={-0.12}>
         <planeGeometry args={[3.2, 12]} />
