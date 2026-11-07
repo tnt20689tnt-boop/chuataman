@@ -53,7 +53,7 @@ function CampusBuilding({ building }: { building: typeof BUILDINGS[number] }) {
 }
 
 function Bridge() {
-  const bridgeLength = 20;
+  const bridgeLength = 24;
   const halfLength = bridgeLength / 2;
   const geo = useMemo(() => {
     const points = Array.from({ length: 73 }, (_, i) => new THREE.Vector3(
