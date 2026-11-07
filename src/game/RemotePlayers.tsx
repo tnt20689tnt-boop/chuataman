@@ -7,18 +7,22 @@ import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js
 import { HAIR_COLORS, OUTFIT_COLORS, OUTFIT_LABEL, HAIR_LABEL } from "./sim";
 import { useMultiplayer, type RemotePlayer } from "./multiplayer";
 import { surfaceHeight } from "./collision";
+import { animateAvatarRig, captureAvatarRig, type AvatarRig } from "./avatarAnimation";
 
 function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePlayer[] }) {
   const group = useRef<THREE.Group>(null);
   const bodyRef = useRef<THREE.Group>(null);
   const [externalModel, setExternalModel] = useState<THREE.Group | null>(null);
-  const modelPath = player.modelId === "nam2" ? "/models/nhan-vat-nam-2.glb"
-    : player.modelId === "nu1" ? "/models/nhan-vat-nu-1.glb"
-    : player.modelId === "nu2" ? "/models/nhan-vat-nu-2.glb"
+  const [externalClips, setExternalClips] = useState<THREE.AnimationClip[]>([]);
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const activeClipRef = useRef<THREE.AnimationAction | null>(null);
+  const rigRef = useRef<AvatarRig | null>(null);
+  // Only the approved first male/female models are allowed for remote visitors.
+  const modelPath = player.modelId === "nu1" ? "/models/nhan-vat-nu-1.glb"
     : player.modelId === "nam1" ? "/models/nhan-vat-nam-1.glb" : null;
 
   useEffect(() => {
-    if (!modelPath) { setExternalModel(null); return; }
+    if (!modelPath) { setExternalModel(null); setExternalClips([]); mixerRef.current = null; rigRef.current = null; return; }
     let alive = true;
     const loader = new GLTFLoader();
     loader.load(modelPath, (gltf) => {
@@ -37,9 +41,19 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
           (node as THREE.Mesh).receiveShadow = true;
         }
       });
+      mixerRef.current = new THREE.AnimationMixer(model);
+      rigRef.current = captureAvatarRig(model);
+      setExternalClips(gltf.animations ?? []);
       setExternalModel(model);
     }, undefined, () => { if (alive) setExternalModel(null); });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+      activeClipRef.current?.stop();
+      mixerRef.current?.stopAllAction();
+      mixerRef.current = null;
+      activeClipRef.current = null;
+      rigRef.current = null;
+    };
   }, [modelPath]);
   const leftArm = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
@@ -53,7 +67,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
   const outfit = OUTFIT_COLORS[player.outfit ?? "lam"] ?? OUTFIT_COLORS.lam;
   const hairColor = player.hairColor ?? HAIR_COLORS[0];
 
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
     if (!group.current) return;
     if (bodyRef.current) bodyRef.current.visible = !externalModel;
     const dt = Math.min(delta, 0.05);
@@ -67,6 +81,17 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
     const dz = group.current.position.z - previous.current.z;
     const moving = Math.hypot(dx, dz) > 0.002;
     if (moving) phase.current += dt * 10;
+    mixerRef.current?.update(dt);
+    if (externalModel && externalClips.length) {
+      const wanted = moving ? ["walk", "run"] : ["idle", "stand", "breath"];
+      const clip = externalClips.find((item) => wanted.some((word) => item.name.toLowerCase().includes(word))) ?? externalClips[0];
+      if (clip) {
+        const next = mixerRef.current?.clipAction(clip) ?? null;
+        if (next && activeClipRef.current !== next) { activeClipRef.current?.fadeOut(0.2); next.reset().fadeIn(0.2).play(); activeClipRef.current = next; }
+      }
+    } else if (externalModel) {
+      animateAvatarRig(rigRef.current, clock.elapsedTime, moving);
+    }
     previous.current = { x: group.current.position.x, z: group.current.position.z };
     const swing = moving ? Math.sin(phase.current) * 0.48 : 0;
     if (leftArm.current) leftArm.current.rotation.x = THREE.MathUtils.damp(leftArm.current.rotation.x, swing, 10, dt);

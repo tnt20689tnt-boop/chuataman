@@ -7,6 +7,7 @@ import { player, useUI } from "./store";
 import { moveVisitor } from "./collision";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { animateAvatarRig, captureAvatarRig, type AvatarRig } from "./avatarAnimation";
 
 const SKIN = "#f4d6bd";
 
@@ -235,6 +236,7 @@ export function PlayerAvatar() {
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const activeClipRef = useRef<THREE.AnimationAction | null>(null);
   const externalMotionRef = useRef<THREE.Group>(null);
+  const externalRigRef = useRef<AvatarRig | null>(null);
   const modelId = avatar?.modelId ?? (female ? "nu1" : "nam1");
   const modelPath = ({
     nam1: "/models/nhan-vat-nam-1.glb",
@@ -271,8 +273,15 @@ export function PlayerAvatar() {
           }
         });
         mixerRef.current = new THREE.AnimationMixer(model);
-        setExternalClips(gltf.animations ?? []);
-        setExternalModel(model);
+        const rig = captureAvatarRig(model);
+        externalRigRef.current = rig;
+        const clips = gltf.animations ?? [];
+        setExternalClips(clips);
+        // Nam 1 / Nu 1 are currently static, unrigged GLBs. Do not render
+        // them as frozen floating meshes: use the articulated procedural
+        // avatar below until a fully skinned rigged export is supplied.
+        if (rig.size > 0 || clips.length > 0) setExternalModel(model);
+        else setExternalModel(null);
       },
       undefined,
       () => {
@@ -312,6 +321,7 @@ export function PlayerAvatar() {
     if (externalMotionRef.current && externalModel) {
       const walkingExternal = pose === "walk";
       const breathingExternal = Math.sin(t * 2.0) * 0.006;
+      animateAvatarRig(externalRigRef.current, t, walkingExternal);
       const bowExternal = action === "le" ? Math.max(0, Math.sin(t * 1.15)) * 0.12
         : action === "thien" ? 0.035 : 0;
       const externalSmooth = 1 - Math.exp(-delta * 8);
