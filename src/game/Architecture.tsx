@@ -670,7 +670,7 @@ export function Pond({ position, w, d }: { position: [number, number, number]; w
       seed = (seed * 1664525 + 1013904223) >>> 0;
       return seed / 4294967296;
     };
-    return Array.from({ length: 116 }, (_, i) => {
+    return Array.from({ length: 150 }, (_, i) => {
       const side = i % 2 === 0 ? -1 : 1;
       const clusterX = 3.2 + rand() * Math.max(0.8, w * 0.5 - 4.2);
       const clusterZ = -d * 0.42 + rand() * d * 0.84;
@@ -720,16 +720,7 @@ export function Pond({ position, w, d }: { position: [number, number, number]; w
         <planeGeometry args={[w, d]} />
         <meshStandardMaterial map={tex} roughness={0.16} metalness={0.28} color="#bfe3e3" />
       </mesh>
-      {/* Layered carved stone edging around the lotus pond. */}
-      {([
-        [0, d / 2, w + 1.4, 1],
-        [0, -d / 2, w + 1.4, 1],
-      ] as [number, number, number, number][]).map(([x, z, l], i) => (
-        <group key={i} position={[x, 0.4, z]}>
-          <mesh castShadow receiveShadow><boxGeometry args={[l, 0.8, 0.7]} /><meshStandardMaterial color="#56605a" roughness={0.92} /></mesh>
-          <mesh position={[0, 0.43, 0]}><boxGeometry args={[l, 0.08, 0.82]} /><meshStandardMaterial color="#b99a61" metalness={0.35} roughness={0.5} /></mesh>
-        </group>
-      ))}
+      {/* Open stone approaches at both ends of the pond: no end walls or raised banks. */}
       {[w / 2, -w / 2].map((x, i) => (
         <group key={i} position={[x, 0.4, 0]}>
           <mesh castShadow receiveShadow><boxGeometry args={[0.7, 0.8, d]} /><meshStandardMaterial color="#56605a" roughness={0.92} /></mesh>
