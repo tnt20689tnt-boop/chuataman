@@ -20,11 +20,11 @@ const solids: Solid[] = [
   { id: 'waterfall', x: -38, z: -12, w: 20, d: 17 },
   // 18m x 20m lotus pond, proportioned to the 17m-wide Tam Quan.
   // Keep the central 3.2m bridge and both approaches open.
-  { id: 'pond-left', x: -5.3, z: 13, w: 7.4, d: 20 },
-  { id: 'pond-right', x: 5.3, z: 13, w: 7.4, d: 20 },
+  { id: 'pond-left', x: -5.3, z: 13, w: 7.4, d: 24 },
+  { id: 'pond-right', x: 5.3, z: 13, w: 7.4, d: 24 },
   // Side rails guide visitors along the bridge; there are no barriers across either end.
-  { id: 'lotus-bridge-rail-left', x: -1.55, z: 13, w: 0.2, d: 20 },
-  { id: 'lotus-bridge-rail-right', x: 1.55, z: 13, w: 0.2, d: 20 },
+  { id: 'lotus-bridge-rail-left', x: -1.55, z: 13, w: 0.2, d: 24 },
+  { id: 'lotus-bridge-rail-right', x: 1.55, z: 13, w: 0.2, d: 24 },
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
   { id: 'perimeter-back', x: 0, z: -185, w: 240, d: 1.8 },
   { id: 'perimeter-left', x: -120, z: -36.5, w: 1.8, d: 297 },
@@ -36,10 +36,10 @@ for (const b of BUILDINGS) {
   solids.push(
     // Match the rendered wall panels, with a little extra thickness so a
     // moving avatar cannot clip through thin walls at high frame rates.
-    { id: b.id + '-left', x: b.x - b.w / 2, z: b.z, w: 0.8, d: b.d + 0.3 },
+    { id: b.id + '-left', x: b.x - b.w / 2, z: b.z, w: 1.2, d: b.d + 0.6 },
     { id: b.id + '-right', x: b.x + b.w / 2, z: b.z, w: 0.8, d: b.d + 0.3 },
-    { id: b.id + '-back', x: b.x, z: b.z - b.d / 2, w: b.w + 0.3, d: 0.8 },
-    { id: b.id + '-front-left', x: b.x - b.w / 3, z: b.z + b.d / 2, w: b.w / 3 + 0.15, d: 0.8 },
+    { id: b.id + '-back', x: b.x, z: b.z - b.d / 2, w: b.w + 0.6, d: 1.2 },
+    { id: b.id + '-front-left', x: b.x - b.w / 3, z: b.z + b.d / 2, w: b.w / 3 + 0.3, d: 1.2 },
     { id: b.id + '-front-right', x: b.x + b.w / 3, z: b.z + b.d / 2, w: b.w / 3 + 0.15, d: 0.8 },
   );
   if (b.kind === 'ancestral') solids.push({ id: 'ancestral-altar', x: b.x, z: b.z - 4, w: 10, d: 5 });
@@ -119,8 +119,8 @@ export function surfaceHeight(x: number, z: number) {
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
   // Match the 20 stone slabs: one end meets the inner side of the Tam Quan at z=23, the other meets the pond edge at z=3.
   // Bridge center is z=13; both approaches remain open.
-  if (Math.abs(x) <= 1.0 && z >= 3 && z <= 23) {
-    return 0.45 + Math.sin(((z - 3) / 20) * Math.PI) * 1.1;
+  if (Math.abs(x) <= 1.0 && z >= 1 && z <= 25) {
+    return 0.45 + Math.sin(((z - 1) / 24) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
   if (Math.abs(x - 70) < 8 && Math.abs(z - 52) < 6) return 0.6;
