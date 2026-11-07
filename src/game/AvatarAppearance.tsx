@@ -69,18 +69,21 @@ export function AnimatedAvatarAppearance({
   }, [model]);
   useLayoutEffect(() => {
     const all = names.map((name) => ({ name, action: actions[name] })).filter((item) => item.action);
-    const preferred = pose === "walk"
-      ? /walk|run|locomotion|move/i
-      : action === "le" || pose === "kneel" ? /kneel|bow|prostrate/i
+    // Keep locomotion driven by the same world-space controller as the legacy
+    // avatar. Imported walk clips can contain root motion or a different forward
+    // axis, which makes the mesh slide/veer away from the direction being pressed.
+    // During walking, fade out the imported clip and use the rig's in-place gait below.
+    const preferred = action === "le" || pose === "kneel" ? /kneel|bow|prostrate/i
       : action === "thien" || pose === "sit" ? /sit|meditat/i
       : action === "chap" ? /pray|idle|stand/i
       : /idle|stand|breath/i;
-    const chosen = all.find((item) => preferred.test(item.name)) ?? (pose === "walk" ? all.find((item) => /walk|run|move/i.test(item.name)) : undefined) ?? all[0];
+    const chosen = pose === "walk" ? undefined
+      : all.find((item) => preferred.test(item.name)) ?? all[0];
     if (chosen?.action) chosen.action.reset().fadeIn(0.2).play();
     return () => { chosen?.action?.fadeOut(0.15); };
   }, [actions, names, pose, action]);
   useFrame(({ clock }, delta) => {
-    // If the GLB has no matching locomotion clip, animate its actual rig bones as a fallback.
+    // Animate the GLB rig in place while the legacy controller moves and rotates the avatar.
     const walking = pose === "walk";
     const phase = clock.elapsedTime * 8.5;
     const smooth = 1 - Math.exp(-delta * 12);
