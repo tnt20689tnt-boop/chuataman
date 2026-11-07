@@ -51,9 +51,23 @@ export function AnimatedAvatarAppearance({
 
   const clips = useMemo(() => gltf.animations.map((source) => {
     const clip = source.clone();
-    // The game controller owns world position. Remove exported root translation
-    // so walk/run clips animate the skeleton without sliding the avatar across the map.
-    clip.tracks = clip.tracks.filter((track) => track.name !== "Root.position");
+    // The game controller owns world X/Z position. Some exported GLBs store
+    // locomotion on a root/hips/armature node rather than a node literally
+    // named "Root". Keep its vertical motion, but lock horizontal root motion
+    // to the first keyframe so the loop cannot pull the avatar backwards.
+    clip.tracks = clip.tracks.filter((track) => {
+      if (!/(root|hips|armature)\\.position$/i.test(track.name)) return true;
+      const values = track.values as Float32Array;
+      const stride = track.getValueSize();
+      if (stride < 3 || values.length < stride) return false;
+      const firstX = values[0];
+      const firstZ = values[2];
+      for (let i = 0; i + 2 < values.length; i += stride) {
+        values[i] = firstX;
+        values[i + 2] = firstZ;
+      }
+      return true;
+    });
     return clip;
   }), [gltf.animations]);
   const { actions } = useAnimations(clips, root);
