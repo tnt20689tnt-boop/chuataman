@@ -125,14 +125,19 @@ function Ground() {
         <Suspense fallback={<meshStandardMaterial map={stone} roughness={0.9} />}><Surface kind="stone" repeat={18} /></Suspense>
       </mesh>
       {/* Main ceremonial stone avenue, split around the lotus pond and bridge. */}
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0.03, 70]} receiveShadow>
-        <planeGeometry args={[12, 72]} />
-        <Suspense fallback={<meshStandardMaterial map={path} roughness={0.9} />}><Surface kind="stone" repeat={18} /></Suspense>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.03, 66]} receiveShadow>
+        <planeGeometry args={[12, 96]} />
+        <Suspense fallback={<meshStandardMaterial map={path} roughness={0.9} />}><Surface kind="stone" repeat={24} /></Suspense>
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.03, -25]} receiveShadow>
         <planeGeometry args={[12, 50]} />
         <Suspense fallback={<meshStandardMaterial map={path} roughness={0.9} />}><Surface kind="stone" repeat={14} /></Suspense>
       </mesh>
+      {/* Fine bronze borders frame the ceremonial avenue without creating collision obstacles. */}
+      {[-6.25, 6.25].map((x) => <group key={x}>
+        <mesh position={[x, 0.08, 66]} castShadow><boxGeometry args={[0.22, 0.12, 96]} /><meshStandardMaterial color="#a98a55" metalness={0.42} roughness={0.52} /></mesh>
+        <mesh position={[x, 0.08, -25]} castShadow><boxGeometry args={[0.22, 0.12, 50]} /><meshStandardMaterial color="#a98a55" metalness={0.42} roughness={0.52} /></mesh>
+      </group>)}
       {/* Broad cross-avenue links the main hall forecourt to both side wings. */}
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.025, 30]} receiveShadow>
         <planeGeometry args={[170, 6]} />
@@ -365,8 +370,8 @@ export default function World() {
   const trees = useMemo(() => { const points = treePoints(); setTreeCollisionPoints(points); return points; }, []);
   const lanterns = useMemo(() => {
     const p: [number, number][] = [];
-    for (let z = 34; z < 108; z += 12) p.push([-8, z], [8, z]);
-    for (let z = -42; z <= -6; z += 12) p.push([-8, z], [8, z]);
+    for (let z = 38; z < 108; z += 14) p.push([-10, z], [10, z]);
+    for (let z = -42; z <= -6; z += 14) p.push([-10, z], [10, z]);
     for (let x = -36; x <= 36; x += 12) p.push([x, 24]);
     return p;
   }, []);
