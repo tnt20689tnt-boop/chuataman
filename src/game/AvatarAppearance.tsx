@@ -93,11 +93,11 @@ export function AnimatedAvatarAppearance({
   useFrame(({ clock }, delta) => {
     // Animate the GLB rig in place while the legacy controller moves and rotates the avatar.
     const walking = pose === "walk";
-    const phase = clock.elapsedTime * 8.5;
+    const phase = clock.elapsedTime * 6.5;
     const smooth = 1 - Math.exp(-delta * 12);
     for (const item of bonePoses) {
-      const target = item.kind === "arm" && walking ? Math.sin(phase) * 0.42 * item.side
-        : item.kind === "leg" && walking ? -Math.sin(phase) * 0.48 * item.side
+      const target = item.kind === "arm" && walking ? Math.sin(phase) * 0.18 * item.side
+        : item.kind === "leg" && walking ? -Math.sin(phase) * 0.22 * item.side
         : item.kind === "spine" ? Math.sin(clock.elapsedTime * 2) * 0.012 : 0;
       item.bone.rotation.x += ((item.base.x + target) - item.bone.rotation.x) * smooth;
     }
