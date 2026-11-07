@@ -309,12 +309,14 @@ function Controller() {
       cameraRay.near = 0.05;
       cameraRay.far = Math.max(0.5, desiredDistance - 0.2);
       const hits = cameraRay.intersectObjects(scene.children, true);
-      const obstruction = hits.find((hit) =>
-        hit.distance > 0.35 &&
-        hit.object.visible &&
-        (hit.object as THREE.Mesh).isMesh &&
-        !((hit.object as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined)?.transparent
-      );
+      const obstruction = hits.find((hit) => {
+        const mesh = hit.object as THREE.Mesh;
+        if (hit.distance <= 0.35 || !mesh.visible || !mesh.isMesh) return false;
+        const material = mesh.material;
+        return Array.isArray(material)
+          ? material.some((part) => !part.transparent)
+          : !material.transparent;
+      });
       const available = obstruction
         ? Math.max(1.9, obstruction.distance + 0.38 - 0.5)
         : desiredDistance;
