@@ -283,7 +283,7 @@ export function PlayerAvatar() {
 
   return (
     <group ref={g}>
-      {avatar?.modelId && (pose === "stand" || pose === "walk") && action === "none" ? (
+      {avatar?.modelId && pose !== "lie" ? (
         <AnimatedAvatarAppearance
           modelId={avatar.modelId}
           outfit={avatar.outfit}
