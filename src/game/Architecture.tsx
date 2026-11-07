@@ -662,68 +662,96 @@ export function Gate({ z }: { z: number }) {
 
 export function Pond({ position, w, d }: { position: [number, number, number]; w: number; d: number }) {
   const tex = useMemo(() => waterTexture(), []);
-  const lotus = useMemo(() => {
-    const arr: [number, number, number][] = [];
-    for (let i = 0; i < 160; i++) arr.push([(Math.random() - 0.5) * (w - 2), (Math.random() - 0.5) * (d - 2), Math.random()]);
-    return arr;
-  }, [w, d]);
+  // Stable placement keeps the lotus garden consistent for every visitor.
+  const lotus = useMemo(() => Array.from({ length: 92 }, (_, i) => {
+    const a = i * 2.399963;
+    const radius = 1.8 + ((i * 17) % 100) / 100 * 0.43;
+    const x = Math.cos(a) * radius * (w * 0.43);
+    const z = Math.sin(a) * radius * (d * 0.42);
+    return [x, z, ((i * 37) % 100) / 100] as [number, number, number];
+  }), [w, d]);
   const padRef = useRef<THREE.InstancedMesh>(null);
   const flowerRef = useRef<THREE.InstancedMesh>(null);
+  const fishRefs = useRef<THREE.Group[]>([]);
   useLayoutEffect(() => {
-    (() => {
-      const m = new THREE.Object3D();
-      lotus.forEach(([x, z, r], i) => {
-        m.position.set(x, 0.05, z);
-        m.rotation.set(0, r * 6, 0);
-        m.scale.setScalar(0.7 + r * 0.6);
-        m.updateMatrix();
-        padRef.current?.setMatrixAt(i, m.matrix);
-        m.position.y = 0.25;
-        m.scale.setScalar(r > 0.5 ? 0.5 : 0);
-        m.updateMatrix();
-        flowerRef.current?.setMatrixAt(i, m.matrix);
-      });
-      if (padRef.current) padRef.current.instanceMatrix.needsUpdate = true;
-      if (flowerRef.current) flowerRef.current.instanceMatrix.needsUpdate = true;
-    })();
+    const m = new THREE.Object3D();
+    lotus.forEach(([x, z, r], i) => {
+      m.position.set(x, 0.09, z);
+      m.rotation.set(0, r * 6, 0);
+      m.scale.setScalar(0.65 + r * 0.42);
+      m.updateMatrix();
+      padRef.current?.setMatrixAt(i, m.matrix);
+      m.position.y = 0.28;
+      m.scale.setScalar(i % 4 === 0 ? 0.62 : 0);
+      m.updateMatrix();
+      flowerRef.current?.setMatrixAt(i, m.matrix);
+    });
+    if (padRef.current) padRef.current.instanceMatrix.needsUpdate = true;
+    if (flowerRef.current) flowerRef.current.instanceMatrix.needsUpdate = true;
   }, [lotus]);
-  useFrame((_, dt) => {
-    tex.offset.x += dt * 0.01;
+  useFrame((state, dt) => {
+    tex.offset.x += dt * 0.008;
+    tex.offset.y += dt * 0.003;
+    const t = state.clock.elapsedTime;
+    fishRefs.current.forEach((fish, i) => {
+      if (!fish) return;
+      const phase = t * (0.22 + i * 0.012) + i * 1.7;
+      const rx = Math.max(2, w * 0.29 - (i % 2) * 1.5);
+      const rz = Math.max(2, d * 0.29);
+      fish.position.set(Math.cos(phase) * rx, 0.2 + Math.sin(t * 1.7 + i) * 0.035, Math.sin(phase * 0.82) * rz);
+      fish.rotation.y = -Math.atan2(Math.cos(phase) * rx * 0.82, -Math.sin(phase) * rz);
+      const tail = fish.children[1];
+      if (tail) tail.rotation.y = Math.sin(t * 5 + i) * 0.32;
+    });
   });
   return (
     <group position={position}>
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.05, 0]} receiveShadow>
         <planeGeometry args={[w, d]} />
-        <meshStandardMaterial map={tex} roughness={0.08} metalness={0.4} color="#bfe3e3" />
+        <meshStandardMaterial map={tex} roughness={0.16} metalness={0.28} color="#bfe3e3" />
       </mesh>
-      {/* stone rim */}
+      {/* Layered carved stone edging around the lotus pond. */}
       {([
         [0, d / 2, w + 1.4, 1],
         [0, -d / 2, w + 1.4, 1],
       ] as [number, number, number, number][]).map(([x, z, l], i) => (
-        <mesh key={i} position={[x, 0.4, z]} castShadow receiveShadow>
-          <boxGeometry args={[l, 0.8, 0.7]} />
-          <meshStandardMaterial color="#56605a" />
-        </mesh>
+        <group key={i} position={[x, 0.4, z]}>
+          <mesh castShadow receiveShadow><boxGeometry args={[l, 0.8, 0.7]} /><meshStandardMaterial color="#56605a" roughness={0.92} /></mesh>
+          <mesh position={[0, 0.43, 0]}><boxGeometry args={[l, 0.08, 0.82]} /><meshStandardMaterial color="#b99a61" metalness={0.35} roughness={0.5} /></mesh>
+        </group>
       ))}
       {[w / 2, -w / 2].map((x, i) => (
-        <mesh key={i} position={[x, 0.4, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.7, 0.8, d]} />
-          <meshStandardMaterial color="#56605a" />
-        </mesh>
+        <group key={i} position={[x, 0.4, 0]}>
+          <mesh castShadow receiveShadow><boxGeometry args={[0.7, 0.8, d]} /><meshStandardMaterial color="#56605a" roughness={0.92} /></mesh>
+          <mesh position={[0, 0.43, 0]}><boxGeometry args={[0.82, 0.08, d]} /><meshStandardMaterial color="#b99a61" metalness={0.35} roughness={0.5} /></mesh>
+        </group>
       ))}
       <instancedMesh ref={padRef} args={[undefined, undefined, lotus.length]}>
-        <cylinderGeometry args={[0.6, 0.6, 0.04, 12]} />
-        <meshStandardMaterial color="#3f7a35" />
+        <cylinderGeometry args={[0.6, 0.6, 0.045, 14]} />
+        <meshStandardMaterial color="#477d3d" roughness={0.92} />
       </instancedMesh>
       <instancedMesh ref={flowerRef} args={[undefined, undefined, lotus.length]}>
-        <coneGeometry args={[0.45, 0.6, 7, 1, true]} />
-        <meshStandardMaterial color="#f2a6c0" emissive="#f07aa0" emissiveIntensity={0.15} side={THREE.DoubleSide} />
+        <coneGeometry args={[0.43, 0.62, 7, 1, true]} />
+        <meshStandardMaterial color="#f2a6c0" emissive="#d96891" emissiveIntensity={0.12} side={THREE.DoubleSide} roughness={0.7} />
       </instancedMesh>
+      {/* Small koi glide slowly beneath the lotus leaves. */}
+      {Array.from({ length: 6 }, (_, i) => (
+        <group key={i} ref={(el) => { if (el) fishRefs.current[i] = el; }} scale={0.58 + (i % 3) * 0.12}>
+          <mesh castShadow>
+            <sphereGeometry args={[1, 14, 10]} />
+            <meshStandardMaterial color={i % 2 ? "#f2eee0" : "#d96c3e"} roughness={0.42} />
+          </mesh>
+          <mesh position={[0, 0, -1.05]} rotation-x={Math.PI / 2}>
+            <coneGeometry args={[0.48, 0.9, 5]} />
+            <meshStandardMaterial color={i % 2 ? "#d96c3e" : "#f2eee0"} roughness={0.5} />
+          </mesh>
+          <mesh position={[0.35, 0.35, 0.35]} scale={0.11}><sphereGeometry args={[1, 8, 8]} /><meshBasicMaterial color="#171717" /></mesh>
+          <mesh position={[-0.35, 0.35, 0.35]} scale={0.11}><sphereGeometry args={[1, 8, 8]} /><meshBasicMaterial color="#171717" /></mesh>
+        </group>
+      ))}
     </group>
   );
 }
-
 export function Waterfall({ position }: { position: [number, number, number] }) {
   const tex = useMemo(() => {
     const t = fallTexture();
