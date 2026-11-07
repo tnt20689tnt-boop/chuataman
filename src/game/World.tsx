@@ -397,7 +397,7 @@ export default function World() {
           );
         })}
       </group>
-      <Pavilion position={[0, 0, -15]} rot={0} />
+      <Pavilion position={[0, 0, -21]} rot={0} />
       <TempleCampus />
       <StoneLanterns points={lanterns} />
       <SkyLanterns />
