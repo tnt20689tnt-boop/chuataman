@@ -1,7 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { Html, useGLTF, useAnimations } from "@react-three/drei";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { HAIR_COLORS, OUTFIT_COLORS, OUTFIT_LABEL, HAIR_LABEL } from "./sim";
 import { useMultiplayer, type RemotePlayer } from "./multiplayer";
