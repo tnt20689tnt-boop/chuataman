@@ -1,61 +1,14 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { HAIR_COLORS, OUTFIT_COLORS, OUTFIT_LABEL, HAIR_LABEL } from "./sim";
 import { useMultiplayer, type RemotePlayer } from "./multiplayer";
 import { surfaceHeight } from "./collision";
-import { animateAvatarRig, captureAvatarRig, type AvatarRig } from "./avatarAnimation";
 
 function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePlayer[] }) {
   const group = useRef<THREE.Group>(null);
   const bodyRef = useRef<THREE.Group>(null);
-  const externalMotionRef = useRef<THREE.Group>(null);
-  const [externalModel, setExternalModel] = useState<THREE.Group | null>(null);
-  const [externalClips, setExternalClips] = useState<THREE.AnimationClip[]>([]);
-  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
-  const activeClipRef = useRef<THREE.AnimationAction | null>(null);
-  const rigRef = useRef<AvatarRig | null>(null);
-  // Only the approved first male/female models are allowed for remote visitors.
-  const modelPath = player.modelId === "nu1" ? "/models/nhan-vat-nu-1.glb"
-    : player.modelId === "nam1" ? "/models/nhan-vat-nam-1.glb" : null;
-
-  useEffect(() => {
-    if (!modelPath) { setExternalModel(null); setExternalClips([]); mixerRef.current = null; rigRef.current = null; return; }
-    let alive = true;
-    const loader = new GLTFLoader();
-    loader.load(modelPath, (gltf) => {
-      if (!alive) return;
-      const model = cloneSkinned(gltf.scene) as THREE.Group;
-      model.updateMatrixWorld(true);
-      const bounds = new THREE.Box3().setFromObject(model);
-      const size = bounds.getSize(new THREE.Vector3());
-      const center = bounds.getCenter(new THREE.Vector3());
-      const scale = 2.35 / Math.max(size.y, 0.001);
-      model.scale.setScalar(scale);
-      model.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
-      model.traverse((node) => {
-        if ((node as THREE.Mesh).isMesh) {
-          (node as THREE.Mesh).castShadow = true;
-          (node as THREE.Mesh).receiveShadow = true;
-        }
-      });
-      mixerRef.current = new THREE.AnimationMixer(model);
-      rigRef.current = captureAvatarRig(model);
-      setExternalClips(gltf.animations ?? []);
-      setExternalModel(model);
-    }, undefined, () => { if (alive) setExternalModel(null); });
-    return () => {
-      alive = false;
-      activeClipRef.current?.stop();
-      mixerRef.current?.stopAllAction();
-      mixerRef.current = null;
-      activeClipRef.current = null;
-      rigRef.current = null;
-    };
-  }, [modelPath]);
   const leftArm = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
   const leftLeg = useRef<THREE.Group>(null);
@@ -70,7 +23,6 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
 
   useFrame(({ clock }, delta) => {
     if (!group.current) return;
-    if (bodyRef.current) bodyRef.current.visible = !externalModel;
     const dt = Math.min(delta, 0.05);
     group.current.position.x = THREE.MathUtils.damp(group.current.position.x, player.x, 11, dt);
     group.current.position.z = THREE.MathUtils.damp(group.current.position.z, player.z, 11, dt);
@@ -82,28 +34,6 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
     const dz = group.current.position.z - previous.current.z;
     const moving = Math.hypot(dx, dz) > 0.002;
     if (moving) phase.current += dt * 10;
-    mixerRef.current?.update(dt);
-    if (externalModel && externalClips.length) {
-      const wanted = moving ? ["walk", "run"] : ["idle", "stand", "breath"];
-      const clip = externalClips.find((item) => wanted.some((word) => item.name.toLowerCase().includes(word))) ?? externalClips[0];
-      if (clip) {
-        const next = mixerRef.current?.clipAction(clip) ?? null;
-        if (next && activeClipRef.current !== next) { activeClipRef.current?.fadeOut(0.2); next.reset().fadeIn(0.2).play(); activeClipRef.current = next; }
-      }
-    } else if (externalModel) {
-      animateAvatarRig(rigRef.current, clock.elapsedTime, moving);
-    }
-    // Static GLBs have no bones to swing their limbs, so animate the model
-    // root smoothly while it follows the remote player's network position.
-    if (externalMotionRef.current && externalModel && externalClips.length === 0 && !rigRef.current?.size) {
-      const t = clock.elapsedTime;
-      const smooth = 1 - Math.exp(-dt * 8);
-      const targetBob = moving ? Math.abs(Math.sin(t * 9.5)) * 0.045 : Math.sin(t * 2.1) * 0.009;
-      const targetLean = moving ? Math.sin(t * 9.5) * 0.035 : 0;
-      externalMotionRef.current.position.y = THREE.MathUtils.damp(externalMotionRef.current.position.y, targetBob, 8, dt);
-      externalMotionRef.current.rotation.x += (targetLean - externalMotionRef.current.rotation.x) * smooth;
-      externalMotionRef.current.rotation.z = Math.sin(t * 1.25) * (moving ? 0.025 : 0.008);
-    }
     previous.current = { x: group.current.position.x, z: group.current.position.z };
     const swing = moving ? Math.sin(phase.current) * 0.48 : 0;
     if (leftArm.current) leftArm.current.rotation.x = THREE.MathUtils.damp(leftArm.current.rotation.x, swing, 10, dt);
@@ -133,7 +63,6 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
         setSelected((value) => !value);
       }}
     >
-      {externalModel && <group ref={externalMotionRef}><primitive object={externalModel} /></group>}
       <group ref={bodyRef}>
       {/* Robe and torso */}
       <mesh position={[0, 1.02, 0]} castShadow>
