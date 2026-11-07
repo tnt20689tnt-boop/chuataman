@@ -23,25 +23,35 @@ export function AnimatedAvatarAppearance({
   const gltf = useGLTF(path);
   const root = useRef<THREE.Group>(null);
 
+  // Keep the skinned model instance stable when the user changes clothes.
+  // Replacing the cloned skeleton after useAnimations has bound its tracks leaves
+  // the new model in its bind/T-pose (arms spread, no leg movement).
   const model = useMemo(() => {
     const copy = clone(gltf.scene);
     copy.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
+      const materials = (Array.isArray(object.material) ? object.material : [object.material])
+        .map((original) => original.clone());
+      object.material = Array.isArray(object.material) ? materials : materials[0];
+    });
+    return copy;
+  }, [gltf.scene]);
+
+  useEffect(() => {
+    model.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
       const meshName = object.name.toLowerCase();
-      const materials = (Array.isArray(object.material) ? object.material : [object.material]).map((original) => {
-        const material = original.clone();
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach((material) => {
         const label = meshName + " " + material.name.toLowerCase();
         if (!material.map && /hair|toc|ponytail|bun/.test(label) && "color" in material) {
           (material as THREE.MeshStandardMaterial).color.set(hairColor);
         } else if (!material.map && !/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
           (material as THREE.MeshStandardMaterial).color.set(OUTFIT_COLORS[outfit]);
         }
-        return material;
       });
-      object.material = Array.isArray(object.material) ? materials : materials[0];
     });
-    return copy;
-  }, [gltf.scene, outfit, hairColor]);
+  }, [model, outfit, hairColor]);
 
   const bounds = useMemo(() => new THREE.Box3().setFromObject(model), [model]);
   const size = useMemo(() => bounds.getSize(new THREE.Vector3()), [bounds]);
@@ -56,7 +66,7 @@ export function AnimatedAvatarAppearance({
     // named "Root". Keep its vertical motion, but lock horizontal root motion
     // to the first keyframe so the loop cannot pull the avatar backwards.
     clip.tracks = clip.tracks.filter((track) => {
-      if (!/(root|hips|armature)\\.position$/i.test(track.name)) return true;
+      if (!/(root|hips|armature)\.position$/i.test(track.name)) return true;
       const values = track.values as Float32Array;
       const stride = track.getValueSize();
       if (stride < 3 || values.length < stride) return false;
