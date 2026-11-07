@@ -531,7 +531,6 @@ export function PlayerAvatar() {
         </group>
       )}
       </group>
-      </group>
       )}
       <Html position={[0, hy + 0.6, 0]} center distanceFactor={14} zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
         <div className="name-tag name-tag-self">{avatar?.name ?? "Phật tử"}</div>
