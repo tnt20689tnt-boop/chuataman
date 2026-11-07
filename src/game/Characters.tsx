@@ -226,7 +226,6 @@ export function PlayerAvatar() {
   const hair = avatar?.hair ?? "ngan";
   const handsJoined = action === "chap" || action === "le" || action === "thien" || action === "kinh";
   useFrame(({ clock }, delta) => {
-    mixerRef.current?.update(delta);
     const t = clock.elapsedTime;
     if (!g.current) return;
     g.current.position.set(player.x, player.y, player.z);
