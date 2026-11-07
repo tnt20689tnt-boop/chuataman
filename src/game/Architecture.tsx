@@ -662,14 +662,25 @@ export function Gate({ z }: { z: number }) {
 
 export function Pond({ position, w, d }: { position: [number, number, number]; w: number; d: number }) {
   const tex = useMemo(() => waterTexture(), []);
-  // Stable placement keeps the lotus garden consistent for every visitor.
-  const lotus = useMemo(() => Array.from({ length: 92 }, (_, i) => {
-    const a = i * 2.399963;
-    const radius = 1.8 + ((i * 17) % 100) / 100 * 0.43;
-    const x = Math.cos(a) * radius * (w * 0.43);
-    const z = Math.sin(a) * radius * (d * 0.42);
-    return [x, z, ((i * 37) % 100) / 100] as [number, number, number];
-  }), [w, d]);
+  // Natural-looking, deterministic lotus clusters on both sides of the bridge.
+  // Keep a clear channel over the bridge so flowers never appear on the walking surface.
+  const lotus = useMemo(() => {
+    let seed = 20261107;
+    const rand = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+    return Array.from({ length: 116 }, (_, i) => {
+      const side = i % 2 === 0 ? -1 : 1;
+      const cluster = Math.floor(i / 2) % 9;
+      const clusterX = 3.2 + rand() * Math.max(0.8, w * 0.5 - 4.2);
+      const clusterZ = -d * 0.42 + rand() * d * 0.84;
+      const x = side * Math.min(w * 0.46, clusterX + (rand() - 0.5) * 2.8);
+      const z = Math.max(-d * 0.46, Math.min(d * 0.46, clusterZ + (rand() - 0.5) * 4.2));
+      const size = 0.2 + rand() * 0.8;
+      return [x, z, size] as [number, number, number];
+    });
+  }, [w, d]);
   const padRef = useRef<THREE.InstancedMesh>(null);
   const flowerRef = useRef<THREE.InstancedMesh>(null);
   const fishRefs = useRef<THREE.Group[]>([]);
