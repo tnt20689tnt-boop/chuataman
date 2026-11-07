@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
-import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
+import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar, type AvatarModelId } from "./store";
 import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, pauseSpeak, resumeSpeak, subscribeAudioSettings, testFootsteps, updateAudioSettings } from "./audio";
 import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useMultiplayerConnected, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
@@ -610,17 +610,41 @@ function AuthPanel() {
 }
 
 function AvatarPanel({ initial }: { initial: Avatar | null }) {
-  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
+  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "nam1", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
+  const gender = a.gender ?? "nam";
+  const modelOptions: { id: AvatarModelId; label: string; description: string }[] = gender === "nam"
+    ? [
+        { id: "nam1", label: "Nam 1", description: "Mẫu nam thứ nhất" },
+        { id: "nam2", label: "Nam 2", description: "Mẫu nam thứ hai" },
+      ]
+    : [
+        { id: "nu1", label: "Nữ 1", description: "Mẫu nữ thứ nhất" },
+        { id: "nu2", label: "Nữ 2", description: "Mẫu nữ thứ hai" },
+      ];
+  const selectedModel = a.modelId ?? (gender === "nu" ? "nu1" : "nam1");
   const ok = a.name.trim().length >= 2;
   return (
     <Panel title={initial ? "Tùy chỉnh Avatar" : "Tạo Avatar của bạn"} {...(initial ? { onClose: () => setUI({ panel: null }) } : {})}>
       <label className="mb-1 block text-sm font-semibold text-foreground">Tên hiển thị / pháp danh</label>
       <input className="hud-input mb-4 w-full" value={a.name} maxLength={24} onChange={(e) => setA({ ...a, name: e.target.value })} placeholder="Ví dụ: Diệu An" />
       <div className="mb-1 text-sm font-semibold text-foreground">Kiểu nhân vật</div>
-      <div className="mb-4 flex gap-2">
-        {(["nam", "nu"] as const).map((gender) => (
-          <button key={gender} className="hud-swatch" data-active={(a.gender ?? "nam") === gender} onClick={() => setA({ ...a, gender })}>
-            {gender === "nam" ? "👨 Nam" : "👩 Nữ"}
+      <div className="mb-3 flex gap-2">
+        {(["nam", "nu"] as const).map((nextGender) => (
+          <button key={nextGender} className="hud-swatch" data-active={gender === nextGender}
+            onClick={() => setA({ ...a, gender: nextGender, modelId: nextGender === "nam" ? "nam1" : "nu1" })}>
+            {nextGender === "nam" ? "👨 Nam" : "👩 Nữ"}
+          </button>
+        ))}
+      </div>
+      <div className="mb-2 grid grid-cols-2 gap-2">
+        {modelOptions.map((model) => (
+          <button key={model.id} type="button"
+            className="hud-tile flex min-h-20 flex-col items-center justify-center gap-1"
+            data-active={selectedModel === model.id}
+            onClick={() => setA({ ...a, gender, modelId: model.id })}>
+            <span className="text-lg">{gender === "nam" ? "👨" : "👩"}</span>
+            <span className="font-semibold">{model.label}</span>
+            <span className="text-[10px] text-muted-foreground">{model.description}</span>
           </button>
         ))}
       </div>
@@ -653,7 +677,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
         className="hud-primary w-full"
         disabled={!ok}
         onClick={() => {
-          saveAvatar({ ...a, name: a.name.trim() });
+          saveAvatar({ ...a, gender, modelId: selectedModel, name: a.name.trim() });
           setUI({ panel: null });
           ringBell(0.4);
         }}
