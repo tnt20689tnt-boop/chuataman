@@ -10,7 +10,6 @@ import {
   MainHall,
   Pavilion,
   Pond,
-  ReleaseLanterns,
   StoneLanterns,
   SkyLanterns,
   Tower,
@@ -350,7 +349,7 @@ export default function World() {
     const p: [number, number][] = [];
     for (let z = 38; z < 108; z += 14) p.push([-10, z], [10, z]);
     for (let z = -42; z <= -6; z += 14) p.push([-10, z], [10, z]);
-    for (let x = -36; x <= 36; x += 12) p.push([x, 24]);
+    for (let x = -36; x <= 36; x += 12) if (x !== 0) p.push([x, 24]);
     return p;
   }, []);
   return (
@@ -380,8 +379,7 @@ export default function World() {
       <Gate z={24} />
       <BellTower position={[55, 0, -112]} />
       <Tower position={[-55, 0, -112]} tiers={5} label="Bảo tháp" />
-      <Pond position={[24, 0, 12]} w={30} d={22} />
-      <ReleaseLanterns position={[-28, 0, 12]} />
+      <Pond position={[0, 0, 11]} w={12} d={24} />
       {/* Meditation zone: stone platform with an outdoor Buddha */}
       <group position={[0, 0, -155]}>
         <mesh position={[0, 0.25, 0]} receiveShadow>
