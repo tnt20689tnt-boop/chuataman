@@ -17,6 +17,27 @@ function CampusBuilding({ building }: { building: typeof BUILDINGS[number] }) {
       <mesh position={[side * b.w / 6, b.h / 2 + 0.3, b.d / 2]} castShadow><cylinderGeometry args={[0.24, 0.3, b.h, 12]} /><Surface kind="wood" /></mesh>
     </group>)}
     <Roof w={b.w + 2} d={b.d + 2} h={3.5} y={b.h + 0.3} />
+    {/* Formal stone entrance steps and a red-gold open doorway for each campus hall. */}
+    <group name={b.label + " - bậc tam cấp"}>
+      {[0, 1, 2].map((step) => <mesh key={step} position={[0, 0.12 + step * 0.16, b.d / 2 + 1.15 - step * 0.72]} castShadow receiveShadow>
+        <boxGeometry args={[Math.min(b.w * 0.58, 13), 0.24 + step * 0.08, 1.05]} />
+        <meshStandardMaterial color={step === 2 ? "#b8ad99" : "#8d897d"} roughness={0.92} />
+      </mesh>)}
+      {[-1, 1].map((side) => <group key={side} position={[side * Math.min(b.w * 0.22, 4.8), 0, b.d / 2 + 0.38]}>
+        <mesh position={[0, b.h * 0.48 + 0.3, 0]} castShadow>
+          <boxGeometry args={[0.32, b.h * 0.96, 0.42]} />
+          <meshStandardMaterial color={C.lacquer} roughness={0.5} />
+        </mesh>
+        <mesh position={[0, b.h * 0.48 + 0.3, 0.24]}>
+          <boxGeometry args={[0.42, b.h * 0.96 + 0.12, 0.08]} />
+          <meshStandardMaterial color={C.gold} metalness={0.58} roughness={0.38} />
+        </mesh>
+        <mesh position={[0, b.h + 0.38, 0]}>
+          <boxGeometry args={[0.8, 0.22, 0.8]} />
+          <meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.42} />
+        </mesh>
+      </group>)}
+    </group>
     <Inscription text={b.label} width={b.w * 0.5} height={1.1} position={[0, b.h - 0.4, b.d / 2 + 0.35]} />
     {b.kind === 'ancestral' && <>
       <mesh position={[0, 0.8, -4]} castShadow><boxGeometry args={[10, 1, 4]} /><Surface kind="wood" /></mesh>
