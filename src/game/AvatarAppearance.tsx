@@ -90,15 +90,15 @@ export function AnimatedAvatarAppearance({
     if (!proceduralWalk.current) return;
     const t = clock.elapsedTime;
     const blend = 1 - Math.exp(-delta * 16);
-    const phase = t * 8.5;
+    const phase = t * 5.2;
     for (const item of bones) {
-      const swing = Math.sin(phase) * (item.kind === "leg" ? 0.48 : 0.18) * item.side;
+      const swing = Math.sin(phase) * (item.kind === "leg" ? 0.22 : 0.10) * item.side;
       // The hips/upper legs alternate to create real steps; arms counter-swing
       // gently instead of remaining stretched out like an airplane.
       const targetX = item.base.x + swing;
       item.bone.rotation.x += (targetX - item.bone.rotation.x) * blend;
       item.bone.rotation.y += (item.base.y - item.bone.rotation.y) * blend;
-      const targetZ = item.kind === "arm" ? item.base.z + item.side * 0.9 : item.base.z;
+      const targetZ = item.kind === "arm" ? item.base.z + item.side * 0.65 : item.base.z;
       item.bone.rotation.z += (targetZ - item.bone.rotation.z) * blend;
     }
   });
@@ -106,8 +106,8 @@ export function AnimatedAvatarAppearance({
   return (
     <group ref={root}>
       <group position={[-center.x * unitScale, -bounds.min.y * unitScale, -center.z * unitScale]} scale={unitScale}>
-        {/* Keep the imported model's authored orientation unchanged until its
-            actual front axis has been inspected. */}
+        {/* Correct the GLB's reversed forward direction relative to the game (+Z). */}
+        <group rotation-y={Math.PI}>
         <primitive object={model} />
           {hair === "bui" && <mesh position={[center.x, bounds.max.y - size.y * 0.045, center.z - size.z * 0.12]} castShadow>
             <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
@@ -135,6 +135,7 @@ export function AnimatedAvatarAppearance({
             <boxGeometry args={[Math.max(size.x * 0.16, 0.035), size.y * 0.40, Math.max(size.z * 0.055, 0.018)]} />
             <meshStandardMaterial color="#c49a54" roughness={0.75} />
           </mesh>}
+        </group>
       </group>
     </group>
   );
