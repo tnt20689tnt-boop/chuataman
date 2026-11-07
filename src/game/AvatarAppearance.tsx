@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { OUTFIT_COLORS, type Outfit, type Hair, type Pose } from "./sim";
 import { input, type Action } from "./store";
+import { stabilizeRootPositionTrack } from "./rootMotion";
 
 export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
 
@@ -61,6 +62,7 @@ export function AnimatedAvatarAppearance({
 
   const clips = useMemo(() => gltf.animations.map((source) => {
     const clip = source.clone();
+    const locomotion = source.name === "walk" || source.name === "run";
     // Only lock the actual root/hips/pelvis channel. Never match the full
     // track path: exporters often prefix every bone with "Armature".
     clip.tracks = clip.tracks.filter((track) => {
@@ -79,12 +81,9 @@ export function AnimatedAvatarAppearance({
       const values = track.values as Float32Array;
       const stride = track.getValueSize();
       if (stride < 3 || values.length < stride) return false;
-      const firstX = values[0] ?? 0;
-      const firstZ = values[2] ?? 0;
-      for (let i = 0; i + 2 < values.length; i += stride) {
-        values[i] = firstX;
-        values[i + 2] = firstZ;
-      }
+      // The supplied walk/run hips tracks contain cumulative vertical drift;
+      // remove only that net cycle displacement while preserving body bounce.
+      stabilizeRootPositionTrack(values, track.times, stride, locomotion);
       return true;
     });
     return clip;
