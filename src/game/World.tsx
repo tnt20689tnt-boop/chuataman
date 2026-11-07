@@ -182,7 +182,14 @@ function treePoints(): [number, number, number][] {
 }
 
 function Controller() {
-  const { camera, gl } = useThree();
+  const { camera, gl, scene } = useThree();
+  const cameraRay = useMemo(() => new THREE.Raycaster(), []);
+  const cameraOrigin = useMemo(() => new THREE.Vector3(), []);
+  const cameraDirection = useMemo(() => new THREE.Vector3(), []);
+  const desiredCamera = useMemo(() => new THREE.Vector3(), []);
+  const safeCamera = useMemo(() => new THREE.Vector3(), []);
+  const lastCameraCheck = useRef(0);
+  const safeDistance = useRef(cam.dist);
   const last = useRef(0);
   const lastAudioZone = useRef("");
   const keys = useRef(new Set<string>());
@@ -281,14 +288,42 @@ function Controller() {
 
     target.set(player.x, player.y + 1.6, player.z);
     const cp = Math.cos(cam.pitch);
-    camera.position.lerp(
-      new THREE.Vector3(
-        player.x + Math.sin(cam.yaw) * cam.dist * cp,
-        player.y + 1.6 + Math.sin(cam.pitch) * cam.dist,
-        player.z + Math.cos(cam.yaw) * cam.dist * cp,
-      ),
-      1 - Math.exp(-8 * dt),
+    desiredCamera.set(
+      player.x + Math.sin(cam.yaw) * cam.dist * cp,
+      player.y + 1.6 + Math.sin(cam.pitch) * cam.dist,
+      player.z + Math.cos(cam.yaw) * cam.dist * cp,
     );
+
+    // Camera obstruction: raycast from the avatar toward the desired camera
+    // and pull the camera in front of walls, columns, roofs and other geometry.
+    // Run the expensive scene query at 12.5 Hz; interpolate every rendered frame.
+    const now = state.clock.elapsedTime;
+    if (now - lastCameraCheck.current > 0.08) {
+      lastCameraCheck.current = now;
+      cameraOrigin.copy(target);
+      cameraDirection.subVectors(desiredCamera, cameraOrigin);
+      const desiredDistance = cameraDirection.length();
+      cameraDirection.normalize();
+      cameraOrigin.addScaledVector(cameraDirection, 0.38); // ignore the avatar's own body
+      cameraRay.set(cameraOrigin, cameraDirection);
+      cameraRay.near = 0.05;
+      cameraRay.far = Math.max(0.5, desiredDistance - 0.2);
+      const hits = cameraRay.intersectObjects(scene.children, true);
+      const obstruction = hits.find((hit) =>
+        hit.distance > 0.35 &&
+        hit.object.visible &&
+        (hit.object as THREE.Mesh).isMesh &&
+        !((hit.object as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined)?.transparent
+      );
+      const available = obstruction
+        ? Math.max(1.9, obstruction.distance + 0.38 - 0.5)
+        : desiredDistance;
+      safeDistance.current = THREE.MathUtils.clamp(available, 1.9, desiredDistance);
+    }
+
+    cameraDirection.subVectors(desiredCamera, target).normalize();
+    safeCamera.copy(target).addScaledVector(cameraDirection, safeDistance.current);
+    camera.position.lerp(safeCamera, 1 - Math.exp(-12 * dt));
     camera.lookAt(target);
 
     const t = state.clock.elapsedTime;
