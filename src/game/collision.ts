@@ -24,7 +24,7 @@ const solids: Solid[] = [
   { id: 'pond-right', x: 5.3, z: 8, w: 7.4, d: 24 },
   // Side rails guide visitors along the bridge; there are no barriers across either end.
   { id: 'lotus-bridge-rail-left', x: -1.55, z: 8, w: 0.2, d: 24 },
-  { id: 'lotus-bridge-rail-right', x: 1.55, z: 5, w: 0.2, d: 24 },
+  { id: 'lotus-bridge-rail-right', x: 1.55, z: 8, w: 0.2, d: 24 },
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
   { id: 'perimeter-back', x: 0, z: -185, w: 240, d: 1.8 },
   { id: 'perimeter-left', x: -120, z: -36.5, w: 1.8, d: 297 },
@@ -119,8 +119,8 @@ export function surfaceHeight(x: number, z: number) {
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
   // Match the 24 stone slabs: the bridge stays behind the gate and reaches the pavilion steps.
   // Bridge center is z=8; leave a clear landing between the bridge and the inner gate.
-  if (Math.abs(x) <= 1.0 && z >= -7 && z <= 17) {
-    return 0.45 + Math.sin(((z + 7) / 24) * Math.PI) * 1.1;
+  if (Math.abs(x) <= 1.0 && z >= -4 && z <= 20) {
+    return 0.45 + Math.sin(((z + 4) / 24) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
   // Pavilion deck is elevated 0.6m; match the three visible approach steps.
