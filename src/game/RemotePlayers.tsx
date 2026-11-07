@@ -17,6 +17,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
   const label = useRef<HTMLDivElement>(null);
   const { camera } = useThree();
   const [selected, setSelected] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
   const previous = useRef({ x: player.x, z: player.z });
   const phase = useRef(0);
   const outfit = OUTFIT_COLORS[player.outfit ?? "lam"] ?? OUTFIT_COLORS.lam;
@@ -34,6 +35,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
     const dx = group.current.position.x - previous.current.x;
     const dz = group.current.position.z - previous.current.z;
     const moving = Math.hypot(dx, dz) > 0.002;
+    if (moving !== isMoving) setIsMoving(moving);
     if (moving) phase.current += dt * 10;
     previous.current = { x: group.current.position.x, z: group.current.position.z };
     const swing = moving ? Math.sin(phase.current) * 0.48 : 0;
@@ -55,7 +57,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
     }
   });
 
-  if (player.modelId === "male_animated" || player.modelId === "female_animated") return <group ref={group} position={[player.x, surfaceHeight(player.x, player.z), player.z]} onClick={(event) => { event.stopPropagation(); setSelected((value) => !value); }}><AnimatedAvatarAppearance modelId={player.modelId} outfit={player.outfit ?? "lam"} hair={player.hair ?? "ngan"} hairColor={player.hairColor ?? HAIR_COLORS[0]} accessory={player.accessory ?? "neck_mala"} /><Html position={[0, 2.3, 0]} center distanceFactor={13}><div ref={label} className="name-tag">{player.name}</div></Html></group>;
+  if (player.modelId === "male_animated" || player.modelId === "female_animated") return <group ref={group} position={[player.x, surfaceHeight(player.x, player.z), player.z]} onClick={(event) => { event.stopPropagation(); setSelected((value) => !value); }}><AnimatedAvatarAppearance modelId={player.modelId} outfit={player.outfit ?? "lam"} hair={player.hair ?? "ngan"} hairColor={player.hairColor ?? HAIR_COLORS[0]} accessory={player.accessory ?? "neck_mala"} pose={isMoving ? "walk" : "stand"} /><Html position={[0, 2.3, 0]} center distanceFactor={13}><div ref={label} className="name-tag">{player.name}</div></Html></group>;
 
   return (
     <group
