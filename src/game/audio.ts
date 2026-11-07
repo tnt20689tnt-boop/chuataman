@@ -118,7 +118,7 @@ function startChant() {
   const recite = () => {
     if (!chantActive || !settings.enabled || activeZone !== "dien" || speechActive) return;
     const u = new SpeechSynthesisUtterance("Nam mô A Di Đà Phật");
-    u.lang = "vi-VN"; u.rate = 0.72; u.pitch = 0.9; u.volume = 0.68;
+    u.lang = "vi-VN"; u.rate = 0.72; u.pitch = 0.9; u.volume = 0.28;
     const vi = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("vi"));
     if (vi) u.voice = vi;
     u.onend = () => { if (chantActive) chantTimer = window.setTimeout(recite, 2600); };

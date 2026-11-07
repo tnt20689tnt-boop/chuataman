@@ -6,6 +6,7 @@ import { tileTexture, fallTexture, waterTexture } from "./textures";
 import { Surface } from "./Materials";
 import { CarvedPanel, Inscription } from "./TempleDetails";
 import { SCENE_COLORS as C } from "./templeData";
+import { HallInterior, HallChantControl } from './HallInterior';
 
 const RED = C.lacquer;
 
@@ -70,7 +71,7 @@ function IncenseSmoke() {
     wisps.current.forEach((mesh, i) => {
       if (!mesh) return;
       const phase = (time * 0.22 + i / 6) % 1;
-      mesh.position.set(Math.sin(time * 0.55 + i) * (0.12 + phase * 0.45), 2.25 + phase * 3.2, -2.4 + Math.cos(time * 0.4 + i) * 0.12);
+      mesh.position.set(Math.sin(time * 0.55 + i) * (0.12 + phase * 0.45), 2.76 + phase * 3.2, -2.4 + Math.cos(time * 0.4 + i) * 0.12);
       const s = 0.12 + phase * 0.42;
       mesh.scale.set(s * (1 + Math.sin(time + i) * 0.12), s * 1.35, s);
       const material = mesh.material as THREE.MeshStandardMaterial;
@@ -80,7 +81,7 @@ function IncenseSmoke() {
   return <group>
     {Array.from({ length: 6 }, (_, i) => <mesh key={i} ref={el => { if (el) wisps.current[i] = el; }}>
       <sphereGeometry args={[1, 12, 10]} />
-      <meshStandardMaterial color="#e8e5dc" transparent opacity={0.16} depthWrite={false} roughness={1} />
+      <meshStandardMaterial color={C.smoke} transparent opacity={0.16} depthWrite={false} roughness={1} />
     </mesh>)}
   </group>;
 }
@@ -167,30 +168,6 @@ function DonationBox() {
   </group>;
 }
 
-function PrayerAudio() {
-  const [playing, setPlaying] = useState(false);
-  useEffect(() => {
-    if (!playing) return;
-    if (!("speechSynthesis" in window)) { setPlaying(false); return; }
-    const speak = () => {
-      window.speechSynthesis.cancel();
-      const line = new SpeechSynthesisUtterance("Nam mô A Di Đà Phật");
-      line.lang = "vi-VN"; line.rate = 0.72; line.pitch = 0.86; line.volume = 0.28;
-      const voice = window.speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith("vi"));
-      if (voice) line.voice = voice;
-      window.speechSynthesis.speak(line);
-    };
-    speak();
-    const timer = window.setInterval(speak, 12000);
-    return () => { window.clearInterval(timer); window.speechSynthesis.cancel(); };
-  }, [playing]);
-  return <Html position={[0, 2.1, 10.5]} center transform={false} distanceFactor={10}>
-    <button onClick={() => setPlaying(v => !v)} style={{ border: "1px solid #c7b98f", borderRadius: 24, padding: "9px 14px", background: "rgba(250,245,225,.94)", color: "#294332", fontWeight: 600, whiteSpace: "nowrap", boxShadow: "0 3px 12px #0003" }}>
-      {playing ? "🔇 Tắt niệm Phật" : "🔊 Nghe A Di Đà Phật"}
-    </button>
-  </Html>;
-}
-
 export function MainHall() {
   return (
     <group position={[0, 0, -62]}>
@@ -227,7 +204,7 @@ export function MainHall() {
         {/* altar */}
         <mesh position={[0, 0.8, -4]} castShadow>
           <boxGeometry args={[10, 1.6, 4]} />
-          <meshStandardMaterial color={RED} />
+          <meshStandardMaterial color={C.altarRed} roughness={0.42} metalness={0.18} />
         </mesh>
         <Buddha position={[0, 1.6, -6.5]} scale={1.6} />
 
@@ -265,17 +242,17 @@ export function MainHall() {
           </group>
         ))}
         <IncenseSmoke />
-        <Sparkles position={[0, 2.7, -2.4]} count={12} scale={[0.5, 0.7, 0.5]} size={2} speed={0.15} color="#f5dfaa" opacity={0.35} />
+        <HallInterior />
         {/* Cushioned meditation mats facing the Buddha, arranged in calm rows. */}
         {[-12, -6, 0, 6, 12].flatMap((x) => [2.5, 7].map((z, row) => (
           <group key={`mat-${x}-${row}`} position={[x, 0.18, z]}>
-            <mesh castShadow receiveShadow>
+            <mesh receiveShadow>
               <boxGeometry args={[2.35, 0.22, 1.75]} />
-              <meshStandardMaterial color={row === 0 ? "#8d4939" : "#a65e48"} roughness={0.96} />
+              <meshStandardMaterial color={C.mat} roughness={0.96} />
             </mesh>
             <mesh position={[0, 0.13, 0]}>
               <boxGeometry args={[2.12, 0.08, 1.52]} />
-              <meshStandardMaterial color="#c18a62" roughness={1} />
+              <meshStandardMaterial color={C.matBorder} roughness={1} />
             </mesh>
             <mesh position={[0, 0.2, -0.48]} scale={[0.48, 0.12, 0.28]}>
               <sphereGeometry args={[1, 16, 10]} />
@@ -283,7 +260,7 @@ export function MainHall() {
             </mesh>
           </group>
         )))}
-        <PrayerAudio />
+        <HallChantControl />
         {/* Enlarged merit box mounted against the left inner wall; its sign hangs separately above it. */}
         <group position={[-18.445, 0, 0]} rotation-y={Math.PI / 2}>
           <DonationBox />
@@ -299,7 +276,6 @@ export function MainHall() {
             </mesh>
             <mesh position={[0, 0.86, 0]}><torusGeometry args={[0.34, 0.045, 6, 12]} /><meshStandardMaterial color="#d9ad62" metalness={0.55} /></mesh>
             <mesh position={[0, -0.02, 0]}><coneGeometry args={[0.12, 0.24, 8]} /><meshStandardMaterial color="#d9ad62" metalness={0.5} /></mesh>
-            {i % 3 === 0 && <pointLight position={[0, 0.35, 0]} intensity={2.2} distance={6} color="#ffb45e" />}
           </group>;
         })}
         {[-1, 1].map(side => Array.from({ length: 4 }, (_, i) => (
@@ -308,10 +284,9 @@ export function MainHall() {
               <cylinderGeometry args={[0.3, 0.37, 0.72, 12]} />
               <meshStandardMaterial color="#c9442b" emissive="#ff6b30" emissiveIntensity={1.05} />
             </mesh>
-            <pointLight position={[0, 0.3, 0]} intensity={1.5} distance={5} color="#ffbd72" />
           </group>
         )))}
-        <pointLight position={[0, 6, -2]} intensity={60} distance={30} color="#ffcf8a" />
+        <pointLight position={[0, 6, -2]} intensity={60} distance={30} color={C.warmLight} />
       </group>
     </group>
   );
@@ -786,7 +761,7 @@ export function SkyLanterns() {
         userData={{ baseX: x, baseY: 17 + phase, baseZ: z, phase }}>
         <mesh position={[0, 0.42, 0]} castShadow>
           <cylinderGeometry args={[0.22, 0.34, 0.82, 12, 1, false]} />
-          <meshStandardMaterial color={colors[i % colors.length]} emissive={colors[i % colors.length]} emissiveIntensity={1.7} roughness={0.68} />
+          <meshStandardMaterial color={colors[i % colors.length] ?? C.gold} emissive={colors[i % colors.length] ?? C.gold} emissiveIntensity={1.7} roughness={0.68} />
         </mesh>
         <mesh position={[0, 0.84, 0]}>
           <torusGeometry args={[0.22, 0.035, 6, 12]} />

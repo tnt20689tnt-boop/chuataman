@@ -11,6 +11,8 @@ const solids: Solid[] = [
   { id: 'foundation-left', x: -15, z: -62, w: 16, d: 30 },
   { id: 'foundation-right', x: 15, z: -62, w: 16, d: 30 },
   { id: 'altar', x: 0, z: -67, w: 13, d: 10 },
+  { id: 'attendant-left', x: -7.2, z: -68.1, w: 4.35, d: 3.35 },
+  { id: 'attendant-right', x: 7.2, z: -68.1, w: 4.35, d: 3.35 },
   // Double-size donation box mounted along the left inner wall of the main hall.
   { id: 'main-hall-donation-box', x: -18.445, z: -62, w: 2.5, d: 3.4 },
   { id: 'bell', x: -55, z: -52, w: 10, d: 10 },
@@ -90,6 +92,11 @@ export function isBlocked(x: number, z: number) {
   }) || statues.some(s => SAT.testCircleCircle(visitor, s)) || treeTrunks.some(s => SAT.testCircleCircle(visitor, s));
 }
 export function surfaceHeight(x: number, z: number) {
+  // Existing cushions are walkable; support the avatar above their padded tops.
+  for (const mx of [-12, -6, 0, 6, 12]) for (const mz of [-59.5, -55]) {
+    if (Math.abs(x - mx) <= 1.06 && Math.abs(z - mz) <= 0.76) return HALL.floor + 0.35;
+    if (Math.abs(x - mx) <= 1.175 && Math.abs(z - mz) <= 0.875) return HALL.floor + 0.29;
+  }
   // The eight raised stepping stones in the meditation garden are real walkable
   // surfaces, matching Garden() in TempleCampus.tsx (garden origin -104, 25).
   for (let i = 0; i < 8; i++) {

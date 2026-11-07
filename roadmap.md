@@ -1,4 +1,7 @@
 # PR9 – Chùa Tâm An
+- [x] Current request: upgrade main-hall ceiling and altar offerings, lighting, single-voice chanting; preserve dimensions, doors and controls.
+- [x] Current request: verify main-hall access and sitting on desktop/mobile; 12 tests pass and build is clean.
+- [ ] Current request blocker: realistic central Buddha and distinct Bodhisattvas need suitable licensed intact 3D assets; existing statues are preserved, not claimed realistic.
 - [ ] Preserve current accounts, multiplayer and UI; repair blocking errors.
 - [ ] Upgrade Vietnamese roofs, carved wood, gate name and destination signage.
 - [ ] Replace primitive Buddha with a licensed detailed model.

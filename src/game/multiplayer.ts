@@ -298,10 +298,10 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           hair: avatar?.hair ?? "ngan",
           hairColor: avatar?.hairColor ?? "#1b1410",
         };
-        const { error: trackError } = await activeChannel.track(initialPresence);
+        const trackStatus = await activeChannel.track(initialPresence);
         // The page may have signed out or reconnected while track() was pending.
         if (attempt !== connectionAttempt || channel !== activeChannel) return;
-        if (trackError) console.warn("Chùa Tâm An: chưa đăng ký được Presence.", trackError);
+        if (trackStatus !== 'ok') console.warn("Chùa Tâm An: chưa đăng ký được Presence.", trackStatus);
         let lastPresenceAt = Date.now();
         // Reconcile periodically in case a presence sync event was missed.
         readPresence(activeChannel);

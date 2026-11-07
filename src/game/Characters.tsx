@@ -291,6 +291,7 @@ export function PlayerAvatar() {
       : ["idle", "stand"];
     const clip = externalClips.find((item) => wanted.some((word) => item.name.toLowerCase().includes(word)))
       ?? externalClips[0];
+    if (!clip) return;
     const next = mixerRef.current.clipAction(clip);
     if (activeClipRef.current !== next) {
       activeClipRef.current?.fadeOut(0.18);

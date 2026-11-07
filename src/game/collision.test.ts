@@ -3,6 +3,16 @@ import { isBlocked, moveVisitor, surfaceHeight } from './collision';
 import { stepPlayer } from './sim';
 
 describe('PR9 visitor access', () => {
+  it('keeps both attendant plinths solid', () => {
+    expect(isBlocked(-7.2, -68.1)).toBe(true);
+    expect(isBlocked(7.2, -68.1)).toBe(true);
+  });
+  it('supports visitors on meditation mats without closing the walking aisles', () => {
+    expect(surfaceHeight(0, -59.5)).toBeCloseTo(1.55);
+    expect(isBlocked(0, -59.5)).toBe(false);
+    expect(surfaceHeight(3, -55)).toBe(1.2);
+    expect(isBlocked(3, -55)).toBe(false);
+  });
   it('cannot walk through main hall walls', () => {
     const p = { x: 18, z: -55, y: 1.2 };
     moveVisitor(p, 8, 0);
