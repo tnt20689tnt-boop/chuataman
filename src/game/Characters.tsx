@@ -5,6 +5,7 @@ import { Html, useGLTF, useAnimations } from "@react-three/drei";
 import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose } from "./sim";
 import { player, useUI } from "./store";
 import { moveVisitor } from "./collision";
+import { AnimatedAvatarAppearance } from "./AvatarAppearance";
 
 const SKIN = "#f4d6bd";
 
@@ -282,6 +283,17 @@ export function PlayerAvatar() {
 
   return (
     <group ref={g}>
+      {avatar?.modelId && (pose === "stand" || pose === "walk") && action === "none" ? (
+        <AnimatedAvatarAppearance
+          modelId={avatar.modelId}
+          outfit={avatar.outfit}
+          hair={avatar.hair}
+          hairColor={avatar.hairColor}
+          accessory={avatar.accessory ?? "neck_mala"}
+          pose={pose}
+          action={action}
+        />
+      ) : (
       <group>
       <mesh ref={robeRef} position={[0, 0, 0]} scale={[sxz, sy, sxz]} castShadow>
         <primitive object={robeGeometry} attach="geometry" />
@@ -519,6 +531,8 @@ export function PlayerAvatar() {
         </group>
       )}
       </group>
+      </group>
+      )}
       <Html position={[0, hy + 0.6, 0]} center distanceFactor={14} zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
         <div className="name-tag name-tag-self">{avatar?.name ?? "Phật tử"}</div>
       </Html>
