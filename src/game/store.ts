@@ -66,8 +66,8 @@ export function loadAvatar(): Avatar | null {
     const raw = localStorage.getItem(AV_KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw) as Avatar;
-    // Return to the original built-in avatar instead of loading the newer GLB character.
-    delete saved.modelId;
+    // Keep the selected gender mapped to its matching animated GLB character.
+    saved.modelId = saved.gender === "nu" ? "female_animated" : "male_animated";
     localStorage.setItem(AV_KEY, JSON.stringify(saved));
     return saved;
   } catch {
@@ -75,8 +75,7 @@ export function loadAvatar(): Avatar | null {
   }
 }
 export function saveAvatar(a: Avatar) {
-  const originalAvatar = { ...a };
-  delete originalAvatar.modelId;
+  const originalAvatar = { ...a, modelId: a.gender === "nu" ? "female_animated" : "male_animated" };
   localStorage.setItem(AV_KEY, JSON.stringify(originalAvatar));
   setUI({ avatar: originalAvatar });
 }
