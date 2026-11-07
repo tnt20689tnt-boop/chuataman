@@ -123,12 +123,27 @@ export function surfaceHeight(x: number, z: number) {
     return 0.45 + Math.sin(((z + 4) / 24) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
-  // Pavilion deck is elevated 0.6m; match the three visible approach steps.
+  // Raised pavilion deck and three walkable steps on all four sides.
   if (Math.abs(x) <= 7.5 && z >= -21 && z <= -9) return 0.6;
+  // Front side (faces the lotus bridge).
   if (Math.abs(x) <= 2.6) {
     if (z > -7.55 && z <= -6.45) return 0.2;
     if (z > -8.55 && z <= -7.45) return 0.4;
     if (z > -9.6 && z <= -8.45) return 0.6;
+    // Back side.
+    if (z >= -23.55 && z < -22.45) return 0.2;
+    if (z >= -22.55 && z < -21.45) return 0.4;
+    if (z >= -21.55 && z < -20.45) return 0.6;
+  }
+  // Left side steps, progressing inward toward the deck.
+  if (Math.abs(z + 15) <= 2.6) {
+    if (x >= -10.6 && x < -9.4) return 0.2;
+    if (x >= -9.6 && x < -8.4) return 0.4;
+    if (x >= -8.6 && x < -7.4) return 0.6;
+    // Right side steps, progressing inward toward the deck.
+    if (x > 9.4 && x <= 10.6) return 0.2;
+    if (x > 8.4 && x <= 9.6) return 0.4;
+    if (x > 7.4 && x <= 8.6) return 0.6;
   }
   return 0;
 }
