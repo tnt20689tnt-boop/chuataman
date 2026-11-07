@@ -95,18 +95,32 @@ export function AnimatedAvatarAppearance({
       action === "thien" || action === "kinh" ? "meditation" :
       action === "none" && pose === "walk" ? (input.run ? "run" : "walk") :
       "idle";
-    if (activeClip.current === desired) return;
-    actions[activeClip.current]?.fadeOut(0.18);
-    const next = actions[desired];
+
+    // Some supplied GLBs contain a walk clip but no separate run clip.
+    // In that case keep the walk cycle and speed up its cadence to match
+    // the faster world movement instead of letting the feet lag behind.
+    const selected = desired === "run" && !actions.run ? "walk" : desired;
+    const playbackRate = desired === "run" && selected === "walk" ? 1.7 : 1;
+
+    // Run may use the same walk clip, so update its playback rate even when
+    // the selected clip name has not changed.
+    if (activeClip.current === selected) {
+      actions[selected]?.setEffectiveTimeScale(playbackRate);
+      return;
+    }
+
+    actions[activeClip.current]?.fadeOut(0.12);
+    const next = actions[selected];
     if (next) {
       next.reset();
       next.enabled = true;
-      const oneShot = desired === "prayer" || desired === "kneel" || desired === "turn";
+      next.setEffectiveTimeScale(playbackRate);
+      const oneShot = selected === "prayer" || selected === "kneel" || selected === "turn";
       next.setLoop(oneShot ? THREE.LoopOnce : THREE.LoopRepeat, oneShot ? 1 : Infinity);
       next.clampWhenFinished = oneShot;
-      next.fadeIn(0.18).play();
+      next.fadeIn(0.12).play();
     }
-    activeClip.current = desired;
+    activeClip.current = selected;
   });
 
   return (
