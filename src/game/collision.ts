@@ -71,9 +71,10 @@ for (const b of BUILDINGS) {
 for (const z of [24, 112]) for (const x of [-8, -3.6, 3.6, 8]) {
   solids.push({ id: 'gate-column', x, z, w: 1.25, d: 1.65 });
 }
-// Pavilion posts are solid in the rendered scene; prevent walking through them.
+// Solid collision around every rendered pavilion column; the generous footprint
+// prevents the avatar capsule from clipping through the timber supports.
 for (const x of [-7, -2.333, 2.333, 7]) for (const z of [-26, -16]) {
-  solids.push({ id: 'pavilion-post', x, z, w: 1.1, d: 1.1 });
+  solids.push({ id: 'pavilion-post', x, z, w: 1.45, d: 1.45 });
 }
 for (let i = 0; i < 8; i++) for (const z of [-50, -74]) {
   solids.push({ id: 'hall-column', x: -19 + i * 38 / 7, z, w: 1.05, d: 1.05 });
@@ -123,27 +124,30 @@ export function surfaceHeight(x: number, z: number) {
     return 0.45 + Math.sin(((z + 4) / 24) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
-  // Raised pavilion deck and three walkable steps on all four sides.
+  // Pavilion deck top is 0.6m; four equal 0.15m risers on every side.
   if (Math.abs(x) <= 7.5 && z >= -27 && z <= -15) return 0.6;
-  // Front side (faces the lotus bridge).
+  // Front steps: from the bridge toward the deck.
   if (Math.abs(x) <= 2.6) {
-    if (z > -13.55 && z <= -12.45) return 0.2;
-    if (z > -14.55 && z <= -13.45) return 0.4;
-    if (z > -15.6 && z <= -14.45) return 0.6;
-    // Back side.
-    if (z >= -29.55 && z < -28.45) return 0.2;
-    if (z >= -28.55 && z < -27.45) return 0.4;
-    if (z >= -27.55 && z < -26.45) return 0.6;
+    if (z >= 9 && z < 10.2) return 0.15;
+    if (z >= 8 && z < 9) return 0.30;
+    if (z >= 7 && z < 8) return 0.45;
+    if (z >= 6 && z < 7) return 0.60;
+    // Back steps.
+    if (z > -10.2 && z <= -9) return 0.15;
+    if (z > -9 && z <= -8) return 0.30;
+    if (z > -8 && z <= -7) return 0.45;
+    if (z > -7 && z <= -6) return 0.60;
   }
-  // Left side steps, progressing inward toward the deck.
+  // Left and right side steps.
   if (Math.abs(z + 21) <= 2.6) {
-    if (x >= -10.6 && x < -9.4) return 0.2;
-    if (x >= -9.6 && x < -8.4) return 0.4;
-    if (x >= -8.6 && x < -7.4) return 0.6;
-    // Right side steps, progressing inward toward the deck.
-    if (x > 9.4 && x <= 10.6) return 0.2;
-    if (x > 8.4 && x <= 9.6) return 0.4;
-    if (x > 7.4 && x <= 8.6) return 0.6;
+    if (x >= -10.2 && x < -9) return 0.15;
+    if (x >= -9 && x < -8) return 0.30;
+    if (x >= -8 && x < -7) return 0.45;
+    if (x >= -7 && x < -6) return 0.60;
+    if (x > 9 && x <= 10.2) return 0.15;
+    if (x > 8 && x <= 9) return 0.30;
+    if (x > 7 && x <= 8) return 0.45;
+    if (x > 6 && x <= 7) return 0.60;
   }
   return 0;
 }
