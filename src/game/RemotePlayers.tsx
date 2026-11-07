@@ -1,13 +1,46 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { HAIR_COLORS, OUTFIT_COLORS, OUTFIT_LABEL, HAIR_LABEL } from "./sim";
 import { useMultiplayer, type RemotePlayer } from "./multiplayer";
 import { surfaceHeight } from "./collision";
 
 function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePlayer[] }) {
   const group = useRef<THREE.Group>(null);
+  const bodyRef = useRef<THREE.Group>(null);
+  const [externalModel, setExternalModel] = useState<THREE.Group | null>(null);
+  const modelPath = player.modelId === "nam2" ? "/models/nhan-vat-nam-2.glb"
+    : player.modelId === "nu1" ? "/models/nhan-vat-nu-1.glb"
+    : player.modelId === "nu2" ? "/models/nhan-vat-nu-2.glb"
+    : player.modelId === "nam1" ? "/models/nhan-vat-nam-1.glb" : null;
+
+  useEffect(() => {
+    if (!modelPath) { setExternalModel(null); return; }
+    let alive = true;
+    const loader = new GLTFLoader();
+    loader.load(modelPath, (gltf) => {
+      if (!alive) return;
+      const model = cloneSkinned(gltf.scene) as THREE.Group;
+      model.updateMatrixWorld(true);
+      const bounds = new THREE.Box3().setFromObject(model);
+      const size = bounds.getSize(new THREE.Vector3());
+      const center = bounds.getCenter(new THREE.Vector3());
+      const scale = 2.35 / Math.max(size.y, 0.001);
+      model.scale.setScalar(scale);
+      model.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+      model.traverse((node) => {
+        if ((node as THREE.Mesh).isMesh) {
+          (node as THREE.Mesh).castShadow = true;
+          (node as THREE.Mesh).receiveShadow = true;
+        }
+      });
+      setExternalModel(model);
+    }, undefined, () => { if (alive) setExternalModel(null); });
+    return () => { alive = false; };
+  }, [modelPath]);
   const leftArm = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
   const leftLeg = useRef<THREE.Group>(null);
@@ -22,6 +55,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
 
   useFrame((_, delta) => {
     if (!group.current) return;
+    if (bodyRef.current) bodyRef.current.visible = !externalModel;
     const dt = Math.min(delta, 0.05);
     group.current.position.x = THREE.MathUtils.damp(group.current.position.x, player.x, 11, dt);
     group.current.position.z = THREE.MathUtils.damp(group.current.position.z, player.z, 11, dt);
@@ -62,6 +96,8 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
         setSelected((value) => !value);
       }}
     >
+      {externalModel && <primitive object={externalModel} />}
+      <group ref={bodyRef}>
       {/* Robe and torso */}
       <mesh position={[0, 1.02, 0]} castShadow>
         <capsuleGeometry args={[0.29, 0.48, 5, 10]} />
@@ -133,6 +169,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
           <sphereGeometry args={[0.105, 10, 8]} />
           <meshStandardMaterial color="#5b5149" />
         </mesh>
+      </group>
       </group>
       <Html position={[0, 2.2, 0]} center distanceFactor={13} zIndexRange={[20, 5]}>
         <div
