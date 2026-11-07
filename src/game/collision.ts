@@ -75,7 +75,7 @@ const polygons = solids.map(s => ({ ...s, shape: new SAT.Box(new SAT.Vector(s.x 
 // is also solid, but this explicit statue volume protects the full seated form.
 const statues = [
   new SAT.Circle(new SAT.Vector(0, -68.5), 3.8),
-  new SAT.Circle(new SAT.Vector(-86, 20), 2.8),
+  new SAT.Circle(new SAT.Vector(0, -155), 2.8),
 ];
 const visitor = new SAT.Circle(new SAT.Vector(), PLAYER_RADIUS);
 // Populated from the exact rendered forest positions by World before movement starts.
