@@ -396,12 +396,12 @@ export default function World() {
       <Waterfall position={[0, 0, -12]} />
       <ReleaseLanterns position={[28, 0, 12]} />
       {/* Meditation zone: stone platform with an outdoor Buddha */}
-      <group position={[-78, 0, 20]}>
+      <group position={[0, 0, -155]}>
         <mesh position={[0, 0.25, 0]} receiveShadow>
           <cylinderGeometry args={[14, 14, 0.5, 40]} />
           <meshStandardMaterial color="#cfc3ac" />
         </mesh>
-        <Buddha position={[-8, 0.5, 0]} scale={0.8} />
+        <Buddha position={[0, 0.5, 0]} scale={0.8} />
         {Array.from({ length: 24 }).map((_, i) => {
           const a = (i / 24) * Math.PI * 2;
           return (
