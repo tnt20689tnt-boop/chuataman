@@ -315,6 +315,14 @@ export function PlayerAvatar() {
     }
   }, [externalClips, action, pose]);
 
+  useLayoutEffect(() => {
+    // Mark the local avatar so the follow-camera obstruction ray ignores its meshes.
+    if (g.current) g.current.userData.cameraIgnore = true;
+    return () => {
+      if (g.current) delete g.current.userData.cameraIgnore;
+    };
+  }, []);
+
   useFrame(({ clock }, delta) => {
     mixerRef.current?.update(delta);
     const t = clock.elapsedTime;

@@ -310,6 +310,12 @@ function Controller() {
       cameraRay.far = Math.max(0.5, desiredDistance - 0.2);
       const hits = cameraRay.intersectObjects(scene.children, true);
       const obstruction = hits.find((hit) => {
+        // The camera ray starts near the player's head and points past the avatar.
+        // Ignore the local avatar hierarchy so its own body never pulls the camera
+        // into a close-up when movement changes the camera angle.
+        let ancestor: THREE.Object3D | null = hit.object;
+        while (ancestor && !ancestor.userData.cameraIgnore) ancestor = ancestor.parent;
+        if (ancestor?.userData.cameraIgnore) return false;
         const mesh = hit.object as THREE.Mesh;
         if (hit.distance <= 0.35 || !mesh.visible || !mesh.isMesh) return false;
         const material = mesh.material;
