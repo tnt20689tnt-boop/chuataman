@@ -1,21 +1,12 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { OUTFIT_COLORS, type Outfit, type Hair, type Pose } from "./sim";
-import type { Action } from "./store";
+import { input, type Action } from "./store";
 
 export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
-
-type BonePose = {
-  bone: THREE.Bone;
-  base: THREE.Euler;
-  side: -1 | 1;
-  kind: "arm" | "leg";
-};
-
-const cleanName = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 export function AnimatedAvatarAppearance({
   modelId, outfit, hair, hairColor, accessory, pose = "stand", action = "none",
@@ -31,59 +22,37 @@ export function AnimatedAvatarAppearance({
   const path = modelId === "female_animated" ? "/models/female_animated.glb" : "/models/male_animated.glb";
   const gltf = useGLTF(path);
   const root = useRef<THREE.Group>(null);
-  const proceduralWalk = useRef(false);
+  const clips = useMemo(() => gltf.animations.map((source) => {
+    const clip = source.clone();
+    // The game controller owns world position. Remove exported root translation
+    // so walk/run clips animate the skeleton without sliding the avatar across the map.
+    clip.tracks = clip.tracks.filter((track) => track.name !== "Root.position");
+    return clip;
+  }), [gltf.animations]);
+  const { actions } = useAnimations(clips, root);
+  const activeClip = useRef("");
 
-  const model = useMemo(() => {
-    const copy = clone(gltf.scene);
-    copy.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
-      const meshName = object.name.toLowerCase();
-      const materials = (Array.isArray(object.material) ? object.material : [object.material]).map((original) => {
-        const material = original.clone();
-        const label = meshName + " " + material.name.toLowerCase();
-        if (/hair|toc|ponytail|bun/.test(label) && "color" in material) {
-          (material as THREE.MeshStandardMaterial).color.set(hairColor);
-        } else if (!/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
-          (material as THREE.MeshStandardMaterial).color.set(OUTFIT_COLORS[outfit]);
-        }
-        return material;
-      });
-      object.material = Array.isArray(object.material) ? materials : materials[0];
-    });
-    return copy;
-  }, [gltf.scene, outfit, hairColor]);
-
-  const { actions, names } = useAnimations(gltf.animations, root);
-  const bounds = useMemo(() => new THREE.Box3().setFromObject(model), [model]);
-  const size = useMemo(() => bounds.getSize(new THREE.Vector3()), [bounds]);
-  const center = useMemo(() => bounds.getCenter(new THREE.Vector3()), [bounds]);
-  const unitScale = 1.8 / Math.max(size.y, 0.001);
-  const neckY = bounds.min.y + size.y * 0.72;
-
-  const bones = useMemo<BonePose[]>(() => {
-    const result: BonePose[] = [];
-    model.traverse((object) => {
-      if (!(object instanceof THREE.Bone)) return;
-      const n = cleanName(object.name);
-      const left = n.includes("left") || /mixamorigl(upperarm|arm|upleg|thigh)/.test(n) || /^(l|l_)(upperarm|upleg|thigh)/.test(n);
-      const right = n.includes("right") || /mixamorigr(upperarm|arm|upleg|thigh)/.test(n) || /^(r|r_)(upperarm|upleg|thigh)/.test(n);
-      if (!left && !right) return;
-      const side: -1 | 1 = left ? 1 : -1;
-      if (/upperarm|shoulder|mixamorigleftarm|mixamorigrightarm/.test(n) || /^(leftarm|rightarm|lupperarm|rupperarm)$/.test(n)) {
-        result.push({ bone: object, base: object.rotation.clone(), side, kind: "arm" });
-      } else if (/upleg|thigh/.test(n)) {
-        result.push({ bone: object, base: object.rotation.clone(), side, kind: "leg" });
-      }
-    });
-    return result;
-  }, [model]);
-
-  useLayoutEffect(() => {
-    // Do not play imported GLB clips yet: some contain root-motion tracks
-    // that move the whole character independently of the game controller.
-    Object.values(actions).forEach((clip) => clip?.stop());
-    proceduralWalk.current = pose === "walk";
+  useEffect(() => {
+    activeClip.current = "";
     return () => Object.values(actions).forEach((clip) => clip?.stop());
+  }, [actions]);
+
+  useFrame(() => {
+    const desired = pose === "walk" ? (input.run ? "run" : "walk") : "idle";
+    if (activeClip.current === desired) return;
+    actions[activeClip.current]?.fadeOut(0.18);
+    const next = actions[desired];
+    if (next) {
+      next.reset();
+      next.enabled = true;
+      next.setLoop(THREE.LoopRepeat, Infinity);
+      next.clampWhenFinished = false;
+      next.fadeIn(0.18).play();
+    }
+    activeClip.current = desired;
+  });
+
+  return () => Object.values(actions).forEach((clip) => clip?.stop());
   }, [actions, pose, action]);
 
   useFrame(({ clock }, delta) => {
