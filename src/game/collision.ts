@@ -20,11 +20,11 @@ const solids: Solid[] = [
   { id: 'waterfall', x: -38, z: -12, w: 20, d: 17 },
   // 18m x 20m lotus pond, proportioned to the 17m-wide Tam Quan.
   // Keep the central 3.2m bridge and both approaches open.
-  { id: 'pond-left', x: -5.3, z: 14, w: 7.4, d: 20 },
-  { id: 'pond-right', x: 5.3, z: 14, w: 7.4, d: 20 },
+  { id: 'pond-left', x: -5.3, z: 13, w: 7.4, d: 20 },
+  { id: 'pond-right', x: 5.3, z: 13, w: 7.4, d: 20 },
   // Side rails guide visitors along the bridge; there are no barriers across either end.
-  { id: 'lotus-bridge-rail-left', x: -1.55, z: 14, w: 0.2, d: 20 },
-  { id: 'lotus-bridge-rail-right', x: 1.55, z: 14, w: 0.2, d: 20 },
+  { id: 'lotus-bridge-rail-left', x: -1.55, z: 13, w: 0.2, d: 20 },
+  { id: 'lotus-bridge-rail-right', x: 1.55, z: 13, w: 0.2, d: 20 },
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
   { id: 'perimeter-back', x: 0, z: -185, w: 240, d: 1.8 },
   { id: 'perimeter-left', x: -120, z: -36.5, w: 1.8, d: 297 },
@@ -117,10 +117,10 @@ export function surfaceHeight(x: number, z: number) {
   if (Math.abs(x - HALL.x) < HALL.halfW && z <= -47 && z >= -77) return HALL.floor;
   // Three 0.4m treads match the visible main-hall staircase exactly.
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
-  // Match the 20 stone slabs: one end meets the Tam Quan at z=24, the other meets the pond edge at z=4.
-  // Bridge center is z=14; both approaches remain open.
-  if (Math.abs(x) <= 1.0 && z >= 4 && z <= 24) {
-    return 0.45 + Math.sin(((z - 4) / 20) * Math.PI) * 1.1;
+  // Match the 20 stone slabs: one end meets the inner side of the Tam Quan at z=23, the other meets the pond edge at z=3.
+  // Bridge center is z=13; both approaches remain open.
+  if (Math.abs(x) <= 1.0 && z >= 3 && z <= 23) {
+    return 0.45 + Math.sin(((z - 3) / 20) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
   if (Math.abs(x - 70) < 8 && Math.abs(z - 52) < 6) return 0.6;
