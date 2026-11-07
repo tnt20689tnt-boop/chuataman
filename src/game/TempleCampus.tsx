@@ -197,7 +197,8 @@ function BoundaryWalls() {
 
 export function TempleCampus() {
   return <>
-    <BoundaryWalls />\n    {BUILDINGS.map(b => <CampusBuilding key={b.id} building={b} />)}
+    <BoundaryWalls />
+    {BUILDINGS.map(b => <CampusBuilding key={b.id} building={b} />)}
     <Bridge /><Garden />
     <Inscription text="NHÀ GIẢNG PHÁP" width={9} height={1} position={[60, 4.4, -51.8]} />
     <Inscription text="HỒ SEN" width={5} height={1} position={[0, 1.6, 26]} stone />
