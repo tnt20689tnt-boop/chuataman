@@ -247,7 +247,12 @@ export function PlayerAvatar() {
       robeRef.current.rotation.x += ((bowCycle * 0.20) - robeRef.current.rotation.x) * smooth;
       robeRef.current.scale.y = sy * (1 + breath * 0.006);
     }
-    g.current.position.y = player.y + (walking ? Math.abs(Math.sin(avatarTime * 8.5)) * 0.025 : Math.sin(avatarTime * 1.8) * 0.008);
+    // Custom GLB avatars already contain their own full-body walk/idle animation.
+    // Do not add a second whole-body bounce on top of the exported animation.
+    const customModel = Boolean(avatar?.modelId && pose !== "lie");
+    g.current.position.y = player.y + (customModel ? 0 : walking
+      ? Math.abs(Math.sin(avatarTime * 8.5)) * 0.025
+      : Math.sin(avatarTime * 1.8) * 0.008);
     const prayerPose = action === "chap" || action === "le" || action === "thien";
     // Arms move from the shoulders toward the sternum, rather than leaving
     // two detached hands floating in front of the robe.
