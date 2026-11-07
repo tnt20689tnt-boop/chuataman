@@ -53,7 +53,7 @@ function CampusBuilding({ building }: { building: typeof BUILDINGS[number] }) {
 }
 
 function Bridge() {
-  const bridgeLength = 28;
+  const bridgeLength = 20;
   const halfLength = bridgeLength / 2;
   const geo = useMemo(() => {
     const points = Array.from({ length: 73 }, (_, i) => new THREE.Vector3(
@@ -63,9 +63,9 @@ function Bridge() {
     ));
     return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 72, 0.08, 6, false);
   }, []);
-  return <group position={[0, 0, 9]} name="Cầu đá hồ sen">
-    {Array.from({ length: bridgeLength }, (_, i) => <mesh key={i} position={[0, 0.27 + Math.sin((i + 0.5) / bridgeLength * Math.PI) * 1.1, -halfLength + 0.5 + i]} receiveShadow castShadow><boxGeometry args={[4.4, 0.36, 1.06]} /><Surface kind="stone" /></mesh>)}
-    {[-1, 1].map(side => <group key={side} position={[side * 2.1, 0, 0]}>
+  return <group position={[0, 0, 13]} name="Cầu đá hồ sen">
+    {Array.from({ length: bridgeLength }, (_, i) => <mesh key={i} position={[0, 0.27 + Math.sin((i + 0.5) / bridgeLength * Math.PI) * 1.1, -halfLength + 0.5 + i]} receiveShadow castShadow><boxGeometry args={[3.2, 0.36, 1.06]} /><Surface kind="stone" /></mesh>)}
+    {[-1, 1].map(side => <group key={side} position={[side * 1.5, 0, 0]}>
       <mesh geometry={geo} position={[0, 1, 0]} castShadow><meshStandardMaterial color={C.stone} /></mesh>
       {Array.from({ length: 9 }, (_, i) => <mesh key={i} position={[0, 0.95 + Math.sin(i / 8 * Math.PI) * 1.1, -halfLength + i * (bridgeLength / 8)] castShadow><boxGeometry args={[0.2, 1.15, 0.2]} /><Surface kind="stone" /></mesh>)}
     </group>)}
