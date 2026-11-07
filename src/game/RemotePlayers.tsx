@@ -150,7 +150,6 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
         </mesh>
       </group>
       </group>
-      </group>
       )}
       <Html position={[0, 2.2, 0]} center distanceFactor={13} zIndexRange={[20, 5]}>
         <div
