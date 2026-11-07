@@ -37,10 +37,10 @@ for (const b of BUILDINGS) {
     // Match the rendered wall panels, with a little extra thickness so a
     // moving avatar cannot clip through thin walls at high frame rates.
     { id: b.id + '-left', x: b.x - b.w / 2, z: b.z, w: 1.2, d: b.d + 0.6 },
-    { id: b.id + '-right', x: b.x + b.w / 2, z: b.z, w: 0.8, d: b.d + 0.3 },
+    { id: b.id + '-right', x: b.x + b.w / 2, z: b.z, w: 1.2, d: b.d + 0.6 },
     { id: b.id + '-back', x: b.x, z: b.z - b.d / 2, w: b.w + 0.6, d: 1.2 },
     { id: b.id + '-front-left', x: b.x - b.w / 3, z: b.z + b.d / 2, w: b.w / 3 + 0.3, d: 1.2 },
-    { id: b.id + '-front-right', x: b.x + b.w / 3, z: b.z + b.d / 2, w: b.w / 3 + 0.15, d: 0.8 },
+    { id: b.id + '-front-right', x: b.x + b.w / 3, z: b.z + b.d / 2, w: b.w / 3 + 0.3, d: 1.2 },
   );
   if (b.kind === 'ancestral') solids.push({ id: 'ancestral-altar', x: b.x, z: b.z - 4, w: 10, d: 5 });
   // Guest-room beds are solid furniture; visitors must approach from the aisle.
@@ -117,7 +117,7 @@ export function surfaceHeight(x: number, z: number) {
   if (Math.abs(x - HALL.x) < HALL.halfW && z <= -47 && z >= -77) return HALL.floor;
   // Three 0.4m treads match the visible main-hall staircase exactly.
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
-  // Match the 20 stone slabs: one end meets the inner side of the Tam Quan at z=23, the other meets the pond edge at z=3.
+  // Match the 24 stone slabs: the bridge now reaches both edges of the pond.
   // Bridge center is z=13; both approaches remain open.
   if (Math.abs(x) <= 1.0 && z >= 1 && z <= 25) {
     return 0.45 + Math.sin(((z - 1) / 24) * Math.PI) * 1.1;
