@@ -24,7 +24,7 @@ describe('PR9 visitor access', () => {
     moveVisitor(p, 0, -20);
     expect(p.z).toBeGreaterThan(-62);
     expect(isBlocked(0, -68.5)).toBe(true);
-    expect(isBlocked(-86, 20)).toBe(true);
+    expect(isBlocked(0, -155)).toBe(true); // Outdoor Buddha in the meditation garden.
   });
   it('follows each of the three visible staircase treads', () => {
     expect(surfaceHeight(0, -43.9)).toBe(0);
@@ -37,14 +37,14 @@ describe('PR9 visitor access', () => {
     expect(p.y).toBe(1.2);
   });
   it('keeps visitors out of water while allowing the stone bridge', () => {
-    expect(isBlocked(70, -10)).toBe(true);
-    expect(isBlocked(76, -10)).toBe(false);
-    expect(surfaceHeight(76, -14)).toBeCloseTo(1.55);
+    expect(isBlocked(8, 11)).toBe(true); // Lotus pond water.
+    expect(isBlocked(0, 11)).toBe(false); // Clear stone bridge corridor.
+    expect(surfaceHeight(0, 11)).toBeCloseTo(1.55);
   });
   it('blocks new building walls but leaves their central doors open', () => {
     expect(isBlocked(-82, -15)).toBe(true);
     expect(isBlocked(-70, -6)).toBe(false);
-    expect(isBlocked(0, -109.5)).toBe(true);
+    expect(isBlocked(-70, -24)).toBe(true); // Back wall of the meditation hall.
   });
   it('does not report walking when pressed into a solid gate column', () => {
     const p = { x: 3.6, z: 25.13, y: 0, rot: Math.PI };
