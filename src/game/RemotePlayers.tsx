@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { HAIR_COLORS, OUTFIT_COLORS, OUTFIT_LABEL, HAIR_LABEL } from "./sim";
 import { useMultiplayer, type RemotePlayer } from "./multiplayer";
 import { surfaceHeight } from "./collision";
+import { AnimatedAvatarAppearance } from "./AvatarAppearance";
 
 function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePlayer[] }) {
   const group = useRef<THREE.Group>(null);
@@ -65,6 +66,16 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
         setSelected((value) => !value);
       }}
     >
+      {player.modelId ? (
+        <AnimatedAvatarAppearance
+          modelId={player.modelId}
+          outfit={player.outfit ?? "lam"}
+          hair={player.hair ?? "ngan"}
+          hairColor={player.hairColor ?? "#1b1410"}
+          accessory={player.accessory ?? "neck_mala"}
+          pose={isMoving ? "walk" : "stand"}
+        />
+      ) : (
       <group ref={bodyRef}>
       {/* Robe and torso */}
       <mesh position={[0, 1.02, 0]} castShadow>
@@ -139,6 +150,8 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
         </mesh>
       </group>
       </group>
+      </group>
+      )}
       <Html position={[0, 2.2, 0]} center distanceFactor={13} zIndexRange={[20, 5]}>
         <div
           ref={label}
