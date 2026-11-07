@@ -275,11 +275,10 @@ export function PlayerAvatar() {
         externalRigRef.current = rig;
         const clips = gltf.animations ?? [];
         setExternalClips(clips);
-        // Nam 1 / Nu 1 are currently static, unrigged GLBs. Do not render
-        // them as frozen floating meshes: use the articulated procedural
-        // avatar below until a fully skinned rigged export is supplied.
-        if (rig.size > 0 || clips.length > 0) setExternalModel(model);
-        else setExternalModel(null);
+        // Render the supplied Nam 1 / Nu 1 GLBs even when they are static.
+        // Root-level procedural motion below adds breathing, sway and a
+        // gentle walking bounce; rigged exports additionally get limb motion.
+        setExternalModel(model);
       },
       undefined,
       () => {
@@ -322,8 +321,9 @@ export function PlayerAvatar() {
       animateAvatarRig(externalRigRef.current, t, walkingExternal);
       const bowExternal = action === "le" ? Math.max(0, Math.sin(t * 1.15)) * 0.12
         : action === "thien" ? 0.035 : 0;
+      const walkLean = walkingExternal ? Math.sin(t * 6.5) * 0.025 : 0;
       const externalSmooth = 1 - Math.exp(-delta * 8);
-      externalMotionRef.current.rotation.x += (bowExternal - externalMotionRef.current.rotation.x) * externalSmooth;
+      externalMotionRef.current.rotation.x += ((bowExternal + walkLean) - externalMotionRef.current.rotation.x) * externalSmooth;
       externalMotionRef.current.rotation.z = Math.sin(t * 1.2) * (walkingExternal ? 0.025 : 0.007);
       externalMotionRef.current.position.y = walkingExternal
         ? Math.abs(Math.sin(t * 6.5)) * 0.025
