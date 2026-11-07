@@ -287,7 +287,7 @@ export function PlayerAvatar() {
   });
 
   return (
-    <group ref={g}>
+    <group ref={g} userData={{ cameraIgnore: true }}>
       {avatar?.modelId && pose !== "lie" ? (
         <AnimatedAvatarAppearance
           modelId={avatar.modelId}
