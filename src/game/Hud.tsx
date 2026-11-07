@@ -659,14 +659,8 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
   const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "nam1", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
   const gender = a.gender ?? "nam";
   const modelOptions: { id: AvatarModelId; label: string; description: string }[] = gender === "nam"
-    ? [
-        { id: "nam1", label: "Nam 1", description: "Mẫu nam thứ nhất" },
-        { id: "nam2", label: "Nam 2", description: "Mẫu nam thứ hai" },
-      ]
-    : [
-        { id: "nu1", label: "Nữ 1", description: "Mẫu nữ thứ nhất" },
-        { id: "nu2", label: "Nữ 2", description: "Mẫu nữ thứ hai" },
-      ];
+    ? [{ id: "nam1", label: "Nam", description: "Mẫu nam" }]
+    : [{ id: "nu1", label: "Nữ", description: "Mẫu nữ" }];
   const selectedModel = a.modelId ?? (gender === "nu" ? "nu1" : "nam1");
   const ok = a.name.trim().length >= 2;
   return (
