@@ -72,8 +72,8 @@ for (const z of [24, 112]) for (const x of [-8, -3.6, 3.6, 8]) {
   solids.push({ id: 'gate-column', x, z, w: 1.25, d: 1.65 });
 }
 // Pavilion posts are solid in the rendered scene; prevent walking through them.
-for (const x of [-7, -2.333, 2.333, 7]) for (const z of [47, 57]) {
-  solids.push({ id: 'pavilion-post', x: 70 + x, z, w: 1.1, d: 1.1 });
+for (const x of [-7, -2.333, 2.333, 7]) for (const z of [-17, -7]) {
+  solids.push({ id: 'pavilion-post', x, z, w: 1.1, d: 1.1 });
 }
 for (let i = 0; i < 8; i++) for (const z of [-50, -74]) {
   solids.push({ id: 'hall-column', x: -19 + i * 38 / 7, z, w: 1.05, d: 1.05 });
