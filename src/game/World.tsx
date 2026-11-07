@@ -14,7 +14,6 @@ import {
   StoneLanterns,
   SkyLanterns,
   Tower,
-  Waterfall,
   Buddha,
 } from "./Architecture";
 import { PlayerAvatar } from "./Characters";
@@ -143,27 +142,6 @@ function Ground() {
         <planeGeometry args={[170, 6]} />
         <meshStandardMaterial map={path} roughness={0.9} />
       </mesh>
-    </>
-  );
-}
-
-function Mountains() {
-  const peaks = useMemo(() => {
-    const r = rng(3);
-    return Array.from({ length: 22 }).map((_, i) => {
-      const a = (i / 22) * Math.PI * 2;
-      const d = 190 + r() * 30;
-      return { x: Math.cos(a) * d, z: Math.sin(a) * d, h: 40 + r() * 50, w: 40 + r() * 30 };
-    });
-  }, []);
-  return (
-    <>
-      {peaks.map((p, i) => (
-        <mesh key={i} position={[p.x, p.h / 2 - 2, p.z]}>
-          <coneGeometry args={[p.w, p.h, 7]} />
-          <meshStandardMaterial color="#6f8a6a" roughness={1} flatShading />
-        </mesh>
-      ))}
     </>
   );
 }
@@ -395,7 +373,6 @@ export default function World() {
       </Clouds>
 
       <Ground />
-      <Mountains />
       <Forest points={trees} />
       <Suspense fallback={null}>
       <MainHall />
@@ -403,9 +380,8 @@ export default function World() {
       <Gate z={24} />
       <BellTower position={[55, 0, -112]} />
       <Tower position={[-55, 0, -112]} tiers={5} label="Bảo tháp" />
-      <Pond position={[0, 0, 12]} w={30} d={22} />
-      <Waterfall position={[-38, 0, -12]} />
-      <ReleaseLanterns position={[28, 0, 12]} />
+      <Pond position={[24, 0, 12]} w={30} d={22} />
+      <ReleaseLanterns position={[-28, 0, 12]} />
       {/* Meditation zone: stone platform with an outdoor Buddha */}
       <group position={[0, 0, -155]}>
         <mesh position={[0, 0.25, 0]} receiveShadow>
