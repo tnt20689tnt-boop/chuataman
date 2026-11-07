@@ -235,13 +235,8 @@ export function PlayerAvatar() {
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const activeClipRef = useRef<THREE.AnimationAction | null>(null);
   const externalMotionRef = useRef<THREE.Group>(null);
-  const modelId = avatar?.modelId ?? (female ? "nu1" : "nam1");
-  const modelPath = ({
-    nam1: "/models/nhan-vat-nam-1.glb",
-    nam2: "/models/nhan-vat-nam-2.glb",
-    nu1: "/models/nhan-vat-nu-1.glb",
-    nu2: "/models/nhan-vat-nu-2.glb",
-  } as const)[modelId];
+  const modelId = avatar?.modelId === "female_animated" || avatar?.modelId === "male_animated" ? avatar.modelId : (female ? "female_animated" : "male_animated");
+  const modelPath = modelId === "female_animated" ? "/models/female_animated.glb" : "/models/male_animated.glb";
 
   useEffect(() => {
     let alive = true;
