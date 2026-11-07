@@ -42,9 +42,9 @@ describe('PR9 visitor access', () => {
     expect(surfaceHeight(0, 11)).toBeCloseTo(1.4663);
   });
   it('blocks new building walls but leaves their central doors open', () => {
-    expect(isBlocked(-54, -15)).toBe(true);
-    expect(isBlocked(-42, -6)).toBe(false); // Central doorway of the meditation hall.
-    expect(isBlocked(-42, -24)).toBe(true); // Back wall of the meditation hall.
+    expect(isBlocked(29.5, -15)).toBe(true); // Left wall of the guest house.
+    expect(isBlocked(42, -7)).toBe(false); // Central doorway of the guest house.
+    expect(isBlocked(42, -23)).toBe(true); // Back wall of the guest house.
   });
   it('does not report walking when pressed into a solid gate column', () => {
     const p = { x: 3.6, z: 25.13, y: 0, rot: Math.PI };
