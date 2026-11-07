@@ -206,7 +206,7 @@ export function MainHall() {
           <boxGeometry args={[10, 1.6, 4]} />
           <meshStandardMaterial color={C.altarRed} roughness={0.42} metalness={0.18} />
         </mesh>
-        <Buddha position={[0, 1.6, -6.5]} scale={1.6} />
+        <Buddha position={[0, 1.6, -6.5]} scale={1.1} />
 
         {/* Two smaller attendant Bodhisattva statues, symmetrically flanking the main Buddha. */}
         {[-1, 1].map((side) => (
