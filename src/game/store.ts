@@ -66,26 +66,19 @@ export function loadAvatar(): Avatar | null {
     const raw = localStorage.getItem(AV_KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw) as Avatar;
-    // Upgrade every previously saved visitor to the animated GLB models.
-    // Older saves may contain nam1/nu1, retired nam2/nu2, or no modelId at all.
-    const legacyModel = saved.modelId as string | undefined;
-    const gender = saved.gender === "nu" || legacyModel === "nu1" || legacyModel === "nu2" || legacyModel === "female_animated"
-      ? "nu"
-      : "nam";
-    const modelId: AvatarModelId = gender === "nu" ? "female_animated" : "male_animated";
-    if (saved.gender !== gender || saved.modelId !== modelId) {
-      saved.gender = gender;
-      saved.modelId = modelId;
-      localStorage.setItem(AV_KEY, JSON.stringify(saved));
-    }
+    // Return to the original built-in avatar instead of loading the newer GLB character.
+    delete saved.modelId;
+    localStorage.setItem(AV_KEY, JSON.stringify(saved));
     return saved;
   } catch {
     return null;
   }
 }
 export function saveAvatar(a: Avatar) {
-  localStorage.setItem(AV_KEY, JSON.stringify(a));
-  setUI({ avatar: a });
+  const originalAvatar = { ...a };
+  delete originalAvatar.modelId;
+  localStorage.setItem(AV_KEY, JSON.stringify(originalAvatar));
+  setUI({ avatar: originalAvatar });
 }
 
 export function teleport(x: number, z: number, rot: number) {
