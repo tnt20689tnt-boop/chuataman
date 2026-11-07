@@ -12,6 +12,7 @@ import { animateAvatarRig, captureAvatarRig, type AvatarRig } from "./avatarAnim
 function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePlayer[] }) {
   const group = useRef<THREE.Group>(null);
   const bodyRef = useRef<THREE.Group>(null);
+  const externalMotionRef = useRef<THREE.Group>(null);
   const [externalModel, setExternalModel] = useState<THREE.Group | null>(null);
   const [externalClips, setExternalClips] = useState<THREE.AnimationClip[]>([]);
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
@@ -92,6 +93,17 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
     } else if (externalModel) {
       animateAvatarRig(rigRef.current, clock.elapsedTime, moving);
     }
+    // Static GLBs have no bones to swing their limbs, so animate the model
+    // root smoothly while it follows the remote player's network position.
+    if (externalMotionRef.current && externalModel && externalClips.length === 0 && !rigRef.current?.size) {
+      const t = clock.elapsedTime;
+      const smooth = 1 - Math.exp(-dt * 8);
+      const targetBob = moving ? Math.abs(Math.sin(t * 9.5)) * 0.045 : Math.sin(t * 2.1) * 0.009;
+      const targetLean = moving ? Math.sin(t * 9.5) * 0.035 : 0;
+      externalMotionRef.current.position.y = THREE.MathUtils.damp(externalMotionRef.current.position.y, targetBob, 8, dt);
+      externalMotionRef.current.rotation.x += (targetLean - externalMotionRef.current.rotation.x) * smooth;
+      externalMotionRef.current.rotation.z = Math.sin(t * 1.25) * (moving ? 0.025 : 0.008);
+    }
     previous.current = { x: group.current.position.x, z: group.current.position.z };
     const swing = moving ? Math.sin(phase.current) * 0.48 : 0;
     if (leftArm.current) leftArm.current.rotation.x = THREE.MathUtils.damp(leftArm.current.rotation.x, swing, 10, dt);
@@ -121,7 +133,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
         setSelected((value) => !value);
       }}
     >
-      {externalModel && <primitive object={externalModel} />}
+      {externalModel && <group ref={externalMotionRef}><primitive object={externalModel} /></group>}
       <group ref={bodyRef}>
       {/* Robe and torso */}
       <mesh position={[0, 1.02, 0]} castShadow>
