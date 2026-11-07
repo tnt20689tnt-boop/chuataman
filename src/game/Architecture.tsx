@@ -190,6 +190,65 @@ export function MainHall() {
           </mesh>
         ))}
         <Columns w={38} d={24} h={10} n={8} />
+        {/* Ornate Vietnamese timber-column detailing: stone plinths, gilded collars and carved capitals. */}
+        {Array.from({ length: 8 }, (_, i) => -19 + (i / 7) * 38).flatMap((x) => [-12, 12].map((z) => (
+          <group key={`column-detail-${x}-${z}`} position={[x, 0, z]}>
+            <mesh position={[0, 0.32, 0]} castShadow>
+              <cylinderGeometry args={[0.68, 0.78, 0.64, 12]} />
+              <meshStandardMaterial color="#8b8171" roughness={0.82} />
+            </mesh>
+            <mesh position={[0, 0.68, 0]}>
+              <cylinderGeometry args={[0.47, 0.49, 0.12, 16]} />
+              <meshStandardMaterial color={C.gold} metalness={0.62} roughness={0.34} />
+            </mesh>
+            <mesh position={[0, 9.32, 0]} castShadow>
+              <boxGeometry args={[1.18, 0.42, 1.18]} />
+              <meshStandardMaterial color={C.woodDark} roughness={0.7} />
+            </mesh>
+            <mesh position={[0, 9.55, 0]}>
+              <boxGeometry args={[1.28, 0.1, 1.28]} />
+              <meshStandardMaterial color={C.gold} metalness={0.58} roughness={0.38} />
+            </mesh>
+            <mesh position={[0, 5, z > 0 ? 0.365 : -0.365]}>
+              <boxGeometry args={[0.11, 6.8, 0.035]} />
+              <meshStandardMaterial color={C.lacquer} roughness={0.48} />
+            </mesh>
+            {[2.2, 7.8].map((y) => <mesh key={y} position={[0, y, z > 0 ? 0.39 : -0.39]}>
+              <boxGeometry args={[0.48, 0.075, 0.045]} />
+              <meshStandardMaterial color={C.gold} metalness={0.62} roughness={0.32} />
+            </mesh>)}
+          </group>
+        )))}
+        {/* A layered lotus mandala forms a ceremonial focal backdrop behind the Buddha. */}
+        <group position={[0, 5.75, -11.35]} name="Đài sen phù điêu thếp vàng sau tượng Phật">
+          <mesh><torusGeometry args={[3.25, 0.12, 10, 96]} /><meshStandardMaterial color={C.gold} metalness={0.68} roughness={0.3} /></mesh>
+          <mesh><torusGeometry args={[2.92, 0.045, 8, 96]} /><meshStandardMaterial color="#e6c987" metalness={0.58} roughness={0.34} /></mesh>
+          {Array.from({ length: 16 }, (_, i) => {
+            const a = (i / 16) * Math.PI * 2;
+            return <group key={i} rotation-z={a}>
+              <mesh position={[0, 2.45, 0]} rotation-z={-0.12} scale={[0.38, 0.82, 0.1]} castShadow>
+                <sphereGeometry args={[1, 20, 14]} />
+                <meshStandardMaterial color={i % 2 ? "#c9a45e" : "#e1c17d"} metalness={0.48} roughness={0.38} />
+              </mesh>
+            </group>;
+          })}
+          <mesh position={[0, 0, 0.08]}><circleGeometry args={[0.34, 48]} /><meshStandardMaterial color="#8c3024" /></mesh>
+          <mesh position={[0, 0, 0.12]}><torusGeometry args={[0.42, 0.055, 8, 48]} /><meshStandardMaterial color={C.gold} metalness={0.68} roughness={0.28} /></mesh>
+        </group>
+        {/* Continuous carved-looking gold cornices enrich the otherwise plain side and rear walls. */}
+        {[1.15, 2.05, 8.72].map((y) => (
+          <group key={y}>
+            <mesh position={[0, y, -11.48]}>
+              <boxGeometry args={[39.2, 0.12, 0.18]} />
+              <meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.42} />
+            </mesh>
+            {[-19.48, 19.48].map((x) => <mesh key={x} position={[x, y, 0]}>
+              <boxGeometry args={[0.18, 0.12, 23.4]} />
+              <meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.42} />
+            </mesh>)}
+          </group>
+        ))}
+
         {/* lower roof */}
         <Roof w={44} d={28} h={7} y={9.5} />
         {/* upper tier */}
