@@ -20,8 +20,8 @@ const solids: Solid[] = [
   { id: 'waterfall', x: -38, z: -12, w: 20, d: 17 },
   // Expanded 28m x 36m lotus pond; keep both bridge approaches open.
   // Side water boundaries stop visitors entering the pond, while the 3.2m bridge stays clear.
-  { id: 'pond-left', x: -7.8, z: 11, w: 12.4, d: 36 },
-  { id: 'pond-right', x: 7.8, z: 11, w: 12.4, d: 36 },
+  { id: 'pond-left', x: -7.8, z: 8.5, w: 12.4, d: 31 },
+  { id: 'pond-right', x: 7.8, z: 8.5, w: 12.4, d: 31 },
   // Side rails guide visitors along the bridge; there are no barriers across either end.
   { id: 'lotus-bridge-rail-left', x: -1.55, z: 8.5, w: 0.2, d: 31 },
   { id: 'lotus-bridge-rail-right', x: 1.55, z: 8.5, w: 0.2, d: 31 },
