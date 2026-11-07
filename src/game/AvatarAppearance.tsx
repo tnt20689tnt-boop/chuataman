@@ -93,13 +93,20 @@ export function AnimatedAvatarAppearance({
   useFrame(({ clock }, delta) => {
     // Animate the GLB rig in place while the legacy controller moves and rotates the avatar.
     const walking = pose === "walk";
-    const phase = clock.elapsedTime * 6.5;
-    const smooth = 1 - Math.exp(-delta * 12);
+    const smooth = 1 - Math.exp(-delta * 14);
     for (const item of bonePoses) {
-      const target = item.kind === "arm" && walking ? Math.sin(phase) * 0.18 * item.side
-        : item.kind === "leg" && walking ? -Math.sin(phase) * 0.22 * item.side
-        : item.kind === "spine" ? Math.sin(clock.elapsedTime * 2) * 0.012 : 0;
+      // The uploaded rigs do not share a verified bone-axis convention.
+      // Procedural X-axis swings can lift the arms sideways or twist them
+      // unnaturally. Keep limbs at their authored rest pose while walking
+      // until a compatible walk clip / rig mapping is verified.
+      const target = item.kind === "spine" && !walking
+        ? Math.sin(clock.elapsedTime * 2) * 0.008
+        : 0;
       item.bone.rotation.x += ((item.base.x + target) - item.bone.rotation.x) * smooth;
+      if (walking) {
+        item.bone.rotation.y += (item.base.y - item.bone.rotation.y) * smooth;
+        item.bone.rotation.z += (item.base.z - item.bone.rotation.z) * smooth;
+      }
     }
   });
 
