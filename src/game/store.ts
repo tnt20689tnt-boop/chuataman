@@ -9,7 +9,7 @@ export const input = { fwd: 0, right: 0, run: false, joyF: 0, joyR: 0 };
 
 export type Action = "none" | "le" | "chap" | "thien" | "kinh";
 
-export type AvatarModelId = "nam1" | "nu1" | "male_animated" | "female_animated";
+export type AvatarModelId = "male_animated" | "female_animated";
 
 export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
 
@@ -65,10 +65,16 @@ export function loadAvatar(): Avatar | null {
     const raw = localStorage.getItem(AV_KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw) as Avatar;
-    // Retire the two unwanted models and move existing visitors to the remaining model of their gender.
-    if ((saved.modelId as string) === "nam2" || (saved.modelId as string) === "nu2") {
-      saved.modelId = saved.gender === "nu" || saved.modelId === "nu2" ? "nu1" : "nam1";
-      saved.gender = saved.modelId === "nu1" ? "nu" : "nam";
+    // Upgrade every previously saved visitor to the animated GLB models.
+    // Older saves may contain nam1/nu1, retired nam2/nu2, or no modelId at all.
+    const legacyModel = saved.modelId as string | undefined;
+    const gender = saved.gender === "nu" || legacyModel === "nu1" || legacyModel === "nu2" || legacyModel === "female_animated"
+      ? "nu"
+      : "nam";
+    const modelId: AvatarModelId = gender === "nu" ? "female_animated" : "male_animated";
+    if (saved.gender !== gender || saved.modelId !== modelId) {
+      saved.gender = gender;
+      saved.modelId = modelId;
       localStorage.setItem(AV_KEY, JSON.stringify(saved));
     }
     return saved;
