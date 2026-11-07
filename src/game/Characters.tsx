@@ -212,6 +212,9 @@ function NameTag({ n }: { n: Npc }) {
 
 export function PlayerAvatar() {
   const avatar = useUI((s) => s.avatar);
+  const avatarPreview = useUI((s) => s.avatarPreview);
+  const displayedAvatar = avatarPreview ?? avatar;
+  const modelId = displayedAvatar?.gender === "nu" ? "female_animated" : "male_animated";
   const pose = useUI((s) => s.pose);
   const action = useUI((s) => s.action);
   const g = useRef<THREE.Group>(null);
@@ -222,15 +225,15 @@ export function PlayerAvatar() {
   const leftLegRef = useRef<THREE.Group>(null);
   const rightLegRef = useRef<THREE.Group>(null);
   const [sy, sxz, hy] = layout(pose);
-  const color = OUTFIT_COLORS[avatar?.outfit ?? "lam"];
-  const female = avatar?.gender === "nu";
+  const color = OUTFIT_COLORS[displayedAvatar?.outfit ?? "lam"];
+  const female = displayedAvatar?.gender === "nu";
   const robeGeometry = useMemo(() => new THREE.LatheGeometry(
     female
       ? [new THREE.Vector2(0.31, 0), new THREE.Vector2(0.36, 0.08), new THREE.Vector2(0.30, 0.25), new THREE.Vector2(0.19, 0.50), new THREE.Vector2(0.205, 0.70), new THREE.Vector2(0.26, 0.88), new THREE.Vector2(0.23, 1.10)]
       : [new THREE.Vector2(0.29, 0), new THREE.Vector2(0.32, 0.08), new THREE.Vector2(0.27, 0.25), new THREE.Vector2(0.235, 0.50), new THREE.Vector2(0.25, 0.70), new THREE.Vector2(0.31, 0.88), new THREE.Vector2(0.29, 1.10)],
     16,
   ), [female]);
-  const hair = avatar?.hair ?? "ngan";
+  const hair = displayedAvatar?.hair ?? "ngan";
   const handsJoined = action === "chap" || action === "le" || action === "thien" || action === "kinh";
   useFrame(({ clock }, delta) => {
     const t = clock.elapsedTime;
@@ -255,7 +258,7 @@ export function PlayerAvatar() {
     }
     // Custom GLB avatars already contain their own full-body walk/idle animation.
     // Do not add a second whole-body bounce on top of the exported animation.
-    const customModel = Boolean(avatar?.modelId && pose !== "lie");
+    const customModel = Boolean(displayedAvatar && pose !== "lie");
     g.current.position.y = player.y + (customModel ? 0 : walking
       ? Math.abs(Math.sin(avatarTime * 8.5)) * 0.025
       : Math.sin(avatarTime * 1.8) * 0.008);
@@ -294,13 +297,13 @@ export function PlayerAvatar() {
 
   return (
     <group ref={g} userData={{ cameraIgnore: true }}>
-      {avatar?.modelId && pose !== "lie" ? (
+      {displayedAvatar && pose !== "lie" ? (
         <AnimatedAvatarAppearance
-          modelId={avatar.modelId}
-          outfit={avatar.outfit}
-          hair={avatar.hair}
-          hairColor={avatar.hairColor}
-          accessory={avatar.accessory ?? "neck_mala"}
+          modelId={modelId}
+          outfit={displayedAvatar.outfit}
+          hair={displayedAvatar.hair}
+          hairColor={displayedAvatar.hairColor}
+          accessory={displayedAvatar.accessory ?? "neck_mala"}
           pose={pose}
           action={action}
           onActionComplete={completePlayerInteraction}
@@ -427,19 +430,19 @@ export function PlayerAvatar() {
         {hair !== "troc" && (
           <mesh position={[0, 0.05, -0.01]} scale={hair === "dai" ? [1.04, 1.25, 1.08] : hair === "bui" ? [1, 1.18, 1] : [1, 1, 1]}>
             <sphereGeometry args={[0.258, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-            <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.88} />
+            <meshStandardMaterial color={displayedAvatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.88} />
           </mesh>
         )}
         {hair === "dai" && (
           <group>
             <mesh position={[0, -0.16, -0.12]} scale={[0.78, 1.75, 0.55]}>
               <sphereGeometry args={[0.19, 16, 12]} />
-              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+              <meshStandardMaterial color={displayedAvatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
             </mesh>
             {[-1, 1].map((side) => (
               <mesh key={side} position={[side * 0.19, -0.08, 0.02]} rotation-z={side * -0.08}>
                 <capsuleGeometry args={[0.055, 0.34, 5, 8]} />
-                <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+                <meshStandardMaterial color={displayedAvatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
               </mesh>
             ))}
           </group>
@@ -448,17 +451,17 @@ export function PlayerAvatar() {
           <group>
             <mesh position={[0, 0.13, -0.015]} scale={[1.02, 0.6, 1.02]}>
               <sphereGeometry args={[0.245, 18, 12]} />
-              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
+              <meshStandardMaterial color={displayedAvatar?.hairColor ?? HAIR_COLORS[0]} />
             </mesh>
             {/* A swept fringe and tapered side hair create a clearly masculine haircut. */}
             <mesh position={[0, 0.205, 0.155]} rotation-x={-0.24} scale={[0.76, 0.34, 0.48]}>
               <sphereGeometry args={[0.16, 16, 10]} />
-              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.82} />
+              <meshStandardMaterial color={displayedAvatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.82} />
             </mesh>
             {[-1, 1].map((side) => (
               <mesh key={side} position={[side * 0.215, -0.015, 0.015]} rotation-z={side * -0.08}>
                 <capsuleGeometry args={[0.045, 0.12, 5, 8]} />
-                <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
+                <meshStandardMaterial color={displayedAvatar?.hairColor ?? HAIR_COLORS[0]} />
               </mesh>
             ))}
           </group>
@@ -468,12 +471,12 @@ export function PlayerAvatar() {
           <group>
             <mesh position={[0, 0.105, 0.19]} rotation-x={-0.18} scale={[0.92, 0.28, 0.42]}>
               <sphereGeometry args={[0.16, 18, 12]} />
-              <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+              <meshStandardMaterial color={displayedAvatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
             </mesh>
             {[-1, 1].map((side) => (
               <mesh key={side} position={[side * 0.205, -0.13, 0.115]} rotation-z={side * -0.12}>
                 <capsuleGeometry args={[0.052, hair === "dai" ? 0.48 : 0.25, 6, 10]} />
-                <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
+                <meshStandardMaterial color={displayedAvatar?.hairColor ?? HAIR_COLORS[0]} roughness={0.9} />
               </mesh>
             ))}
           </group>
@@ -482,7 +485,7 @@ export function PlayerAvatar() {
           <group>
           <mesh position={[0, 0.2, -0.18]}>
             <sphereGeometry args={[0.12, 14, 12]} />
-            <meshStandardMaterial color={avatar?.hairColor ?? HAIR_COLORS[0]} />
+            <meshStandardMaterial color={displayedAvatar?.hairColor ?? HAIR_COLORS[0]} />
           </mesh>
           <mesh position={[0, 0.29, -0.18]}>
             <torusGeometry args={[0.105, 0.018, 6, 18]} />
@@ -545,7 +548,7 @@ export function PlayerAvatar() {
       </group>
       )}
       <Html position={[0, hy + 0.6, 0]} center distanceFactor={14} zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
-        <div className="name-tag name-tag-self">{avatar?.name ?? "Phật tử"}</div>
+        <div className="name-tag name-tag-self">{displayedAvatar?.name ?? "Phật tử"}</div>
       </Html>
     </group>
   );

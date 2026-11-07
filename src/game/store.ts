@@ -26,6 +26,7 @@ export interface Avatar {
 
 interface UIState {
   avatar: Avatar | null;
+  avatarPreview: Avatar | null;
   action: Action;
   pose: Pose;
   panel: null | "tour" | "chat" | "phap" | "avatar" | "pray" | "auth" | "rooms" | "audio";
@@ -35,6 +36,7 @@ interface UIState {
 
 let state: UIState = {
   avatar: null,
+  avatarPreview: null,
   action: "none",
   pose: "stand",
   panel: null,
@@ -77,7 +79,7 @@ export function loadAvatar(): Avatar | null {
 export function saveAvatar(a: Avatar) {
   const originalAvatar: Avatar = { ...a, modelId: a.gender === "nu" ? "female_animated" : "male_animated" };
   localStorage.setItem(AV_KEY, JSON.stringify(originalAvatar));
-  setUI({ avatar: originalAvatar });
+  setUI({ avatar: originalAvatar, avatarPreview: null });
 }
 
 export function teleport(x: number, z: number, rot: number) {

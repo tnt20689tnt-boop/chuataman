@@ -115,9 +115,9 @@ export function walkerPos(n: Npc, t: number) {
 }
 
 // Player movement — camera relative
-// Speeds are in scene units/second. The animated GLBs are scaled to 1.8 units
-// tall; these rates keep world travel close to the walk/run foot cycles.
-export const MOVE = { SPEED: 2.4, RUN: 6, TURN: 12 };
+// Speeds are in scene units/second (the 1.8-unit avatar represents an adult).
+// 1.35 m/s is a brisk natural walk; 3.2 m/s is a sustainable light run.
+export const MOVE = { SPEED: 1.35, RUN: 3.2, TURN: 12 };
 export const WORLD_LIMIT = 140;
 
 export function stepPlayer(

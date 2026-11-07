@@ -99,7 +99,7 @@ export function Hud() {
         <SideBtn label="Giao lưu" icon="💬" onClick={() => setUI({ panel: panel === "chat" ? null : "chat" })} />
         <SideBtn label="Chuông" icon="🔔" onClick={() => ringBell(0.6)} />
         <SideBtn label="Âm thanh" icon="🔊" onClick={() => setUI({ panel: panel === "audio" ? null : "audio" })} />
-        <SideBtn label="Avatar" icon="🧘" onClick={() => setUI({ panel: "avatar" })} />
+        <SideBtn label="Tủ trang phục" icon="👘" onClick={() => setUI({ panel: "avatar" })} />
         <SideBtn label="Phòng" icon="🏯" onClick={() => setUI({ panel: panel === "rooms" ? null : "rooms" })} />
       </nav>
 
@@ -618,26 +618,31 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
     { id: "shoulder_sash", label: "Đai vai trang trí" },
   ];
   const ok = a.name.trim().length >= 2;
+  useEffect(() => {
+    setUI({ avatarPreview: a });
+    return () => setUI({ avatarPreview: null });
+  }, [a]);
+  const update = (next: Avatar) => setA(next);
   return (
-    <Panel title={initial ? "Tùy chỉnh Avatar" : "Tạo Avatar của bạn"} {...(initial ? { onClose: () => setUI({ panel: null }) } : {})}>
+    <Panel title={initial ? "Tủ trang phục & Avatar" : "Tạo Avatar của bạn"} {...(initial ? { onClose: () => setUI({ panel: null }) } : {})}>
       <label className="mb-1 block text-sm font-semibold text-foreground">Tên hiển thị / pháp danh</label>
-      <input className="hud-input mb-4 w-full" value={a.name} maxLength={24} onChange={(e) => setA({ ...a, name: e.target.value })} placeholder="Ví dụ: Diệu An" />
+      <input className="hud-input mb-4 w-full" value={a.name} maxLength={24} onChange={(e) => update({ ...a, name: e.target.value })} placeholder="Ví dụ: Diệu An" />
       <div className="mb-1 text-sm font-semibold text-foreground">Kiểu nhân vật</div>
       <div className="mb-3 flex gap-2">
         {(["nam", "nu"] as const).map((nextGender) => (
           <button key={nextGender} className="hud-swatch" data-active={gender === nextGender}
-            onClick={() => setA({ ...a, gender: nextGender })}>
+            onClick={() => update({ ...a, gender: nextGender })}>
             {nextGender === "nam" ? "👨 Nam" : "👩 Nữ"}
           </button>
         ))}
       </div>
       <div className="mb-4 rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-        Nhân vật 3D mặc định của chùa · có chuyển động đi lại, chắp tay và thiền.
+        Xem trước trực tiếp trên nhân vật 3D; chỉ khi lưu thì trang phục mới đồng bộ cho người chơi khác.
       </div>
-      <div className="mb-1 text-sm font-semibold text-foreground">Trang phục</div>
+      <div className="mb-1 text-sm font-semibold text-foreground">Bộ trang phục</div>
       <div className="mb-4 flex flex-wrap gap-2">
-        {(["lam", "nau", "vang"] as Outfit[]).map((o) => (
-          <button key={o} className="hud-swatch" data-active={a.outfit === o} onClick={() => setA({ ...a, outfit: o, hair: o === "tusi" ? "troc" : a.hair })}>
+        {(["lam", "trang", "nau", "tusi", "vang"] as Outfit[]).map((o) => (
+          <button key={o} className="hud-swatch" data-active={a.outfit === o} onClick={() => update({ ...a, outfit: o, hair: o === "tusi" ? "troc" : a.hair })}>
             <span className="h-4 w-4 rounded-full border border-border" style={{ background: OUTFIT_COLORS[o] }} />
             {OUTFIT_LABEL[o]}
           </button>
@@ -646,7 +651,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       <div className="mb-1 text-sm font-semibold text-foreground">Kiểu tóc</div>
       <div className="mb-4 flex flex-wrap gap-2">
         {(["ngan", "bui", "dai"] as Hair[]).map((h) => (
-          <button key={h} className="hud-swatch" data-active={a.hair === h} onClick={() => setA({ ...a, hair: h })}>
+          <button key={h} className="hud-swatch" data-active={a.hair === h} onClick={() => update({ ...a, hair: h })}>
             {HAIR_LABEL[h]}
           </button>
         ))}
@@ -655,7 +660,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       <div className="mb-4 flex flex-wrap gap-2">
         {accessoryOptions.map((item) => (
           <button key={item.id} className="hud-swatch" data-active={(a.accessory ?? "neck_mala") === item.id}
-            onClick={() => setA({ ...a, accessory: item.id })}>
+            onClick={() => update({ ...a, accessory: item.id })}>
             {item.label}
           </button>
         ))}
@@ -663,7 +668,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       <div className="mb-1 text-sm font-semibold text-foreground">Màu tóc</div>
       <div className="mb-5 flex gap-2">
         {HAIR_COLORS.map((c) => (
-          <button key={c} className="hud-swatch h-8 w-8 justify-center p-0" data-active={a.hairColor === c} onClick={() => setA({ ...a, hairColor: c })} aria-label={c}>
+          <button key={c} className="hud-swatch h-8 w-8 justify-center p-0" data-active={a.hairColor === c} onClick={() => update({ ...a, hairColor: c })} aria-label={c}>
             <span className="h-5 w-5 rounded-full" style={{ background: c }} />
           </button>
         ))}
@@ -677,7 +682,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
           ringBell(0.4);
         }}
       >
-        {initial ? "Lưu thay đổi" : "Bước vào chùa 🙏"}
+        {initial ? "Lưu trang phục" : "Bước vào chùa 🙏"}
       </button>
     </Panel>
   );
