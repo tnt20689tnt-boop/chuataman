@@ -322,7 +322,7 @@ export function MainHall() {
           <mesh position={[0, 1.42, 3.68]}><boxGeometry args={[15.1, 0.07, 0.08]} /><meshStandardMaterial color={C.gold} metalness={0.7} roughness={0.3} /></mesh>
         </group>
         {/* Principal Shakyamuni Buddha, enlarged and elevated as the visual heart of the hall. */}
-        <Buddha position={[0, 2.55, -6.55]} scale={1.28} />
+        <Buddha position={[0, 2.45, -6.55]} scale={0.86} />
 
         {/* Two smaller attendant Bodhisattva statues, symmetrically flanking the main Buddha. */}
         {[-1, 1].map((side) => (
