@@ -235,7 +235,13 @@ export function PlayerAvatar() {
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const activeClipRef = useRef<THREE.AnimationAction | null>(null);
   const externalMotionRef = useRef<THREE.Group>(null);
-  const modelPath = female ? "/models/hyper3d-female.glb" : "/models/hyper3d-male.glb";
+  const modelId = avatar?.modelId ?? (female ? "nu1" : "nam1");
+  const modelPath = ({
+    nam1: "/models/nhan-vat-nam-1.glb",
+    nam2: "/models/nhan-vat-nam-2.glb",
+    nu1: "/models/nhan-vat-nu-1.glb",
+    nu2: "/models/nhan-vat-nu-2.glb",
+  } as const)[modelId];
 
   useEffect(() => {
     let alive = true;
