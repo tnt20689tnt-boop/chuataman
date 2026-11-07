@@ -17,7 +17,7 @@ const solids: Solid[] = [
   { id: 'main-hall-donation-box', x: -18.445, z: -62, w: 2.5, d: 3.4 },
   { id: 'bell', x: 55, z: -112, w: 10, d: 10 },
   { id: 'tower', x: -55, z: -112, w: 10, d: 10 },
-  { id: 'waterfall', x: 0, z: -12, w: 20, d: 17 },
+  { id: 'waterfall', x: -38, z: -12, w: 20, d: 17 },
   // Pond has an accessible bridge across its center, not walkable water.
   { id: 'pond-left', x: -8, z: 12, w: 14, d: 22 },
   { id: 'pond-right', x: 8, z: 12, w: 14, d: 22 },
