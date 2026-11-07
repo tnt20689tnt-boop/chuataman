@@ -1,6 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { useRef, useState } from "react";
+import { AnimatedAvatarAppearance } from "./AvatarAppearance";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { HAIR_COLORS, OUTFIT_COLORS, OUTFIT_LABEL, HAIR_LABEL } from "./sim";
 import { useMultiplayer, type RemotePlayer } from "./multiplayer";
@@ -53,6 +54,8 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
       label.current.style.pointerEvents = distance < 42 ? "auto" : "none";
     }
   });
+
+  if (player.modelId === "male_animated" || player.modelId === "female_animated") return <group ref={group} position={[player.x, surfaceHeight(player.x, player.z), player.z]} onClick={(event) => { event.stopPropagation(); setSelected((value) => !value); }}><AnimatedAvatarAppearance modelId={player.modelId} outfit={player.outfit ?? "lam"} hair={player.hair ?? "ngan"} hairColor={player.hairColor ?? HAIR_COLORS[0]} accessory={player.accessory ?? "neck_mala"} /><Html position={[0, 2.3, 0]} center distanceFactor={13}><div ref={label} className="name-tag">{player.name}</div></Html></group>;
 
   return (
     <group

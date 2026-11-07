@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { getUI, player } from "./store";
 import { type Hair, type Outfit } from "./sim";
-import { type AvatarModelId } from "./store";
+import { type AvatarModelId, type AvatarAccessory } from "./store";
 import { getAuthClient } from "./auth";
 
 export interface TempleChatMessage { id: string; name: string; text: string; at: number; }
@@ -24,6 +24,7 @@ export interface RemotePlayer {
   outfit?: Outfit;
   hair?: Hair;
   hairColor?: string;
+  accessory?: AvatarAccessory;
   modelId?: AvatarModelId;
 }
 
@@ -299,7 +300,8 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           outfit: avatar?.outfit ?? "lam",
           hair: avatar?.hair ?? "ngan",
           hairColor: avatar?.hairColor ?? "#1b1410",
-          modelId: avatar?.modelId ?? (avatar?.gender === "nu" ? "nu1" : "nam1"),
+          accessory: avatar?.accessory ?? "neck_mala",
+          modelId: avatar?.modelId ?? (avatar?.gender === "nu" ? "female_animated" : "male_animated"),
         };
         const trackStatus = await activeChannel.track(initialPresence);
         // The page may have signed out or reconnected while track() was pending.
@@ -337,7 +339,8 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
                 outfit: currentAvatar?.outfit ?? "lam",
                 hair: currentAvatar?.hair ?? "ngan",
                 hairColor: currentAvatar?.hairColor ?? "#1b1410",
-                modelId: currentAvatar?.modelId ?? (currentAvatar?.gender === "nu" ? "nu1" : "nam1"),
+          accessory: currentAvatar?.accessory ?? "neck_mala",
+                modelId: currentAvatar?.modelId ?? (currentAvatar?.gender === "nu" ? "female_animated" : "male_animated"),
                 seq: movementSeq,
               } satisfies RemotePlayer);
             }
@@ -352,7 +355,8 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
             outfit: currentAvatar?.outfit ?? "lam",
             hair: currentAvatar?.hair ?? "ngan",
             hairColor: currentAvatar?.hairColor ?? "#1b1410",
-            modelId: currentAvatar?.modelId ?? (currentAvatar?.gender === "nu" ? "nu1" : "nam1"),
+          accessory: currentAvatar?.accessory ?? "neck_mala",
+            modelId: currentAvatar?.modelId ?? (currentAvatar?.gender === "nu" ? "female_animated" : "male_animated"),
           };
           // Broadcast movement frequently enough for smooth remote motion,
           // but update Presence only every 3 seconds to avoid sync storms.

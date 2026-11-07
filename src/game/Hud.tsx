@@ -1,6 +1,6 @@
 import { memo, Suspense, useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
-import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
+import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar, type AvatarAccessory } from "./store";
 import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, pauseSpeak, resumeSpeak, subscribeAudioSettings, testFootsteps, updateAudioSettings } from "./audio";
 import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useMultiplayerConnected, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
@@ -610,9 +610,14 @@ function AuthPanel() {
 }
 
 function AvatarPanel({ initial }: { initial: Avatar | null }) {
-  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "nam1", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
+  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "male_animated", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0], accessory: "neck_mala" });
   const gender = a.gender ?? "nam";
-  const selectedModel = gender === "nu" ? "nu1" : "nam1";
+  const selectedModel = gender === "nu" ? "female_animated" : "male_animated";
+  const accessoryOptions: { id: AvatarAccessory; label: string }[] = [
+    { id: "neck_mala", label: "📿 Tràng hạt đeo cổ" },
+    { id: "wrist_mala", label: "Tràng hạt đeo tay" },
+    { id: "shoulder_sash", label: "Đai vai trang trí" },
+  ];
   const ok = a.name.trim().length >= 2;
   return (
     <Panel title={initial ? "Tùy chỉnh Avatar" : "Tạo Avatar của bạn"} {...(initial ? { onClose: () => setUI({ panel: null }) } : {})}>
@@ -622,7 +627,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       <div className="mb-3 flex gap-2">
         {(["nam", "nu"] as const).map((nextGender) => (
           <button key={nextGender} className="hud-swatch" data-active={gender === nextGender}
-            onClick={() => setA({ ...a, gender: nextGender, modelId: nextGender === "nam" ? "nam1" : "nu1" })}>
+            onClick={() => setA({ ...a, gender: nextGender, modelId: nextGender === "nam" ? "male_animated" : "female_animated" })}>
             {nextGender === "nam" ? "👨 Nam" : "👩 Nữ"}
           </button>
         ))}
@@ -632,7 +637,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       </div>
       <div className="mb-1 text-sm font-semibold text-foreground">Trang phục</div>
       <div className="mb-4 flex flex-wrap gap-2">
-        {(Object.keys(OUTFIT_LABEL) as Outfit[]).map((o) => (
+        {(["lam", "nau", "vang"] as Outfit[]).map((o) => (
           <button key={o} className="hud-swatch" data-active={a.outfit === o} onClick={() => setA({ ...a, outfit: o, hair: o === "tusi" ? "troc" : a.hair })}>
             <span className="h-4 w-4 rounded-full border border-border" style={{ background: OUTFIT_COLORS[o] }} />
             {OUTFIT_LABEL[o]}
@@ -641,9 +646,18 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       </div>
       <div className="mb-1 text-sm font-semibold text-foreground">Kiểu tóc</div>
       <div className="mb-4 flex flex-wrap gap-2">
-        {(Object.keys(HAIR_LABEL) as Hair[]).map((h) => (
+        {(["ngan", "bui", "dai"] as Hair[]).map((h) => (
           <button key={h} className="hud-swatch" data-active={a.hair === h} onClick={() => setA({ ...a, hair: h })}>
             {HAIR_LABEL[h]}
+          </button>
+        ))}
+      </div>
+      <div className="mb-1 text-sm font-semibold text-foreground">Phụ kiện</div>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {accessoryOptions.map((item) => (
+          <button key={item.id} className="hud-swatch" data-active={(a.accessory ?? "neck_mala") === item.id}
+            onClick={() => setA({ ...a, accessory: item.id })}>
+            {item.label}
           </button>
         ))}
       </div>

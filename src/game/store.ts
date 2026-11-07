@@ -9,7 +9,9 @@ export const input = { fwd: 0, right: 0, run: false, joyF: 0, joyR: 0 };
 
 export type Action = "none" | "le" | "chap" | "thien" | "kinh";
 
-export type AvatarModelId = "nam1" | "nu1";
+export type AvatarModelId = "nam1" | "nu1" | "male_animated" | "female_animated";
+
+export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
 
 export interface Avatar {
   name: string;
@@ -18,6 +20,7 @@ export interface Avatar {
   outfit: Outfit;
   hair: Hair;
   hairColor: string;
+  accessory?: AvatarAccessory;
 }
 
 interface UIState {
