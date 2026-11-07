@@ -71,7 +71,18 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
     const dx = group.current.position.x - previous.current.x;
     const dz = group.current.position.z - previous.current.z;
     const moving = Math.hypot(dx, dz) > 0.002;
-    if (moving) phase.current += dt * 10;\n    mixerRef.current?.update(dt);\n    if (externalModel && externalClips.length) {\n      const wanted = moving ? ["walk", "run"] : ["idle", "stand", "breath"];\n      const clip = externalClips.find((item) => wanted.some((word) => item.name.toLowerCase().includes(word))) ?? externalClips[0];\n      if (clip) {\n        const next = mixerRef.current?.clipAction(clip) ?? null;\n        if (next && activeClipRef.current !== next) { activeClipRef.current?.fadeOut(0.2); next.reset().fadeIn(0.2).play(); activeClipRef.current = next; }\n      }\n    } else if (externalModel) {\n      animateAvatarRig(rigRef.current, clock.elapsedTime, moving);\n    }
+    if (moving) phase.current += dt * 10;
+    mixerRef.current?.update(dt);
+    if (externalModel && externalClips.length) {
+      const wanted = moving ? ["walk", "run"] : ["idle", "stand", "breath"];
+      const clip = externalClips.find((item) => wanted.some((word) => item.name.toLowerCase().includes(word))) ?? externalClips[0];
+      if (clip) {
+        const next = mixerRef.current?.clipAction(clip) ?? null;
+        if (next && activeClipRef.current !== next) { activeClipRef.current?.fadeOut(0.2); next.reset().fadeIn(0.2).play(); activeClipRef.current = next; }
+      }
+    } else if (externalModel) {
+      animateAvatarRig(rigRef.current, clock.elapsedTime, moving);
+    }
     previous.current = { x: group.current.position.x, z: group.current.position.z };
     const swing = moving ? Math.sin(phase.current) * 0.48 : 0;
     if (leftArm.current) leftArm.current.rotation.x = THREE.MathUtils.damp(leftArm.current.rotation.x, swing, 10, dt);
