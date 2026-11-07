@@ -100,7 +100,7 @@ export function AnimatedAvatarAppearance({
     // In that case keep the walk cycle and speed up its cadence to match
     // the faster world movement instead of letting the feet lag behind.
     const selected = desired === "run" && !actions.run ? "walk" : desired;
-    const playbackRate = desired === "run" && selected === "walk" ? 1.7 : 1;
+    const playbackRate = desired === "run" ? (selected === "walk" ? 1.85 : 1.25) : 1;
 
     // Run may use the same walk clip, so update its playback rate even when
     // the selected clip name has not changed.
