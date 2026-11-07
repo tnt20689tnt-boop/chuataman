@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html, useGLTF, useAnimations } from "@react-three/drei";
-import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { AnimatedAvatarAppearance } from "./AvatarAppearance";
 import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose } from "./sim";
 import { player, useUI } from "./store";
 import { moveVisitor } from "./collision";
@@ -204,22 +204,6 @@ function NameTag({ n }: { n: Npc }) {
   );
 }
 
-function AnimatedAvatarModel({ modelId }: { modelId: "male_animated" | "female_animated" }) {
-  const path = modelId === "female_animated" ? "/models/female_animated.glb" : "/models/male_animated.glb";
-  const gltf = useGLTF(path);
-  const root = useRef<THREE.Group>(null);
-  const model = useMemo(() => clone(gltf.scene), [gltf.scene]);
-  const { actions } = useAnimations(gltf.animations, root);
-  useLayoutEffect(() => {
-    const firstAction = Object.values(actions).find(Boolean);
-    firstAction?.reset().fadeIn(0.25).play();
-    return () => { firstAction?.fadeOut(0.2); };
-  }, [actions]);
-  return <group ref={root}><primitive object={model} /></group>;
-}
-useGLTF.preload("/models/male_animated.glb");
-useGLTF.preload("/models/female_animated.glb");
-
 export function PlayerAvatar() {
   const avatar = useUI((s) => s.avatar);
   const pose = useUI((s) => s.pose);
@@ -297,7 +281,7 @@ export function PlayerAvatar() {
     }
   });
 
-  if (avatar?.modelId === "male_animated" || avatar?.modelId === "female_animated") return <group ref={g}><AnimatedAvatarModel modelId={avatar.modelId} /></group>;
+  if (avatar?.modelId === "male_animated" || avatar?.modelId === "female_animated") return <group ref={g}><AnimatedAvatarAppearance modelId={avatar.modelId} outfit={avatar.outfit} hair={avatar.hair} hairColor={avatar.hairColor} accessory={avatar.accessory ?? "neck_mala"} /></group>;
 
   return (
     <group ref={g}>
