@@ -19,7 +19,7 @@ export function AnimatedAvatarAppearance({
   pose?: Pose;
   action?: Action;
 }) {
-  const path = modelId === "female_animated" ? "/models/female_animated.glb" : "/models/male_animated.glb";
+  const path = modelId === "female_animated" ? "/models/female_custom_poses.glb" : "/models/male_custom_poses.glb";
   const gltf = useGLTF(path);
   const root = useRef<THREE.Group>(null);
 
@@ -65,15 +65,21 @@ export function AnimatedAvatarAppearance({
   }, [actions]);
 
   useFrame(() => {
-    const desired = action === "none" && pose === "walk" ? (input.run ? "run" : "walk") : "idle";
+    const desired =
+      action === "chap" ? "prayer" :
+      action === "le" ? "kneel" :
+      action === "thien" || action === "kinh" ? "meditation" :
+      action === "none" && pose === "walk" ? (input.run ? "run" : "walk") :
+      "idle";
     if (activeClip.current === desired) return;
     actions[activeClip.current]?.fadeOut(0.18);
     const next = actions[desired];
     if (next) {
       next.reset();
       next.enabled = true;
-      next.setLoop(THREE.LoopRepeat, Infinity);
-      next.clampWhenFinished = false;
+      const oneShot = desired === "prayer" || desired === "kneel" || desired === "turn";
+      next.setLoop(oneShot ? THREE.LoopOnce : THREE.LoopRepeat, oneShot ? 1 : Infinity);
+      next.clampWhenFinished = oneShot;
       next.fadeIn(0.18).play();
     }
     activeClip.current = desired;
@@ -117,5 +123,5 @@ export function AnimatedAvatarAppearance({
   );
 }
 
-useGLTF.preload("/models/male_animated.glb");
-useGLTF.preload("/models/female_animated.glb");
+useGLTF.preload("/models/male_custom_poses.glb");
+useGLTF.preload("/models/female_custom_poses.glb");
