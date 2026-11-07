@@ -404,7 +404,7 @@ export default function World() {
       <BellTower position={[55, 0, -112]} />
       <Tower position={[-55, 0, -112]} tiers={5} label="Bảo tháp" />
       <Pond position={[0, 0, 12]} w={30} d={22} />
-      <Waterfall position={[0, 0, -12]} />
+      <Waterfall position={[-38, 0, -12]} />
       <ReleaseLanterns position={[28, 0, 12]} />
       {/* Meditation zone: stone platform with an outdoor Buddha */}
       <group position={[0, 0, -155]}>
