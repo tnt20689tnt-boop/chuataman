@@ -9,7 +9,7 @@ export const input = { fwd: 0, right: 0, run: false, joyF: 0, joyR: 0 };
 
 export type Action = "none" | "le" | "chap" | "thien" | "kinh";
 
-export type AvatarModelId = "nam1" | "nam2" | "nu1" | "nu2";
+export type AvatarModelId = "nam1" | "nu1";
 
 export interface Avatar {
   name: string;
@@ -63,7 +63,7 @@ export function loadAvatar(): Avatar | null {
     if (!raw) return null;
     const saved = JSON.parse(raw) as Avatar;
     // Retire the two unwanted models and move existing visitors to the remaining model of their gender.
-    if (saved.modelId === "nam2" || saved.modelId === "nu2") {
+    if ((saved.modelId as string) === "nam2" || (saved.modelId as string) === "nu2") {
       saved.modelId = saved.gender === "nu" || saved.modelId === "nu2" ? "nu1" : "nam1";
       saved.gender = saved.modelId === "nu1" ? "nu" : "nam";
       localStorage.setItem(AV_KEY, JSON.stringify(saved));
