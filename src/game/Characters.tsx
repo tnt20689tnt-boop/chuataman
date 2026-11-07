@@ -281,7 +281,7 @@ export function PlayerAvatar() {
     }
   });
 
-  if (avatar?.modelId === "male_animated" || avatar?.modelId === "female_animated") return <group ref={g}><AnimatedAvatarAppearance modelId={avatar.modelId} outfit={avatar.outfit} hair={avatar.hair} hairColor={avatar.hairColor} accessory={avatar.accessory ?? "neck_mala"} /></group>;
+  if (avatar?.modelId === "male_animated" || avatar?.modelId === "female_animated") return <group ref={g}><AnimatedAvatarAppearance modelId={avatar.modelId} outfit={avatar.outfit} hair={avatar.hair} hairColor={avatar.hairColor} accessory={avatar.accessory ?? "neck_mala"} pose={pose} action={action} /></group>;
 
   return (
     <group ref={g}>
