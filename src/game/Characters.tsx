@@ -235,7 +235,8 @@ export function PlayerAvatar() {
   const [externalClips, setExternalClips] = useState<THREE.AnimationClip[]>([]);
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const activeClipRef = useRef<THREE.AnimationAction | null>(null);
-  const externalMotionRef = useRef<THREE.Group>(null);\n  const externalRigRef = useRef<AvatarRig | null>(null);
+  const externalMotionRef = useRef<THREE.Group>(null);
+  const externalRigRef = useRef<AvatarRig | null>(null);
   const modelId = avatar?.modelId ?? (female ? "nu1" : "nam1");
   const modelPath = ({
     nam1: "/models/nhan-vat-nam-1.glb",
@@ -271,7 +272,8 @@ export function PlayerAvatar() {
             mesh.receiveShadow = true;
           }
         });
-        mixerRef.current = new THREE.AnimationMixer(model);\n        externalRigRef.current = captureAvatarRig(model);
+        mixerRef.current = new THREE.AnimationMixer(model);
+        externalRigRef.current = captureAvatarRig(model);
         setExternalClips(gltf.animations ?? []);
         setExternalModel(model);
       },
@@ -312,7 +314,8 @@ export function PlayerAvatar() {
     const t = clock.elapsedTime;
     if (externalMotionRef.current && externalModel) {
       const walkingExternal = pose === "walk";
-      const breathingExternal = Math.sin(t * 2.0) * 0.006;\n      animateAvatarRig(externalRigRef.current, t, walkingExternal);
+      const breathingExternal = Math.sin(t * 2.0) * 0.006;
+      animateAvatarRig(externalRigRef.current, t, walkingExternal);
       const bowExternal = action === "le" ? Math.max(0, Math.sin(t * 1.15)) * 0.12
         : action === "thien" ? 0.035 : 0;
       const externalSmooth = 1 - Math.exp(-delta * 8);
