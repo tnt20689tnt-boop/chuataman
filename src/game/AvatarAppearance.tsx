@@ -27,9 +27,11 @@ export function AnimatedAvatarAppearance({
       const updated = materials.map((original) => {
         const material = original.clone();
         const materialName = material.name.toLowerCase();
-        if (/hair|tóc|ponytail|bun/.test(meshName + " " + materialName) && "color" in material) {
+        const label = meshName + " " + materialName;
+        if (/hair|tóc|ponytail|bun/.test(label) && "color" in material) {
           (material as THREE.MeshStandardMaterial).color.set(hairColor);
-        } else if (/robe|cloth|clothes|outfit|shirt|dress|garment| áo|ao_trang/.test(meshName + " " + materialName) && "color" in material) {
+        } else if (!/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
+          // Many GLB exports use generic names such as "Material.001" for robes.
           (material as THREE.MeshStandardMaterial).color.set(OUTFIT_COLORS[outfit]);
         }
         return material;
