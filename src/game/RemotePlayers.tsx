@@ -1,11 +1,21 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { Html, useGLTF, useAnimations } from "@react-three/drei";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useRef, useState } from "react";
 import * as THREE from "three";
 import { HAIR_COLORS, OUTFIT_COLORS, OUTFIT_LABEL, HAIR_LABEL } from "./sim";
 import { useMultiplayer, type RemotePlayer } from "./multiplayer";
 import { surfaceHeight } from "./collision";
 
+function RemoteAnimatedModel({ modelId }: { modelId: "male_animated" | "female_animated" }) {
+  const path = modelId === "female_animated" ? "/models/female_animated.glb" : "/models/male_animated.glb";
+  const gltf = useGLTF(path);
+  const root = useRef<THREE.Group>(null);
+  const model = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  const { actions } = useAnimations(gltf.animations, root);
+  useEffect(() => { const action = Object.values(actions).find(Boolean); action?.reset().fadeIn(0.2).play(); return () => { action?.fadeOut(0.2); }; }, [actions]);
+  return <group ref={root}><primitive object={model} /></group>;
+}
 function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePlayer[] }) {
   const group = useRef<THREE.Group>(null);
   const bodyRef = useRef<THREE.Group>(null);
@@ -53,6 +63,8 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
       label.current.style.pointerEvents = distance < 42 ? "auto" : "none";
     }
   });
+
+  if (player.modelId === "male_animated" || player.modelId === "female_animated") return <group ref={group} position={[player.x, surfaceHeight(player.x, player.z), player.z]} onClick={(event) => { event.stopPropagation(); setSelected((value) => !value); }}><RemoteAnimatedModel modelId={player.modelId} /><Html position={[0, 2.3, 0]} center distanceFactor={13}><div ref={label} className="name-tag">{player.name}</div></Html></group>;
 
   return (
     <group

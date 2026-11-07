@@ -610,9 +610,9 @@ function AuthPanel() {
 }
 
 function AvatarPanel({ initial }: { initial: Avatar | null }) {
-  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "nam1", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
+  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "male_animated", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0] });
   const gender = a.gender ?? "nam";
-  const selectedModel = gender === "nu" ? "nu1" : "nam1";
+  const selectedModel = gender === "nu" ? "female_animated" : "male_animated";
   const ok = a.name.trim().length >= 2;
   return (
     <Panel title={initial ? "Tùy chỉnh Avatar" : "Tạo Avatar của bạn"} {...(initial ? { onClose: () => setUI({ panel: null }) } : {})}>
@@ -622,7 +622,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       <div className="mb-3 flex gap-2">
         {(["nam", "nu"] as const).map((nextGender) => (
           <button key={nextGender} className="hud-swatch" data-active={gender === nextGender}
-            onClick={() => setA({ ...a, gender: nextGender, modelId: nextGender === "nam" ? "nam1" : "nu1" })}>
+            onClick={() => setA({ ...a, gender: nextGender, modelId: nextGender === "nam" ? "male_animated" : "female_animated" })}>
             {nextGender === "nam" ? "👨 Nam" : "👩 Nữ"}
           </button>
         ))}

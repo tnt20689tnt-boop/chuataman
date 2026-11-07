@@ -1,7 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { Html, useGLTF, useAnimations } from "@react-three/drei";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose } from "./sim";
 import { player, useUI } from "./store";
 import { moveVisitor } from "./collision";
@@ -203,6 +204,22 @@ function NameTag({ n }: { n: Npc }) {
   );
 }
 
+function AnimatedAvatarModel({ modelId }: { modelId: "male_animated" | "female_animated" }) {
+  const path = modelId === "female_animated" ? "/models/female_animated.glb" : "/models/male_animated.glb";
+  const gltf = useGLTF(path);
+  const root = useRef<THREE.Group>(null);
+  const model = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  const { actions } = useAnimations(gltf.animations, root);
+  useLayoutEffect(() => {
+    const firstAction = Object.values(actions).find(Boolean);
+    firstAction?.reset().fadeIn(0.25).play();
+    return () => { firstAction?.fadeOut(0.2); };
+  }, [actions]);
+  return <group ref={root}><primitive object={model} /></group>;
+}
+useGLTF.preload("/models/male_animated.glb");
+useGLTF.preload("/models/female_animated.glb");
+
 export function PlayerAvatar() {
   const avatar = useUI((s) => s.avatar);
   const pose = useUI((s) => s.pose);
@@ -279,6 +296,8 @@ export function PlayerAvatar() {
       headRef.current.rotation.z = Math.sin(t * 1.05) * 0.008;
     }
   });
+
+  if (avatar?.modelId === "male_animated" || avatar?.modelId === "female_animated") return <group ref={g}><AnimatedAvatarModel modelId={avatar.modelId} /></group>;
 
   return (
     <group ref={g}>
