@@ -164,6 +164,42 @@ function Garden() {
       <mesh position={[0, 1.68, 0]}><boxGeometry args={[0.58, 0.48, 0.58]} /><meshStandardMaterial color="#d7b879" emissive="#d39a4e" emissiveIntensity={0.35} /></mesh>
       <mesh position={[0, 1.98, 0]}><coneGeometry args={[0.62, 0.28, 4]} /><meshStandardMaterial color="#77776d" roughness={1} /></mesh>
     </group>)}
+    {/* Bodhi tree: a calm focal point with a broad canopy and visible spreading roots. */}
+    <group position={[0, 0, -10.7]} name="Cây bồ đề vườn thiền">
+      <mesh position={[0, 2.65, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.48, 0.78, 5.3, 14]} />
+        <meshStandardMaterial color="#72513a" roughness={0.96} />
+      </mesh>
+      {Array.from({ length: 7 }, (_, i) => {
+        const a = i * Math.PI * 2 / 7;
+        return <group key={i} rotation-y={a}>
+          <mesh position={[0.34, 0.34, 0]} rotation-z={-0.42} castShadow>
+            <coneGeometry args={[0.22, 1.45, 8]} />
+            <meshStandardMaterial color="#76543a" roughness={0.96} />
+          </mesh>
+          <mesh position={[0.12, 0.18, 0]} rotation-z={-0.2} castShadow>
+            <coneGeometry args={[0.17, 0.95, 8]} />
+            <meshStandardMaterial color="#76543a" roughness={0.96} />
+          </mesh>
+        </group>;
+      })}
+      {Array.from({ length: 13 }, (_, i) => {
+        const a = i * 2.399;
+        const ring = i % 3;
+        const x = Math.cos(a) * (1.9 + ring * 0.65);
+        const z = Math.sin(a) * (1.65 + ring * 0.48);
+        const y = 5.1 + (i % 4) * 0.62;
+        const size = 1.45 + (i % 3) * 0.22;
+        return <mesh key={i} position={[x, y, z]} scale={[size * 1.18, size * 0.78, size]} castShadow receiveShadow>
+          <sphereGeometry args={[1, 16, 12]} />
+          <meshStandardMaterial color={i % 3 === 0 ? "#55784b" : "#668a56"} roughness={0.94} />
+        </mesh>;
+      })}
+      <mesh position={[0, 0.12, 0]} rotation-x={-Math.PI / 2}>
+        <torusGeometry args={[2.15, 0.12, 8, 48]} />
+        <meshStandardMaterial color="#a99b7e" roughness={0.95} />
+      </mesh>
+    </group>
     <Inscription text="VƯỜN THIỀN" width={5} height={1} position={[0, 1.6, 14.1]} stone />
   </group>;
 }
