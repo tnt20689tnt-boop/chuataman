@@ -36,7 +36,7 @@ function Bridge() {
     const points = Array.from({ length: 49 }, (_, i) => new THREE.Vector3(0, 0.45 + Math.sin(i / 48 * Math.PI) * 1.1, -12 + i / 48 * 24));
     return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 48, 0.08, 6, false);
   }, []);
-  return <group position={[76, 0, -14]} name="Cầu đá hồ sen">
+  return <group position={[0, 0, 12]} name="Cầu đá hồ sen">
     {Array.from({ length: 24 }, (_, i) => <mesh key={i} position={[0, 0.27 + Math.sin((i + 0.5) / 24 * Math.PI) * 1.1, -11.5 + i]} receiveShadow castShadow><boxGeometry args={[3.2, 0.36, 1.06]} /><Surface kind="stone" /></mesh>)}
     {[-1, 1].map(side => <group key={side} position={[side * 1.5, 0, 0]}>
       <mesh geometry={geo} position={[0, 1, 0]} castShadow><meshStandardMaterial color={C.stone} /></mesh>
@@ -151,8 +151,8 @@ export function TempleCampus() {
   return <>
     {BUILDINGS.map(b => <CampusBuilding key={b.id} building={b} />)}
     <Bridge /><Garden />
-    <Inscription text="NHÀ GIẢNG PHÁP" width={9} height={1} position={[70, 4.4, 58.2]} />
-    <Inscription text="HỒ SEN" width={5} height={1} position={[59, 1.6, 0]} stone />
+    <Inscription text="NHÀ GIẢNG PHÁP" width={9} height={1} position={[60, 4.4, -51.8]} />
+    <Inscription text="HỒ SEN" width={5} height={1} position={[0, 1.6, 26]} stone />
     <group position={[-12, 0, 42]}>
       <mesh position={[0, 1.7, 0]} castShadow><boxGeometry args={[5, 3.4, 0.7]} /><Surface kind="stone" /></mesh>
       <Inscription text="CHÙA TÂM AN" width={4.3} height={0.8} position={[0, 2.8, 0.4]} stone />
