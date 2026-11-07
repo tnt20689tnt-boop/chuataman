@@ -960,7 +960,7 @@ export function Pavilion({ position, rot = 0 }: { position: [number, number, num
         <meshStandardMaterial color="#a99d89" roughness={0.94} />
       </mesh>)}
       {Array.from({ length: 3 }, (_, i) => <mesh key={`left-${i}`} position={[-10 + i, (i + 1) * 0.1, 0]} rotation-y={Math.PI / 2} receiveShadow castShadow>
-        <boxGeometry args={[5.2, (i + 1) * 0.2, 1.15]} />
+        <boxGeometry args={[1.15, (i + 1) * 0.2, 5.2]} />
         <meshStandardMaterial color="#a99d89" roughness={0.94} />
       </mesh>)}
       {Array.from({ length: 3 }, (_, i) => <mesh key={`right-${i}`} position={[10 - i, (i + 1) * 0.1, 0]} rotation-y={Math.PI / 2} receiveShadow castShadow>
