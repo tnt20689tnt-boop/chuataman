@@ -1,13 +1,10 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose } from "./sim";
 import { player, useUI } from "./store";
 import { moveVisitor } from "./collision";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { animateAvatarRig, captureAvatarRig, type AvatarRig } from "./avatarAnimation";
 
 const SKIN = "#f4d6bd";
 
@@ -228,107 +225,9 @@ export function PlayerAvatar() {
   ), [female]);
   const hair = avatar?.hair ?? "ngan";
   const handsJoined = action === "chap" || action === "le" || action === "thien" || action === "kinh";
-  // Optional Hyper3D/Rodin character files. Add the exported GLB files to
-  // public/models; if they are absent or fail to load, the procedural avatar
-  // remains available without interrupting the game.
-  const [externalModel, setExternalModel] = useState<THREE.Group | null>(null);
-  const [externalClips, setExternalClips] = useState<THREE.AnimationClip[]>([]);
-  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
-  const activeClipRef = useRef<THREE.AnimationAction | null>(null);
-  const externalMotionRef = useRef<THREE.Group>(null);
-  const externalRigRef = useRef<AvatarRig | null>(null);
-  const modelId = avatar?.modelId ?? (female ? "nu1" : "nam1");
-  const modelPath = ({
-    nam1: "/models/nhan-vat-nam-1.glb",
-    nu1: "/models/nhan-vat-nu-1.glb",
-  } as const)[modelId];
-
-  useEffect(() => {
-    let alive = true;
-    setExternalModel(null);
-    setExternalClips([]);
-    mixerRef.current = null;
-    activeClipRef.current = null;
-    const loader = new GLTFLoader();
-    loader.load(
-      modelPath,
-      (gltf) => {
-        if (!alive) return;
-        const model = cloneSkinned(gltf.scene) as THREE.Group;
-        model.updateMatrixWorld(true);
-        const bounds = new THREE.Box3().setFromObject(model);
-        const size = bounds.getSize(new THREE.Vector3());
-        const center = bounds.getCenter(new THREE.Vector3());
-        const height = Math.max(size.y, 0.001);
-        const scale = 2.35 / height;
-        model.scale.setScalar(scale);
-        model.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
-        model.traverse((node) => {
-          if ((node as THREE.Mesh).isMesh) {
-            const mesh = node as THREE.Mesh;
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-          }
-        });
-        mixerRef.current = new THREE.AnimationMixer(model);
-        const rig = captureAvatarRig(model);
-        externalRigRef.current = rig;
-        const clips = gltf.animations ?? [];
-        setExternalClips(clips);
-        // Render the supplied Nam 1 / Nu 1 GLBs even when they are static.
-        // Root-level procedural motion below adds breathing, sway and a
-        // gentle walking bounce; rigged exports additionally get limb motion.
-        setExternalModel(model);
-      },
-      undefined,
-      () => {
-        // Missing model files are expected until the GLB exports are added.
-        if (alive) setExternalModel(null);
-      },
-    );
-    return () => {
-      alive = false;
-      mixerRef.current?.stopAllAction();
-      mixerRef.current = null;
-      activeClipRef.current = null;
-    };
-  }, [modelPath]);
-
-  useEffect(() => {
-    if (!mixerRef.current || externalClips.length === 0) return;
-    const wanted = action === "le" ? ["bow", "kneel", "prayer", "idle"]
-      : action === "chap" || action === "kinh" ? ["prayer", "pray", "idle"]
-      : action === "thien" ? ["meditat", "sit", "idle"]
-      : pose === "walk" ? ["walk", "run"]
-      : ["idle", "stand"];
-    const clip = externalClips.find((item) => wanted.some((word) => item.name.toLowerCase().includes(word)))
-      ?? externalClips[0];
-    if (!clip) return;
-    const next = mixerRef.current.clipAction(clip);
-    if (activeClipRef.current !== next) {
-      activeClipRef.current?.fadeOut(0.18);
-      next.reset().fadeIn(0.18).play();
-      activeClipRef.current = next;
-    }
-  }, [externalClips, action, pose]);
-
   useFrame(({ clock }, delta) => {
     mixerRef.current?.update(delta);
     const t = clock.elapsedTime;
-    if (externalMotionRef.current && externalModel) {
-      const walkingExternal = pose === "walk";
-      const breathingExternal = Math.sin(t * 2.0) * 0.006;
-      animateAvatarRig(externalRigRef.current, t, walkingExternal);
-      const bowExternal = action === "le" ? Math.max(0, Math.sin(t * 1.15)) * 0.12
-        : action === "thien" ? 0.035 : 0;
-      const walkLean = walkingExternal ? Math.sin(t * 6.5) * 0.025 : 0;
-      const externalSmooth = 1 - Math.exp(-delta * 8);
-      externalMotionRef.current.rotation.x += ((bowExternal + walkLean) - externalMotionRef.current.rotation.x) * externalSmooth;
-      externalMotionRef.current.rotation.z = Math.sin(t * 1.2) * (walkingExternal ? 0.025 : 0.007);
-      externalMotionRef.current.position.y = walkingExternal
-        ? Math.abs(Math.sin(t * 6.5)) * 0.025
-        : breathingExternal;
-    }
     if (!g.current) return;
     g.current.position.set(player.x, player.y, player.z);
     // Lay the avatar horizontally on the guest-room mattress when resting.
@@ -384,7 +283,7 @@ export function PlayerAvatar() {
 
   return (
     <group ref={g}>
-      {externalModel ? <group ref={externalMotionRef}><primitive object={externalModel} /></group> : <group>
+      <group>
       <mesh ref={robeRef} position={[0, 0, 0]} scale={[sxz, sy, sxz]} castShadow>
         <primitive object={robeGeometry} attach="geometry" />
         <meshStandardMaterial color={color} roughness={0.8} />
@@ -620,7 +519,7 @@ export function PlayerAvatar() {
           </mesh>
         </group>
       )}
-      </group>}
+      </group>
       <Html position={[0, hy + 0.6, 0]} center distanceFactor={14} zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
         <div className="name-tag name-tag-self">{avatar?.name ?? "Phật tử"}</div>
       </Html>
