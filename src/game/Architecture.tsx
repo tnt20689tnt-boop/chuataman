@@ -952,19 +952,19 @@ export function Pavilion({ position, rot = 0 }: { position: [number, number, num
       </mesh>
       {/* Four equal-height stone steps on each of the four sides of the pavilion. */}
       {Array.from({ length: 4 }, (_, i) => <mesh key={`front-${i}`} position={[0, (i + 1) * 0.075, 9.5 - i]} receiveShadow castShadow>
-        <boxGeometry args={[5.2, (i + 1) * 0.15, 1.15]} />
+        <boxGeometry args={[5.2, (i + 1) * 0.15, 1.0]} />
         <meshStandardMaterial color="#a99d89" roughness={0.94} />
       </mesh>)}
       {Array.from({ length: 4 }, (_, i) => <mesh key={`back-${i}`} position={[0, (i + 1) * 0.075, -9.5 + i]} receiveShadow castShadow>
-        <boxGeometry args={[5.2, (i + 1) * 0.15, 1.15]} />
+        <boxGeometry args={[5.2, (i + 1) * 0.15, 1.0]} />
         <meshStandardMaterial color="#a99d89" roughness={0.94} />
       </mesh>)}
       {Array.from({ length: 4 }, (_, i) => <mesh key={`left-${i}`} position={[-9.5 + i, (i + 1) * 0.075, 0]} rotation-y={Math.PI / 2} receiveShadow castShadow>
-        <boxGeometry args={[1.15, (i + 1) * 0.15, 5.2]} />
+        <boxGeometry args={[1.0, (i + 1) * 0.15, 5.2]} />
         <meshStandardMaterial color="#a99d89" roughness={0.94} />
       </mesh>)}
       {Array.from({ length: 4 }, (_, i) => <mesh key={`right-${i}`} position={[9.5 - i, (i + 1) * 0.075, 0]} rotation-y={Math.PI / 2} receiveShadow castShadow>
-        <boxGeometry args={[1.15, (i + 1) * 0.15, 5.2]} />
+        <boxGeometry args={[1.0, (i + 1) * 0.15, 5.2]} />
         <meshStandardMaterial color="#a99d89" roughness={0.94} />
       </mesh>)}
       <Columns w={14} d={10} h={5} n={4} />
