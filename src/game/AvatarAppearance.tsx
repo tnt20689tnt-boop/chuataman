@@ -22,6 +22,33 @@ export function AnimatedAvatarAppearance({
   const path = modelId === "female_animated" ? "/models/female_animated.glb" : "/models/male_animated.glb";
   const gltf = useGLTF(path);
   const root = useRef<THREE.Group>(null);
+
+  const model = useMemo(() => {
+    const copy = clone(gltf.scene);
+    copy.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      const meshName = object.name.toLowerCase();
+      const materials = (Array.isArray(object.material) ? object.material : [object.material]).map((original) => {
+        const material = original.clone();
+        const label = meshName + " " + material.name.toLowerCase();
+        if (/hair|toc|ponytail|bun/.test(label) && "color" in material) {
+          (material as THREE.MeshStandardMaterial).color.set(hairColor);
+        } else if (!/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
+          (material as THREE.MeshStandardMaterial).color.set(OUTFIT_COLORS[outfit]);
+        }
+        return material;
+      });
+      object.material = Array.isArray(object.material) ? materials : materials[0];
+    });
+    return copy;
+  }, [gltf.scene, outfit, hairColor]);
+
+  const bounds = useMemo(() => new THREE.Box3().setFromObject(model), [model]);
+  const size = useMemo(() => bounds.getSize(new THREE.Vector3()), [bounds]);
+  const center = useMemo(() => bounds.getCenter(new THREE.Vector3()), [bounds]);
+  const unitScale = 1.8 / Math.max(size.y, 0.001);
+  const neckY = bounds.min.y + size.y * 0.72;
+
   const clips = useMemo(() => gltf.animations.map((source) => {
     const clip = source.clone();
     // The game controller owns world position. Remove exported root translation
@@ -52,32 +79,12 @@ export function AnimatedAvatarAppearance({
     activeClip.current = desired;
   });
 
-  return () => Object.values(actions).forEach((clip) => clip?.stop());
-  }, [actions, pose, action]);
-
-  useFrame(({ clock }, delta) => {
-    if (!proceduralWalk.current) return;
-    const t = clock.elapsedTime;
-    const blend = 1 - Math.exp(-delta * 16);
-    const phase = t * 5.2;
-    for (const item of bones) {
-      const swing = Math.sin(phase) * (item.kind === "leg" ? 0.22 : 0.10) * item.side;
-      // The hips/upper legs alternate to create real steps; arms counter-swing
-      // gently instead of remaining stretched out like an airplane.
-      const targetX = item.base.x + swing;
-      item.bone.rotation.x += (targetX - item.bone.rotation.x) * blend;
-      item.bone.rotation.y += (item.base.y - item.bone.rotation.y) * blend;
-      const targetZ = item.kind === "arm" ? item.base.z + item.side * 0.65 : item.base.z;
-      item.bone.rotation.z += (targetZ - item.bone.rotation.z) * blend;
-    }
-  });
-
   return (
     <group ref={root}>
       <group position={[-center.x * unitScale, -bounds.min.y * unitScale, -center.z * unitScale]} scale={unitScale}>
         {/* Correct the GLB's reversed forward direction relative to the game (+Z). */}
         <group rotation-y={Math.PI}>
-        <primitive object={model} />
+          <primitive object={model} />
           {hair === "bui" && <mesh position={[center.x, bounds.max.y - size.y * 0.045, center.z - size.z * 0.12]} castShadow>
             <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
             <meshStandardMaterial color={hairColor} roughness={0.9} />
