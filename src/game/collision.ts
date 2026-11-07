@@ -124,30 +124,30 @@ export function surfaceHeight(x: number, z: number) {
     return 0.45 + Math.sin(((z + 4) / 24) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
-  // Pavilion deck top is 0.6m; four equal 0.15m risers on every side.
-  if (Math.abs(x) <= 7.5 && z >= -27 && z <= -15) return 0.6;
-  // Front steps: from the bridge toward the deck.
+  // Pavilion deck top is 0.6m; the four 1m-deep steps meet the deck edge exactly.
+  if (Math.abs(x) <= 8 && z >= -27 && z <= -15) return 0.6;
+  // Front steps (toward the bridge): world Z is centered at -21.
   if (Math.abs(x) <= 2.6) {
-    if (z >= 9 && z < 10.2) return 0.15;
-    if (z >= 8 && z < 9) return 0.30;
-    if (z >= 7 && z < 8) return 0.45;
-    if (z >= 6 && z < 7) return 0.60;
+    if (z > -12 && z <= -11) return 0.15;
+    if (z > -13 && z <= -12) return 0.30;
+    if (z > -14 && z <= -13) return 0.45;
+    if (z > -15 && z <= -14) return 0.60;
     // Back steps.
-    if (z > -10.2 && z <= -9) return 0.15;
-    if (z > -9 && z <= -8) return 0.30;
-    if (z > -8 && z <= -7) return 0.45;
-    if (z > -7 && z <= -6) return 0.60;
+    if (z >= -31 && z < -30) return 0.15;
+    if (z >= -30 && z < -29) return 0.30;
+    if (z >= -29 && z < -28) return 0.45;
+    if (z >= -28 && z < -27) return 0.60;
   }
-  // Left and right side steps.
+  // Left and right side steps: four full-width 1m treads outside the deck.
   if (Math.abs(z + 21) <= 2.6) {
-    if (x >= -10.2 && x < -9) return 0.15;
-    if (x >= -9 && x < -8) return 0.30;
-    if (x >= -8 && x < -7) return 0.45;
-    if (x >= -7 && x < -6) return 0.60;
-    if (x > 9 && x <= 10.2) return 0.15;
-    if (x > 8 && x <= 9) return 0.30;
-    if (x > 7 && x <= 8) return 0.45;
-    if (x > 6 && x <= 7) return 0.60;
+    if (x >= -12 && x < -11) return 0.15;
+    if (x >= -11 && x < -10) return 0.30;
+    if (x >= -10 && x < -9) return 0.45;
+    if (x >= -9 && x < -8) return 0.60;
+    if (x > 11 && x <= 12) return 0.15;
+    if (x > 10 && x <= 11) return 0.30;
+    if (x > 9 && x <= 10) return 0.45;
+    if (x > 8 && x <= 9) return 0.60;
   }
   return 0;
 }
