@@ -248,3 +248,132 @@ header.hud-glass > div > div:first-child {
 @media (prefers-reduced-motion: reduce) {
   .hud-panel, .hud-action, .hud-tile, .hud-side { animation: none; transition: none; }
 }
+
+
+/* Chùa Tâm An — refined temple interface */
+:root {
+  --glass: oklch(0.985 0.025 92 / .94);
+  --glass-border: oklch(0.82 0.105 82 / .38);
+  --shadow-soft: 0 18px 48px -22px oklch(0.16 0.055 150 / .48);
+  --gradient-gold: linear-gradient(145deg, oklch(0.93 0.12 91), oklch(0.79 0.13 78));
+  --gradient-vermilion: linear-gradient(145deg, oklch(0.48 0.12 151), oklch(0.32 0.085 155));
+}
+.hud-glass {
+  background: linear-gradient(145deg, oklch(0.99 0.018 90 / .96), oklch(0.94 0.035 98 / .9));
+  border: 1px solid oklch(0.82 0.105 82 / .42);
+  box-shadow: 0 16px 42px -22px oklch(0.16 0.06 150 / .58), inset 0 1px 0 oklch(1 0 0 / .8);
+  backdrop-filter: blur(22px) saturate(1.35);
+}
+header.hud-glass {
+  min-height: 4.2rem;
+  padding: .7rem 1.1rem;
+}
+header.hud-glass svg { color: oklch(0.64 0.12 78); filter: drop-shadow(0 3px 5px oklch(0.4 0.08 80 / .2)); }
+header.hud-glass > div > div:first-child {
+  color: oklch(0.29 0.075 151);
+  letter-spacing: .16em;
+  text-shadow: 0 1px 0 white;
+}
+header.hud-glass > div > div:nth-child(2) { color: oklch(0.46 0.04 145); }
+header.hud-glass .hud-swatch {
+  border-color: oklch(0.75 0.09 85 / .55);
+  background: oklch(0.96 0.045 92);
+  color: oklch(0.34 0.075 150);
+}
+.hud-chip {
+  background: oklch(0.22 0.06 150 / .9);
+  border: 1px solid oklch(0.8 0.12 85 / .48);
+  box-shadow: 0 8px 20px -12px oklch(0.1 0.04 150 / .8);
+}
+.hud-side {
+  width: 4rem;
+  min-height: 3.85rem;
+  gap: .2rem;
+  border: 1px solid oklch(0.82 0.105 82 / .4);
+  background: linear-gradient(150deg, oklch(0.99 0.02 90 / .97), oklch(0.93 0.04 100 / .94));
+  box-shadow: 0 12px 30px -17px oklch(0.16 0.06 150 / .62), inset 0 1px 0 white;
+}
+.hud-side > span:first-child { color: oklch(0.42 0.105 150); }
+.hud-side:hover { border-color: oklch(0.68 0.12 82); transform: translateX(-3px); }
+.hud-action {
+  min-width: 5rem;
+  padding: .72rem .78rem;
+  border: 1px solid oklch(0.82 0.105 82 / .42);
+  background: linear-gradient(150deg, oklch(0.99 0.02 90 / .97), oklch(0.94 0.04 98 / .94));
+  box-shadow: 0 12px 30px -16px oklch(0.16 0.06 150 / .6), inset 0 1px 0 white;
+}
+.hud-action > span:first-child { filter: drop-shadow(0 2px 2px oklch(0.2 0.04 80 / .14)); }
+.hud-action[data-active="true"] {
+  background: linear-gradient(145deg, oklch(0.49 0.12 151), oklch(0.31 0.085 155));
+  border-color: oklch(0.78 0.13 84 / .78);
+  box-shadow: 0 12px 28px -13px oklch(0.18 0.07 150 / .7), inset 0 1px 0 oklch(1 0 0 / .18);
+}
+.hud-panel {
+  background: linear-gradient(155deg, oklch(0.99 0.018 90 / .985), oklch(0.95 0.035 96 / .98));
+  border: 1px solid oklch(0.78 0.105 84 / .48);
+  box-shadow: 0 30px 90px -28px oklch(0.13 0.055 150 / .62), inset 0 1px 0 white;
+}
+.hud-panel h2 { color: oklch(0.29 0.075 151); }
+.hud-tile {
+  background: linear-gradient(145deg, oklch(0.985 0.02 92), oklch(0.94 0.04 98));
+  border-color: oklch(0.82 0.075 90 / .72);
+}
+.hud-tile[data-active="true"] {
+  border-color: oklch(0.52 0.11 150);
+  background: oklch(0.9 0.055 105);
+  box-shadow: inset 0 0 0 1px oklch(0.52 0.11 150 / .18);
+}
+.hud-primary {
+  background: linear-gradient(145deg, oklch(0.48 0.12 151), oklch(0.31 0.085 155));
+  border: 1px solid oklch(0.78 0.13 84 / .58);
+}
+.hud-primary:focus-visible, .hud-side:focus-visible, .hud-action:focus-visible, .hud-swatch:focus-visible {
+  outline: 3px solid oklch(0.72 0.13 82 / .9);
+  outline-offset: 3px;
+}
+.joystick {
+  background: radial-gradient(circle, oklch(0.99 0.02 90 / .58), oklch(0.78 0.1 90 / .28));
+  border: 2px solid oklch(0.86 0.13 85 / .7);
+  box-shadow: 0 12px 32px -16px oklch(0.15 0.06 150 / .55), inset 0 0 0 5px oklch(1 0 0 / .18);
+}
+.joystick-knob {
+  border: 2px solid oklch(0.9 0.12 86 / .85);
+  box-shadow: 0 7px 18px -7px oklch(0.15 0.06 150 / .7);
+}
+@media (max-width: 639px) {
+  header.hud-glass {
+    top: max(.65rem, env(safe-area-inset-top));
+    left: max(.65rem, env(safe-area-inset-left));
+    min-height: 3.5rem;
+    padding: .5rem .7rem;
+  }
+  header.hud-glass .hud-swatch { margin-top: .25rem; padding: .25rem .55rem; font-size: .68rem; }
+  .hud-side { width: 2.9rem; min-height: 2.9rem; }
+  .hud-action {
+    min-width: 3.75rem;
+    padding: .48rem .34rem;
+    flex: 0 0 auto;
+  }
+  .pointer-events-auto.absolute.bottom-4.left-1\/2 {
+    bottom: max(.55rem, env(safe-area-inset-bottom));
+    max-width: calc(100vw - .8rem);
+    gap: .35rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: .28rem;
+    border: 1px solid oklch(0.82 0.105 82 / .38);
+    border-radius: 1.15rem;
+    background: oklch(0.96 0.035 94 / .72);
+    backdrop-filter: blur(18px);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pointer-events-auto.absolute.bottom-4.left-1\/2::-webkit-scrollbar { display: none; }
+  .joystick { bottom: max(6.7rem, calc(env(safe-area-inset-bottom) + 6.1rem)); left: max(.8rem, env(safe-area-inset-left)); }
+  .absolute.right-3.top-3 { right: max(.65rem, env(safe-area-inset-right)); top: max(.65rem, env(safe-area-inset-top)); }
+  .hud-panel { width: min(94vw, 34rem); max-height: 76dvh; }
+}
+@media (max-width: 380px) {
+  .hud-action { min-width: 3.45rem; }
+  .hud-action > span:last-child { font-size: 9px; }
+}
