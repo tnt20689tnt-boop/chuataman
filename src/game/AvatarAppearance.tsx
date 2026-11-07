@@ -1,19 +1,25 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF, useAnimations } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { OUTFIT_COLORS, type Outfit, type Hair } from "./sim";
+import { OUTFIT_COLORS, type Outfit, type Hair, type Pose } from "./sim";
+import type { Action } from "./store";
 
 export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
 
+type BonePose = { bone: THREE.Bone; base: THREE.Euler; side: number; kind: "arm" | "leg" | "spine" };
+
 export function AnimatedAvatarAppearance({
-  modelId, outfit, hair, hairColor, accessory,
+  modelId, outfit, hair, hairColor, accessory, pose = "stand", action = "none",
 }: {
   modelId: "male_animated" | "female_animated";
   outfit: Outfit;
   hair: Hair;
   hairColor: string;
   accessory: AvatarAccessory;
+  pose?: Pose;
+  action?: Action;
 }) {
   const path = modelId === "female_animated" ? "/models/female_animated.glb" : "/models/male_animated.glb";
   const gltf = useGLTF(path);
@@ -31,7 +37,6 @@ export function AnimatedAvatarAppearance({
         if (/hair|tóc|ponytail|bun/.test(label) && "color" in material) {
           (material as THREE.MeshStandardMaterial).color.set(hairColor);
         } else if (!/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
-          // Many GLB exports use generic names such as "Material.001" for robes.
           (material as THREE.MeshStandardMaterial).color.set(OUTFIT_COLORS[outfit]);
         }
         return material;
@@ -40,47 +45,84 @@ export function AnimatedAvatarAppearance({
     });
     return copy;
   }, [gltf.scene, outfit, hairColor]);
-  const { actions } = useAnimations(gltf.animations, root);
+  const { actions, names } = useAnimations(gltf.animations, root);
   const bounds = useMemo(() => new THREE.Box3().setFromObject(model), [model]);
   const size = useMemo(() => bounds.getSize(new THREE.Vector3()), [bounds]);
   const center = useMemo(() => bounds.getCenter(new THREE.Vector3()), [bounds]);
-  const scale = Math.max(size.x, size.z, 0.7);
-  const neckY = bounds.min.y + size.y * 0.68;
+  // All uploaded GLBs are normalized to a human height so the temple's scale is consistent.
+  const unitScale = 1.8 / Math.max(size.y, 0.001);
+  const width = Math.max(size.x, size.z) * unitScale;
+  const neckY = bounds.min.y + size.y * 0.72;
+  const bonePoses = useMemo<BonePose[]>(() => {
+    const found: BonePose[] = [];
+    model.traverse((object) => {
+      if (!(object instanceof THREE.Bone)) return;
+      const n = object.name.toLowerCase().replace(/[^a-z]/g, "");
+      const side = /left|(^|)l(upper|lower|arm|leg|hand|foot)/.test(n) ? 1 : /right|(^|)r(upper|lower|arm|leg|hand|foot)/.test(n) ? -1 : 0;
+      if (!side) return;
+      if (/arm|shoulder|forearm|hand/.test(n)) found.push({ bone: object, base: object.rotation.clone(), side, kind: "arm" });
+      else if (/upleg|thigh|leg|calf|foot/.test(n)) found.push({ bone: object, base: object.rotation.clone(), side, kind: "leg" });
+    });
+    const spine = model.getObjectByName("mixamorigSpine2") ?? model.getObjectByName("Spine2") ?? model.getObjectByName("spine");
+    if (spine instanceof THREE.Bone) found.push({ bone: spine, base: spine.rotation.clone(), side: 0, kind: "spine" });
+    return found;
+  }, [model]);
   useLayoutEffect(() => {
-    const action = Object.values(actions).find(Boolean);
-    action?.reset().fadeIn(0.25).play();
-    return () => { action?.fadeOut(0.2); };
-  }, [actions]);
+    const all = names.map((name) => ({ name, action: actions[name] })).filter((item) => item.action);
+    const preferred = pose === "walk"
+      ? /walk|run|locomotion|move/i
+      : action === "le" || pose === "kneel" ? /kneel|bow|prostrate/i
+      : action === "thien" || pose === "sit" ? /sit|meditat/i
+      : action === "chap" ? /pray|idle|stand/i
+      : /idle|stand|breath/i;
+    const chosen = all.find((item) => preferred.test(item.name)) ?? (pose === "walk" ? all.find((item) => /walk|run|move/i.test(item.name)) : undefined) ?? all[0];
+    if (chosen?.action) chosen.action.reset().fadeIn(0.2).play();
+    return () => { chosen?.action?.fadeOut(0.15); };
+  }, [actions, names, pose, action]);
+  useFrame(({ clock }, delta) => {
+    // If the GLB has no matching locomotion clip, animate its actual rig bones as a fallback.
+    const walking = pose === "walk";
+    const phase = clock.elapsedTime * 8.5;
+    const smooth = 1 - Math.exp(-delta * 12);
+    for (const item of bonePoses) {
+      const target = item.kind === "arm" && walking ? Math.sin(phase) * 0.42 * item.side
+        : item.kind === "leg" && walking ? -Math.sin(phase) * 0.48 * item.side
+        : item.kind === "spine" ? Math.sin(clock.elapsedTime * 2) * 0.012 : 0;
+      item.bone.rotation.x += ((item.base.x + target) - item.bone.rotation.x) * smooth;
+    }
+  });
 
   return (
     <group ref={root}>
-      <primitive object={model} />
-      {hair === "bui" && <mesh position={[center.x, bounds.max.y - size.y * 0.045, center.z - size.z * 0.12]} castShadow>
-        <sphereGeometry args={[scale * 0.075, 16, 12]} />
-        <meshStandardMaterial color={hairColor} roughness={0.9} />
-      </mesh>}
-      {hair === "dai" && <mesh position={[center.x, bounds.min.y + size.y * 0.79, center.z - size.z * 0.19]} rotation-x={-0.12} castShadow>
-        <capsuleGeometry args={[scale * 0.065, size.y * 0.18, 5, 10]} />
-        <meshStandardMaterial color={hairColor} roughness={0.92} />
-      </mesh>}
-      {accessory === "neck_mala" && <group position={[center.x, neckY, center.z + size.z * 0.015]}>
-        <mesh rotation-x={Math.PI / 2} castShadow>
-          <torusGeometry args={[scale * 0.145, scale * 0.018, 8, 48]} />
-          <meshStandardMaterial color="#70452d" roughness={0.72} />
-        </mesh>
-        <mesh position={[0, -scale * 0.14, scale * 0.01]}>
-          <sphereGeometry args={[scale * 0.035, 12, 10]} />
-          <meshStandardMaterial color="#c49a54" metalness={0.2} roughness={0.55} />
-        </mesh>
-      </group>}
-      {accessory === "wrist_mala" && [-1, 1].map((side) => <mesh key={side} position={[center.x + side * scale * 0.24, bounds.min.y + size.y * 0.58, center.z + size.z * 0.12]} rotation-x={Math.PI / 2}>
-        <torusGeometry args={[scale * 0.055, scale * 0.014, 7, 24]} />
-        <meshStandardMaterial color="#70452d" roughness={0.8} />
-      </mesh>)}
-      {accessory === "shoulder_sash" && <mesh position={[center.x, bounds.min.y + size.y * 0.64, center.z + size.z * 0.18]} rotation-z={-0.38} castShadow>
-        <boxGeometry args={[scale * 0.12, size.y * 0.42, scale * 0.025]} />
-        <meshStandardMaterial color="#c49a54" roughness={0.75} />
-      </mesh>}
+      <group position={[-center.x * unitScale, -bounds.min.y * unitScale, -center.z * unitScale]} scale={unitScale}>
+        <primitive object={model} />
+        {hair === "bui" && <mesh position={[center.x, bounds.max.y - size.y * 0.045, center.z - size.z * 0.12]} castShadow>
+          <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
+          <meshStandardMaterial color={hairColor} roughness={0.9} />
+        </mesh>}
+        {hair === "dai" && <mesh position={[center.x, bounds.min.y + size.y * 0.79, center.z - size.z * 0.19]} rotation-x={-0.12} castShadow>
+          <capsuleGeometry args={[Math.max(size.x, size.z) * 0.075, size.y * 0.18, 5, 10]} />
+          <meshStandardMaterial color={hairColor} roughness={0.92} />
+        </mesh>}
+        {accessory === "neck_mala" && <group position={[center.x, neckY, center.z + size.z * 0.04]}>
+          <mesh rotation-x={Math.PI / 2} castShadow>
+            <torusGeometry args={[size.y * 0.075, size.y * 0.009, 8, 48]} />
+            <meshStandardMaterial color="#70452d" roughness={0.72} />
+          </mesh>
+          <mesh position={[0, -size.y * 0.09, size.z * 0.025]}>
+            <sphereGeometry args={[size.y * 0.018, 12, 10]} />
+            <meshStandardMaterial color="#c49a54" metalness={0.2} roughness={0.55} />
+          </mesh>
+        </group>}
+        {accessory === "wrist_mala" && [-1, 1].map((side) => <mesh key={side} position={[center.x + side * size.x * 0.31, bounds.min.y + size.y * 0.52, center.z + size.z * 0.20]} rotation-x={Math.PI / 2}>
+          <torusGeometry args={[size.y * 0.028, size.y * 0.008, 7, 24]} />
+          <meshStandardMaterial color="#70452d" roughness={0.8} />
+        </mesh>)}
+        {accessory === "shoulder_sash" && <mesh position={[center.x + size.x * 0.08, bounds.min.y + size.y * 0.63, center.z + size.z * 0.22]} rotation-z={-0.28} rotation-y={0.12} castShadow>
+          <boxGeometry args={[Math.max(size.x * 0.16, 0.035), size.y * 0.40, Math.max(size.z * 0.055, 0.018)]} />
+          <meshStandardMaterial color="#c49a54" roughness={0.75} />
+        </mesh>}
+      </group>
     </group>
   );
 }
