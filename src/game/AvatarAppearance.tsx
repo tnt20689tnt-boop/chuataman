@@ -88,8 +88,8 @@ export function AnimatedAvatarAppearance({
   return (
     <group ref={root}>
       <group position={[-center.x * unitScale, -bounds.min.y * unitScale, -center.z * unitScale]} scale={unitScale}>
-        {/* Correct the GLB's reversed forward direction relative to the game (+Z). */}
-        <group rotation-y={Math.PI}>
+        {/* The supplied GLBs face local +X; rotate +90 degrees so forward matches game +Z. */}
+        <group rotation-y={Math.PI / 2}>
           <primitive object={model} />
           {hair === "bui" && <mesh position={[center.x, bounds.max.y - size.y * 0.045, center.z - size.z * 0.12]} castShadow>
             <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
