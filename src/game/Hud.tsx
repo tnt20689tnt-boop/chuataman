@@ -610,9 +610,8 @@ function AuthPanel() {
 }
 
 function AvatarPanel({ initial }: { initial: Avatar | null }) {
-  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", modelId: "male_animated", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0], accessory: "neck_mala" });
+  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0], accessory: "neck_mala" });
   const gender = a.gender ?? "nam";
-  const selectedModel = gender === "nu" ? "female_animated" : "male_animated";
   const accessoryOptions: { id: AvatarAccessory; label: string }[] = [
     { id: "neck_mala", label: "📿 Tràng hạt đeo cổ" },
     { id: "wrist_mala", label: "Tràng hạt đeo tay" },
@@ -627,7 +626,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       <div className="mb-3 flex gap-2">
         {(["nam", "nu"] as const).map((nextGender) => (
           <button key={nextGender} className="hud-swatch" data-active={gender === nextGender}
-            onClick={() => setA({ ...a, gender: nextGender, modelId: nextGender === "nam" ? "male_animated" : "female_animated" })}>
+            onClick={() => setA({ ...a, gender: nextGender })}>
             {nextGender === "nam" ? "👨 Nam" : "👩 Nữ"}
           </button>
         ))}
@@ -673,7 +672,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
         className="hud-primary w-full"
         disabled={!ok}
         onClick={() => {
-          saveAvatar({ ...a, gender, modelId: selectedModel, name: a.name.trim() });
+          saveAvatar({ ...a, gender, name: a.name.trim() });
           setUI({ panel: null });
           ringBell(0.4);
         }}
