@@ -2,7 +2,6 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html, useGLTF, useAnimations } from "@react-three/drei";
-import { AnimatedAvatarAppearance } from "./AvatarAppearance";
 import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose } from "./sim";
 import { player, useUI } from "./store";
 import { moveVisitor } from "./collision";
@@ -280,8 +279,6 @@ export function PlayerAvatar() {
       headRef.current.rotation.z = Math.sin(t * 1.05) * 0.008;
     }
   });
-
-  if (avatar?.modelId === "male_animated" || avatar?.modelId === "female_animated") return <group ref={g}><AnimatedAvatarAppearance modelId={avatar.modelId} outfit={avatar.outfit} hair={avatar.hair} hairColor={avatar.hairColor} accessory={avatar.accessory ?? "neck_mala"} pose={pose} action={action} /></group>;
 
   return (
     <group ref={g}>
