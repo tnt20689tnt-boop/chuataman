@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 import { getUI, player } from "./store";
-import { type Hair, type Outfit } from "./sim";
-import { type AvatarModelId, type AvatarAccessory } from "./store";
+import { type Hair, type Outfit, type Pose } from "./sim";
+import { type AvatarModelId, type AvatarAccessory, type Action } from "./store";
 import { getAuthClient } from "./auth";
 
 export interface TempleChatMessage { id: string; name: string; text: string; at: number; }
@@ -26,6 +26,8 @@ export interface RemotePlayer {
   hairColor?: string;
   accessory?: AvatarAccessory;
   modelId?: AvatarModelId;
+  pose?: Pose;
+  action?: Action;
 }
 
 interface MultiplayerSnapshot {
@@ -302,6 +304,8 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           hairColor: avatar?.hairColor ?? "#1b1410",
           accessory: avatar?.accessory ?? "neck_mala",
           modelId: avatar?.modelId ?? (avatar?.gender === "nu" ? "female_animated" : "male_animated"),
+          pose: getUI().pose,
+          action: getUI().action,
         };
         const trackStatus = await activeChannel.track(initialPresence);
         // The page may have signed out or reconnected while track() was pending.
@@ -341,6 +345,8 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
                 hairColor: currentAvatar?.hairColor ?? "#1b1410",
           accessory: currentAvatar?.accessory ?? "neck_mala",
                 modelId: currentAvatar?.modelId ?? (currentAvatar?.gender === "nu" ? "female_animated" : "male_animated"),
+                pose: getUI().pose,
+                action: getUI().action,
                 seq: movementSeq,
               } satisfies RemotePlayer);
             }
@@ -357,6 +363,8 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
             hairColor: currentAvatar?.hairColor ?? "#1b1410",
           accessory: currentAvatar?.accessory ?? "neck_mala",
                 modelId: currentAvatar?.modelId ?? (currentAvatar?.gender === "nu" ? "female_animated" : "male_animated"),
+            pose: getUI().pose,
+            action: getUI().action,
           };
           // Broadcast movement frequently enough for smooth remote motion,
           // but update Presence only every 3 seconds to avoid sync storms.
