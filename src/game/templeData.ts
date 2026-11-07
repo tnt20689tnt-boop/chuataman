@@ -1,6 +1,16 @@
 // Shared architectural footprint: rendering and collision use the same placement.
 export const HALL = { x: 0, z: -62, floor: 1.2, halfW: 23, halfD: 15, stairW: 14 };
-export const BUILDINGS = [
+export interface TempleBuilding {
+  id: string;
+  label: string;
+  x: number;
+  z: number;
+  w: number;
+  d: number;
+  h: number;
+  kind: "ancestral" | "meditation" | "lecture" | "guest" | "library";
+}
+export const BUILDINGS: readonly TempleBuilding[] = [
   { id: "to", label: "NHÀ THỜ TỔ", x: -42, z: -62, w: 26, d: 17, h: 7, kind: "ancestral" },
   { id: "thienDuong", label: "THIỀN ĐƯỜNG", x: -42, z: -15, w: 24, d: 18, h: 6, kind: "meditation" },
   { id: "nhaGiang", label: "NHÀ GIẢNG PHÁP", x: 42, z: -62, w: 26, d: 18, h: 7, kind: "lecture" },

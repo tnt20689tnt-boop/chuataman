@@ -79,8 +79,8 @@ export function AnimatedAvatarAppearance({
       const values = track.values as Float32Array;
       const stride = track.getValueSize();
       if (stride < 3 || values.length < stride) return false;
-      const firstX = values[0];
-      const firstZ = values[2];
+      const firstX = values[0] ?? 0;
+      const firstZ = values[2] ?? 0;
       for (let i = 0; i + 2 < values.length; i += stride) {
         values[i] = firstX;
         values[i + 2] = firstZ;
@@ -108,7 +108,7 @@ export function AnimatedAvatarAppearance({
     // Some supplied GLBs contain a walk clip but no separate run clip.
     // In that case keep the walk cycle and speed up its cadence to match
     // the faster world movement instead of letting the feet lag behind.
-    const selected = desired === "run" && !actions.run ? "walk" : desired;
+    const selected = desired === "run" && !actions["run"] ? "walk" : desired;
     const playbackRate = desired === "run" ? (selected === "walk" ? 1.85 : 1.25) : 1;
 
     // Run may use the same walk clip, so update its playback rate even when
@@ -124,7 +124,7 @@ export function AnimatedAvatarAppearance({
       next.reset();
       next.enabled = true;
       next.setEffectiveTimeScale(playbackRate);
-      const oneShot = selected === "prayer" || selected === "kneel" || selected === "turn";
+      const oneShot = selected === "prayer" || selected === "kneel";
       next.setLoop(oneShot ? THREE.LoopOnce : THREE.LoopRepeat, oneShot ? 1 : Infinity);
       next.clampWhenFinished = oneShot;
       next.fadeIn(0.12).play();

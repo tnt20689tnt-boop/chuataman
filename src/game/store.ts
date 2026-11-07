@@ -75,7 +75,7 @@ export function loadAvatar(): Avatar | null {
   }
 }
 export function saveAvatar(a: Avatar) {
-  const originalAvatar = { ...a, modelId: a.gender === "nu" ? "female_animated" : "male_animated" };
+  const originalAvatar: Avatar = { ...a, modelId: a.gender === "nu" ? "female_animated" : "male_animated" };
   localStorage.setItem(AV_KEY, JSON.stringify(originalAvatar));
   setUI({ avatar: originalAvatar });
 }

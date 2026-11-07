@@ -244,7 +244,7 @@ function Controller() {
   const isControlledAvatar = (object: THREE.Object3D) => {
     let current: THREE.Object3D | null = object;
     while (current) {
-      if (current.userData?.cameraIgnore === true) return true;
+      if (current.userData?.["cameraIgnore"] === true) return true;
       current = current.parent;
     }
     return false;

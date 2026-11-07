@@ -4,6 +4,7 @@ import { getUI, player } from "./store";
 import { type Hair, type Outfit, type Pose } from "./sim";
 import { type AvatarModelId, type AvatarAccessory, type Action } from "./store";
 import { getAuthClient } from "./auth";
+import { reconcilePresencePlayers, type PresenceSyncPlayer } from "./multiplayerState";
 
 export interface TempleChatMessage { id: string; name: string; text: string; at: number; }
 
@@ -12,7 +13,7 @@ let chatMessages: TempleChatMessage[] = [];
 export interface TemplePrayer { id: string; name: string; text: string; at: number; }
 let sharedPrayers: TemplePrayer[] = [];
 
-export interface RemotePlayer {
+export interface RemotePlayer extends PresenceSyncPlayer {
   id: string;
   name: string;
   x: number;
@@ -21,6 +22,8 @@ export interface RemotePlayer {
   updatedAt: number;
   // Monotonic per-session sequence; unlike Date.now(), this is not affected by clock skew between devices.
   seq?: number;
+  // Source timestamp is compared only for equality, never used as a cross-device clock.
+  presenceStamp?: number;
   outfit?: Outfit;
   hair?: Hair;
   hairColor?: string;
@@ -146,32 +149,8 @@ export function useMultiplayerConnected() {
 
 function readPresence(channelRef: RealtimeChannel) {
   const state = channelRef.presenceState<RemotePlayer>();
-  // Presence sync can briefly omit a peer while Realtime is reconciling.
-  // Merge instead of replacing the whole list, and never let an older
-  // Presence payload overwrite a newer player_move broadcast.
-  const merged = new Map(snapshot.players.map((peer) => [peer.id, peer]));
-  for (const [presenceKey, entries] of Object.entries(state)) {
-    if (presenceKey === clientId) continue;
-    for (const meta of entries ?? []) {
-      const id = typeof meta.id === "string" && meta.id ? meta.id : presenceKey;
-      if (id === clientId) continue;
-      const previous = merged.get(id);
-      const receivedSeq = Number.isFinite(meta.seq) ? Number(meta.seq) : 0;
-      if (previous && Number(previous.seq ?? 0) > receivedSeq) continue;
-      merged.set(id, {
-        ...meta,
-        id,
-        name: typeof meta.name === "string" && meta.name.trim() ? meta.name.slice(0, 24) : "Phật tử",
-        x: Number.isFinite(meta.x) ? meta.x : previous?.x ?? 0,
-        z: Number.isFinite(meta.z) ? meta.z : previous?.z ?? 21,
-        rot: Number.isFinite(meta.rot) ? meta.rot : previous?.rot ?? Math.PI,
-        // Store local receipt time for stale-peer cleanup; never compare device clocks.
-        updatedAt: Date.now(),
-        seq: receivedSeq,
-      });
-    }
-  }
-  publish({ connected: true, players: [...merged.values()], roomId: currentRoomId });
+  const players = reconcilePresencePlayers(snapshot.players, state, clientId, Date.now());
+  publish({ connected: true, players, roomId: currentRoomId });
 }
 
 export function connectMultiplayer() {
@@ -219,15 +198,31 @@ export function switchMultiplayerRoom(roomId: string) {
   connectMultiplayer();
 }
 
+function scheduleReconnect(activeChannel: RealtimeChannel, attempt: number) {
+  publish({ ...snapshot, connected: false, roomId: currentRoomId });
+  if (timer) clearInterval(timer);
+  timer = null;
+  if (presenceTimer) clearInterval(presenceTimer);
+  presenceTimer = null;
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    if (attempt !== connectionAttempt || channel !== activeChannel) return;
+    channel = null;
+    if (client) void client.removeChannel(activeChannel);
+    client = null;
+    connectMultiplayer();
+  }, 2500);
+}
+
 function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUserId: string, attempt: number) {
   if (channel) return;
   clientId = authenticatedUserId;
-  movementSeq = 0;
 
   client = authenticatedClient;
 
   // This is one shared temple world: visitors must see one another across every zone.
-  channel = client.channel("tam-an-world:chung", {
+  channel = client.channel(`tam-an-world:${currentRoomId}`, {
     config: {
       presence: { key: clientId },
       broadcast: { self: false },
@@ -310,7 +305,11 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
         const trackStatus = await activeChannel.track(initialPresence);
         // The page may have signed out or reconnected while track() was pending.
         if (attempt !== connectionAttempt || channel !== activeChannel) return;
-        if (trackStatus !== 'ok') console.warn("Chùa Tâm An: chưa đăng ký được Presence.", trackStatus);
+        if (trackStatus !== 'ok') {
+          console.warn("Chùa Tâm An: chưa đăng ký được Presence.", trackStatus);
+          scheduleReconnect(activeChannel, attempt);
+          return;
+        }
         let lastPresenceAt = Date.now();
         // Reconcile periodically in case a presence sync event was missed.
         readPresence(activeChannel);
@@ -377,23 +376,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
         // Keep the last known remote avatars briefly to avoid visual flicker
         // while Realtime recovers, then rebuild the channel if it did not.
-        publish({ ...snapshot, connected: false, roomId: currentRoomId });
-        if (timer) clearInterval(timer);
-        timer = null;
-        if (presenceTimer) clearInterval(presenceTimer);
-        presenceTimer = null;
-        if (!reconnectTimer) {
-          reconnectTimer = setTimeout(() => {
-            reconnectTimer = null;
-            if (attempt !== connectionAttempt) return;
-            // Do not let an obsolete channel's retry tear down a newer connection.
-            if (channel !== activeChannel || attempt !== connectionAttempt) return;
-            channel = null;
-            if (client) void client.removeChannel(activeChannel);
-            client = null;
-            connectMultiplayer();
-          }, 2500);
-        }
+        scheduleReconnect(activeChannel, attempt);
       }
     });
 }
