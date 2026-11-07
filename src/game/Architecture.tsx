@@ -672,10 +672,9 @@ export function Pond({ position, w, d }: { position: [number, number, number]; w
     };
     return Array.from({ length: 116 }, (_, i) => {
       const side = i % 2 === 0 ? -1 : 1;
-      const cluster = Math.floor(i / 2) % 9;
       const clusterX = 3.2 + rand() * Math.max(0.8, w * 0.5 - 4.2);
       const clusterZ = -d * 0.42 + rand() * d * 0.84;
-      const x = side * Math.min(w * 0.46, clusterX + (rand() - 0.5) * 2.8);
+      const x = side * Math.max(3.0, Math.min(w * 0.46, clusterX + (rand() - 0.5) * 2.8));
       const z = Math.max(-d * 0.46, Math.min(d * 0.46, clusterZ + (rand() - 0.5) * 4.2));
       const size = 0.2 + rand() * 0.8;
       return [x, z, size] as [number, number, number];
