@@ -5,7 +5,6 @@ import { Html, useGLTF, useAnimations } from "@react-three/drei";
 import { HAIR_COLORS, OUTFIT_COLORS, makeCrowd, walkerPos, type Npc, type Pose } from "./sim";
 import { getUI, player, setUI, useUI } from "./store";
 import { moveVisitor } from "./collision";
-import { AnimatedAvatarAppearance } from "./AvatarAppearance";
 import type { CompletedInteractionAction } from "./interactionAnimation";
 
 const SKIN = "#f4d6bd";
@@ -214,7 +213,6 @@ export function PlayerAvatar() {
   const avatar = useUI((s) => s.avatar);
   const avatarPreview = useUI((s) => s.avatarPreview);
   const displayedAvatar = avatarPreview ?? avatar;
-  const modelId = displayedAvatar?.gender === "nu" ? "female_animated" : "male_animated";
   const pose = useUI((s) => s.pose);
   const action = useUI((s) => s.action);
   const g = useRef<THREE.Group>(null);
@@ -258,8 +256,7 @@ export function PlayerAvatar() {
     }
     // Custom GLB avatars already contain their own full-body walk/idle animation.
     // Do not add a second whole-body bounce on top of the exported animation.
-    const customModel = Boolean(displayedAvatar && pose !== "lie");
-    g.current.position.y = player.y + (customModel ? 0 : walking
+    g.current.position.y = player.y + (walking
       ? Math.abs(Math.sin(avatarTime * 8.5)) * 0.025
       : Math.sin(avatarTime * 1.8) * 0.008);
     const prayerPose = action === "chap" || action === "le" || action === "thien";
@@ -297,18 +294,7 @@ export function PlayerAvatar() {
 
   return (
     <group ref={g} userData={{ cameraIgnore: true }}>
-      {displayedAvatar && pose !== "lie" ? (
-        <AnimatedAvatarAppearance
-          key={modelId}
-          modelId={modelId}
-          outfit={displayedAvatar.outfit}
-          outfitColor={displayedAvatar.outfitColor}
-          hairColor={displayedAvatar.hairColor}
-          pose={pose}
-          action={action}
-          onActionComplete={completePlayerInteraction}
-        />
-      ) : (
+      {pose !== "lie" ? (
       <group>
       <mesh ref={robeRef} position={[0, 0, 0]} scale={[sxz, sy, sxz]} castShadow>
         <primitive object={robeGeometry} attach="geometry" />
@@ -546,7 +532,7 @@ export function PlayerAvatar() {
         </group>
       )}
       </group>
-      )}
+      ) : null}
       <Html position={[0, hy + 1.0, 0]} center distanceFactor={14} zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
         <div className="name-tag name-tag-self">{displayedAvatar?.name ?? "Phật tử"}</div>
       </Html>
