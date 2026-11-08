@@ -56,6 +56,8 @@ describe('PR9 visitor access', () => {
     expect(isBlocked(18, 52)).toBe(true); // Right pond, west of bridge.
     expect(isBlocked(38, 52)).toBe(true); // Right pond, east of bridge.
     expect(isBlocked(28, 52)).toBe(false); // Stone bridge corridor.
+    expect(isBlocked(26.5, 52)).toBe(true); // West bridge rail.
+    expect(isBlocked(29.5, 52)).toBe(true); // East bridge rail.
     expect(surfaceHeight(28, 52)).toBeCloseTo(1.55);
   });
   it('lets visitors cross the full 40m lotus bridge and both landings', () => {
