@@ -118,7 +118,7 @@ export function walkerPos(n: Npc, t: number) {
 // Speeds are in scene units/second (the 1.8-unit avatar represents an adult).
 // The 2.2m avatar needs a clearly usable walking pace; collision still uses
 // swept substeps, so the faster walk/run speeds remain safe around geometry.
-export const MOVE = { SPEED: 5.0, RUN: 8.0, TURN: 14 };
+export const MOVE = { SPEED: 5.8, RUN: 9.0, TURN: 14 };
 export const WORLD_LIMIT = 140;
 
 export function stepPlayer(
