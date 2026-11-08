@@ -68,6 +68,8 @@ export function AnimatedAvatarAppearance({
         const label = meshName + " " + material.name.toLowerCase();
         if (/hair|toc|ponytail|bun/.test(label) && "color" in material) {
           (material as THREE.MeshStandardMaterial).color.set(hairColor);
+        } else if (/shoe|templeshoes|footwear/.test(label) && "color" in material) {
+          (material as THREE.MeshStandardMaterial).color.set("#3f3029");
         } else if (!/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
           // Tint textured clothing too. The previous !material.map guard made
           // outfit changes appear to do nothing for the custom GLB materials.
@@ -272,27 +274,6 @@ export function AnimatedAvatarAppearance({
         {/* The GLBs face local +X. Rotate -90 degrees so their forward axis agrees with player.rot and camera-relative movement. */}
         <group rotation-y={-Math.PI / 2}>
           <primitive object={model} />
-          {hair !== "troc" && rig.hairBun && createPortal(
-            <mesh position={[0, size.y * 0.035, 0]} scale={[1, 0.72, 1]} castShadow>
-              <sphereGeometry args={[Math.max(size.x, size.z) * 0.16, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
-              <meshStandardMaterial color={hairColor} roughness={0.9} />
-            </mesh>,
-            rig.hairBun.bone,
-          )}
-          {hair === "dai" && rig.hairTail && createPortal(
-            <mesh position={[0, -size.y * 0.045, -size.z * 0.13]} scale={[0.82, 1.45, 0.56]} castShadow>
-              <sphereGeometry args={[Math.max(size.x, size.z) * 0.16, 18, 14]} />
-              <meshStandardMaterial color={hairColor} roughness={0.92} />
-            </mesh>,
-            rig.hairTail.bone,
-          )}
-          {hair === "bui" && rig.hairBun && createPortal(
-            <mesh position={[0, size.y * 0.13, -size.z * 0.03]} castShadow>
-              <sphereGeometry args={[Math.max(size.x, size.z) * 0.105, 16, 12]} />
-              <meshStandardMaterial color={hairColor} roughness={0.9} />
-            </mesh>,
-            rig.hairBun.bone,
-          )}
         </group>
       </group>
     </group>
