@@ -211,8 +211,8 @@ function Controller() {
       if (!drag || drag.id !== e.pointerId) return;
       // Calibrated pointer response: responsive on touchpads, but damped
       // enough to avoid sudden spins on a phone or mouse.
-      cam.yaw -= (e.clientX - drag.x) * 0.0045;
-      cam.pitch = clamp(cam.pitch + (e.clientY - drag.y) * 0.003, 0.05, 1.3);
+      cam.yaw -= (e.clientX - drag.x) * 0.006;
+      cam.pitch = clamp(cam.pitch + (e.clientY - drag.y) * 0.004, 0.05, 1.3);
       drag.x = e.clientX;
       drag.y = e.clientY;
     };
@@ -330,8 +330,8 @@ function Controller() {
       safeDistance.current = THREE.MathUtils.clamp(available, 1.9, desiredDistance);
     }
 
-    const followAlpha = 1 - Math.exp(-dt * 20);
-    const lookAlpha = 1 - Math.exp(-dt * 24);
+    const followAlpha = 1 - Math.exp(-dt * 32);
+    const lookAlpha = 1 - Math.exp(-dt * 36);
     safeCamera.copy(target).addScaledVector(cameraDirection, safeDistance.current);
     // Smooth both the follow point and camera position. This removes the
     // one-frame snaps caused by collision checks while keeping the avatar
