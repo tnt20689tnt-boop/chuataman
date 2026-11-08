@@ -15,13 +15,12 @@ const solids: Solid[] = [
   { id: 'attendant-right', x: 7.2, z: -68.1, w: 4.35, d: 3.35 },
   // Double-size donation box mounted along the left inner wall of the main hall.
   { id: 'main-hall-donation-box', x: -18.445, z: -62, w: 2.5, d: 3.4 },
-  { id: 'bell', x: 55, z: -112, w: 10, d: 10 },
   { id: 'tower', x: -55, z: -112, w: 10, d: 10 },
-  { id: 'waterfall', x: -38, z: -12, w: 20, d: 17 },
+  { id: 'waterfall', x: 0, z: -147, w: 20, d: 12 },
   // 22m x 24m lotus pond, proportioned to the 17m-wide Tam Quan.
   // Keep the central 3.2m bridge and both approaches open.
-  { id: 'pond-left', x: -5.3, z: 8, w: 7.4, d: 24 },
-  { id: 'pond-right', x: 5.3, z: 8, w: 7.4, d: 24 },
+  { id: 'pond-left', x: 24.7, z: 12, w: 7.4, d: 24 },
+  { id: 'pond-right', x: 35.3, z: 12, w: 7.4, d: 24 },
   // The rendered bridge rails are decorative and must not trap a visitor who
   // drifts slightly sideways on a mobile joystick. Pond water remains solid.
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
@@ -67,7 +66,7 @@ for (const b of BUILDINGS) {
     }
   }
 }
-for (const z of [24, 112]) for (const x of [-8, -3.6, 3.6, 8]) {
+for (const z of [112]) for (const x of [-8, -3.6, 3.6, 8]) {
   solids.push({ id: 'gate-column', x, z, w: 1.25, d: 1.65 });
 }
 // Solid collision around every rendered pavilion column; the generous footprint
@@ -107,46 +106,44 @@ export function surfaceHeight(x: number, z: number) {
     if (Math.abs(x - mx) <= 1.175 && Math.abs(z - mz) <= 0.875) return HALL.floor + 0.29;
   }
   // The eight raised stepping stones in the meditation garden are real walkable
-  // surfaces, matching Garden() in TempleCampus.tsx (garden origin -104, 25).
+  // surfaces, matching Garden() in TempleCampus.tsx (garden origin -34, 24).
   for (let i = 0; i < 8; i++) {
-    const sx = -104 + Math.sin(i * 0.42) * 2.1;
-    const sz = 37 - i * 2.15;
+    const sx = -34 + Math.sin(i * 0.42) * 2.1;
+    const sz = 36 - i * 2.15;
     const radius = 0.72 + (i % 3) * 0.12;
     if (Math.hypot(x - sx, z - sz) <= radius * 0.82) return 0.34;
   }
   if (Math.abs(x - HALL.x) < HALL.halfW && z <= -47 && z >= -77) return HALL.floor;
   // Three 0.4m treads match the visible main-hall staircase exactly.
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
-  // Match the 24 stone slabs: the bridge stays behind the gate and reaches the pavilion steps.
-  // Bridge center is z=8; leave a clear landing between the bridge and the inner gate.
-  if (Math.abs(x) <= 1.0 && z >= -4 && z <= 20) {
-    return 0.45 + Math.sin(((z + 4) / 24) * Math.PI) * 1.1;
+  // Match the 24 stone slabs of the bridge at the right side of the courtyard.
+  if (Math.abs(x - 30) <= 1.0 && z >= 0 && z <= 24) {
+    return 0.45 + Math.sin((z / 24) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
-  // Pavilion deck top is 0.6m; the four 1m-deep steps meet the deck edge exactly.
-  if (Math.abs(x) <= 8 && z >= -27 && z <= -15) return 0.6;
-  // Front steps (toward the bridge): world Z is centered at -21.
-  if (Math.abs(x) <= 2.6) {
-    if (z > -12 && z <= -11) return 0.15;
-    if (z > -13 && z <= -12) return 0.30;
-    if (z > -14 && z <= -13) return 0.45;
-    if (z > -15 && z <= -14) return 0.60;
-    // Back steps.
-    if (z >= -31 && z < -30) return 0.15;
-    if (z >= -30 && z < -29) return 0.30;
-    if (z >= -29 && z < -28) return 0.45;
-    if (z >= -28 && z < -27) return 0.60;
+  // Pavilion deck and steps now sit beside the right-hand lotus pond.
+  const pavilionX = x - 45;
+  const pavilionZ = z - 12;
+  if (Math.abs(pavilionX) <= 8 && Math.abs(pavilionZ) <= 6) return 0.6;
+  if (Math.abs(pavilionX) <= 2.6) {
+    if (pavilionZ > 8 && pavilionZ <= 9) return 0.15;
+    if (pavilionZ > 7 && pavilionZ <= 8) return 0.30;
+    if (pavilionZ > 6 && pavilionZ <= 7) return 0.45;
+    if (pavilionZ > 5 && pavilionZ <= 6) return 0.60;
+    if (pavilionZ >= -10 && pavilionZ < -9) return 0.15;
+    if (pavilionZ >= -9 && pavilionZ < -8) return 0.30;
+    if (pavilionZ >= -8 && pavilionZ < -7) return 0.45;
+    if (pavilionZ >= -7 && pavilionZ < -6) return 0.60;
   }
-  // Left and right side steps: four full-width 1m treads outside the deck.
-  if (Math.abs(z + 21) <= 2.6) {
-    if (x >= -12 && x < -11) return 0.15;
-    if (x >= -11 && x < -10) return 0.30;
-    if (x >= -10 && x < -9) return 0.45;
-    if (x >= -9 && x < -8) return 0.60;
-    if (x > 11 && x <= 12) return 0.15;
-    if (x > 10 && x <= 11) return 0.30;
-    if (x > 9 && x <= 10) return 0.45;
-    if (x > 8 && x <= 9) return 0.60;
+  if (Math.abs(pavilionZ) <= 2.6) {
+    if (pavilionX >= -12 && pavilionX < -11) return 0.15;
+    if (pavilionX >= -11 && pavilionX < -10) return 0.30;
+    if (pavilionX >= -10 && pavilionX < -9) return 0.45;
+    if (pavilionX >= -9 && pavilionX < -8) return 0.60;
+    if (pavilionX > 11 && pavilionX <= 12) return 0.15;
+    if (pavilionX > 10 && pavilionX <= 11) return 0.30;
+    if (pavilionX > 9 && pavilionX <= 10) return 0.45;
+    if (pavilionX > 8 && pavilionX <= 9) return 0.60;
   }
   return 0;
 }

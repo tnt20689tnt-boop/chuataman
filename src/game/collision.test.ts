@@ -37,9 +37,9 @@ describe('PR9 visitor access', () => {
     expect(p.y).toBe(1.2);
   });
   it('keeps visitors out of water while allowing the stone bridge', () => {
-    expect(isBlocked(8, 11)).toBe(true); // Lotus pond water.
-    expect(isBlocked(0, 11)).toBe(false); // Clear stone bridge corridor.
-    expect(surfaceHeight(0, 11)).toBeCloseTo(1.4663);
+    expect(isBlocked(38, 15)).toBe(true); // Lotus pond water on the right.
+    expect(isBlocked(30, 15)).toBe(false); // Clear stone bridge corridor.
+    expect(surfaceHeight(30, 15)).toBeCloseTo(1.4663);
   });
   it('blocks new building walls but leaves their central doors open', () => {
     expect(isBlocked(29.5, -15)).toBe(true); // Left wall of the guest house.
@@ -47,7 +47,7 @@ describe('PR9 visitor access', () => {
     expect(isBlocked(42, -23)).toBe(true); // Back wall of the guest house.
   });
   it('does not report walking when pressed into a solid gate column', () => {
-    const p = { x: 3.6, z: 25.13, y: 0, rot: Math.PI };
+    const p = { x: 3.6, z: 113.13, y: 0, rot: Math.PI };
     expect(stepPlayer(p, { fwd: 1, right: 0, run: false }, 0, 0.05)).toBe(false);
   });
   it('uses responsive walking and running speeds for the enlarged 2.2 m avatar', () => {

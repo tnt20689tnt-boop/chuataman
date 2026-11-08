@@ -63,7 +63,7 @@ function Bridge() {
     ));
     return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 72, 0.08, 6, false);
   }, []);
-  return <group position={[0, 0, 8]} name="Cầu đá hồ sen">
+  return <group position={[30, 0, 12]} name="Cầu đá hồ sen">
     {Array.from({ length: bridgeLength }, (_, i) => <mesh key={i} position={[0, 0.27 + Math.sin((i + 0.5) / bridgeLength * Math.PI) * 1.1, -halfLength + 0.5 + i]} receiveShadow castShadow><boxGeometry args={[3.2, 0.36, 1.06]} /><Surface kind="stone" /></mesh>)}
     {[-1, 1].map(side => <group key={side} position={[side * 1.5, 0, 0]}>
       <mesh geometry={geo} position={[0, 1, 0]} castShadow><meshStandardMaterial color={C.stone} /></mesh>
@@ -98,7 +98,7 @@ function Garden() {
       lean: (i % 2 ? 1 : -1) * 0.08,
     }))
   ), []);
-  return <group position={[-104, 0, 25]} name="Vườn thiền Tâm An">
+  return <group position={[-34, 0, 24]} name="Vườn thiền Tâm An">
     {/* Quiet circular garden, framed by a low carved stone border. */}
     <mesh rotation-x={-Math.PI / 2} position={[0, 0.05, 0]} receiveShadow>
       <circleGeometry args={[15, 80]} /><meshStandardMaterial map={gravel} roughness={1} />
@@ -263,7 +263,6 @@ export function TempleCampus() {
     <BoundaryWalls />
     {BUILDINGS.map(b => <CampusBuilding key={b.id} building={b} />)}
     <Bridge /><Garden />
-    <Inscription text="NHÀ GIẢNG PHÁP" width={9} height={1} position={[60, 4.4, -51.8]} />
     <group position={[-12, 0, 42]}>
       <mesh position={[0, 1.7, 0]} castShadow><boxGeometry args={[5, 3.4, 0.7]} /><Surface kind="stone" /></mesh>
       <Inscription text="CHÙA TÂM AN" width={4.3} height={0.8} position={[0, 2.8, 0.4]} stone />
