@@ -116,8 +116,6 @@ export function AnimatedAvatarAppearance({
     const head = findBone("mixamorigHead");
     const leftHand = findBone("mixamorigLeftHand");
     const rightHand = findBone("mixamorigRightHand");
-    const leftFoot = findBone("mixamorigLeftFoot");
-    const rightFoot = findBone("mixamorigRightFoot");
     const leftForeArm = findBone("mixamorigLeftForeArm");
     const rightForeArm = findBone("mixamorigRightForeArm");
     const wristPoint = (forearm: THREE.Bone | null, hand: THREE.Bone | null) => {
@@ -140,9 +138,6 @@ export function AnimatedAvatarAppearance({
       sash: attachAt(spine, worldPos(spine), new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.42, 0, 0))),
       hairBun: attachAt(head, worldPos(head)),
       hairTail: attachAt(head, worldPos(head), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.14))),
-      robe: attachAt(spine, worldPos(spine)),
-      leftFoot: attachAt(leftFoot, worldPos(leftFoot)),
-      rightFoot: attachAt(rightFoot, worldPos(rightFoot)),
     };
   }, [model]);
   const clips = useMemo(() => {
@@ -297,27 +292,6 @@ export function AnimatedAvatarAppearance({
               <meshStandardMaterial color={hairColor} roughness={0.9} />
             </mesh>,
             rig.hairBun.bone,
-          )}
-          {rig.robe && createPortal(
-            <mesh position={[0, -size.y * 0.18, 0]} scale={[1.08, 1.0, 0.82]} castShadow>
-              <capsuleGeometry args={[Math.max(size.x, size.z) * 0.19, size.y * 0.30, 8, 16]} />
-              <meshStandardMaterial color={outfitColor ?? OUTFIT_COLORS[outfit]} roughness={0.88} />
-            </mesh>,
-            rig.robe.bone,
-          )}
-          {rig.leftFoot && createPortal(
-            <mesh position={[0, size.y * 0.025, size.z * 0.025]} scale={[1.12, 0.62, 1.55]} castShadow>
-              <sphereGeometry args={[Math.max(size.x, size.z) * 0.085, 16, 10]} />
-              <meshStandardMaterial color="#3f3029" roughness={0.9} />
-            </mesh>,
-            rig.leftFoot.bone,
-          )}
-          {rig.rightFoot && createPortal(
-            <mesh position={[0, size.y * 0.025, size.z * 0.025]} scale={[1.12, 0.62, 1.55]} castShadow>
-              <sphereGeometry args={[Math.max(size.x, size.z) * 0.085, 16, 10]} />
-              <meshStandardMaterial color="#3f3029" roughness={0.9} />
-            </mesh>,
-            rig.rightFoot.bone,
           )}
         </group>
       </group>
