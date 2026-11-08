@@ -22,6 +22,7 @@ import { cam, getUI, input, player, setUI } from "./store";
 import { playFootstep, stopFootsteps, setAudioZone } from "./audio";
 import { Surface } from './Materials';
 import { TempleCampus } from './TempleCampus';
+import { SacredLandscape } from './SacredLandscape';
 import { BUILDINGS, SCENE_COLORS as C } from './templeData';
 import { surfaceHeight, setTreeCollisionPoints } from './collision';
 import { teleport } from './store';
@@ -105,7 +106,11 @@ function DayNightCycle({ mobile }: { mobile: boolean }) {
 }
 
 function Ground() {
-  const grass = useMemo(() => grassTexture(), []);
+  const grass = useMemo(() => {
+    const texture = grassTexture();
+    texture.repeat.set(114, 114);
+    return texture;
+  }, []);
   const stone = useMemo(() => stoneTexture(), []);
   const path = useMemo(() => {
     const t = stoneTexture();
@@ -115,7 +120,7 @@ function Ground() {
   return (
     <>
       <mesh rotation-x={-Math.PI / 2} receiveShadow>
-        <planeGeometry args={[420, 420]} />
+        <planeGeometry args={[800, 800]} />
         <meshStandardMaterial map={grass} roughness={1} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, -14]} receiveShadow>
@@ -406,6 +411,7 @@ export default function World() {
       <Ground />
       <Forest points={trees} />
       <Suspense fallback={null}>
+      <SacredLandscape existingTrees={trees} />
       <MainHall />
       <Gate z={112} />
       <Gate z={24} />
