@@ -30,7 +30,7 @@ interface UIState {
   avatarPreview: Avatar | null;
   action: Action;
   pose: Pose;
-  panel: null | "tour" | "chat" | "phap" | "avatar" | "pray" | "auth" | "rooms" | "audio";
+  panel: null | "tour" | "chat" | "phap" | "avatar" | "pray" | "auth" | "rooms" | "audio" | "map";
   zoneLabel: string;
   sceneReady: boolean;
 }
