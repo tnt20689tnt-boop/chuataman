@@ -3,23 +3,30 @@ import { moveVisitor } from './collision';
 import { BUILDINGS } from './templeData';
 
 export type Pose = "stand" | "walk" | "sit" | "kneel" | "pray" | "lie";
-export type Outfit = "lam" | "trang" | "nau" | "tusi" | "vang";
+export type Outfit = "lam" | "trang" | "nau" | "tusi" | "tusi_nau" | "vang_nghe" | "xam" | "lam_dam";
 export type Gender = "nam" | "nu";
 
 export const OUTFIT_COLORS: Record<Outfit, string> = {
   lam: "#6f8fa8", // áo lam
   trang: "#ecebe4", // áo tràng trắng
   nau: "#7a5a3c", // áo tràng nâu
-  tusi: "#c9772b", // tu sĩ (y vàng đậm)
-  vang: "#d9a93a", // áo vàng
+  tusi: "#d5a52f", // y tu sĩ vàng
+  tusi_nau: "#76513a", // y tu sĩ nâu
+  vang_nghe: "#b87920", // y tu sĩ vàng nghệ
+  xam: "#85888a", // áo tràng xám
+  lam_dam: "#254f72", // tu hành xanh lam đậm
 };
 export const OUTFIT_LABEL: Record<Outfit, string> = {
   lam: "Áo lam",
   trang: "Áo tràng trắng",
   nau: "Áo tràng nâu",
-  tusi: "Y tu sĩ",
-  vang: "Áo vàng",
+  tusi: "Y tu sĩ vàng",
+  tusi_nau: "Y tu sĩ nâu",
+  vang_nghe: "Y tu sĩ vàng nghệ",
+  xam: "Áo tràng xám",
+  lam_dam: "Tu hành xanh lam đậm",
 };
+export const OUTFIT_COLOR_OPTIONS = ["#6f8fa8", "#254f72", "#ecebe4", "#85888a", "#7a5a3c", "#76513a", "#d5a52f", "#b87920"] as const;
 export const HAIR_COLORS: [string, ...string[]] = ["#1b1410", "#2b1d14", "#3a2a1e", "#151515"];
 export type Hair = "troc" | "ngan" | "bui" | "dai";
 export const HAIR_LABEL: Record<Hair, string> = {
@@ -80,7 +87,7 @@ export function makeCrowd(count = 1000, seed = 7): Npc[] {
     else if (row < 14) pose = p < 0.75 ? "sit" : "pray";
     else pose = p < 0.35 ? "walk" : p < 0.7 ? "stand" : "pray";
     const o = r();
-    const outfit: Outfit = o < 0.08 ? "tusi" : o < 0.45 ? "lam" : o < 0.7 ? "trang" : o < 0.9 ? "nau" : "vang";
+    const outfit: Outfit = o < 0.08 ? "tusi" : o < 0.45 ? "lam" : o < 0.7 ? "trang" : o < 0.9 ? "nau" : "vang_nghe";
     const gender: Gender = outfit === "tusi" || r() < 0.5 ? "nam" : "nu";
     const h = r();
     const hair: Hair = outfit === "tusi" ? "troc" : gender === "nam" ? (h < 0.72 ? "ngan" : "bui") : (h < 0.48 ? "bui" : "dai");

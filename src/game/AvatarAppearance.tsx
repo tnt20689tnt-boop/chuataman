@@ -25,10 +25,11 @@ interface BoneAttachment {
 }
 
 export function AnimatedAvatarAppearance({
-  modelId, outfit, hair, hairColor, accessory, pose = "stand", action = "none", onActionComplete,
+  modelId, outfit, outfitColor, hair, hairColor, accessory, pose = "stand", action = "none", onActionComplete,
 }: {
   modelId: "male_animated" | "female_animated";
   outfit: Outfit;
+  outfitColor?: string | undefined;
   hair: Hair;
   hairColor: string;
   accessory: AvatarAccessory;
@@ -65,14 +66,16 @@ export function AnimatedAvatarAppearance({
       const materials = Array.isArray(object.material) ? object.material : [object.material];
       materials.forEach((material) => {
         const label = meshName + " " + material.name.toLowerCase();
-        if (!material.map && /hair|toc|ponytail|bun/.test(label) && "color" in material) {
+        if (/hair|toc|ponytail|bun/.test(label) && "color" in material) {
           (material as THREE.MeshStandardMaterial).color.set(hairColor);
-        } else if (!material.map && !/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
-          (material as THREE.MeshStandardMaterial).color.set(OUTFIT_COLORS[outfit]);
+        } else if (!/skin|body|face|hand|arm|leg|eye|teeth|lash/.test(label) && "color" in material) {
+          // Tint textured clothing too. The previous !material.map guard made
+          // outfit changes appear to do nothing for the custom GLB materials.
+          (material as THREE.MeshStandardMaterial).color.set(outfitColor ?? OUTFIT_COLORS[outfit]);
         }
       });
     });
-  }, [model, outfit, hairColor]);
+  }, [model, outfit, outfitColor, hairColor]);
 
   const bounds = useMemo(() => new THREE.Box3().setFromObject(model), [model]);
   const size = useMemo(() => bounds.getSize(new THREE.Vector3()), [bounds]);

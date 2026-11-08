@@ -301,6 +301,7 @@ export function PlayerAvatar() {
         <AnimatedAvatarAppearance
           modelId={modelId}
           outfit={displayedAvatar.outfit}
+          outfitColor={displayedAvatar.outfitColor}
           hair={displayedAvatar.hair}
           hairColor={displayedAvatar.hairColor}
           accessory={displayedAvatar.accessory ?? "neck_mala"}

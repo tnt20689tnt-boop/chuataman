@@ -1,5 +1,5 @@
 import { memo, Suspense, useEffect, useRef, useState } from "react";
-import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
+import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_COLOR_OPTIONS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
 import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar, type AvatarAccessory } from "./store";
 import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, pauseSpeak, resumeSpeak, subscribeAudioSettings, testFootsteps, updateAudioSettings } from "./audio";
 import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useMultiplayerConnected, useTempleChat, useTemplePrayers } from "./multiplayer";
@@ -610,7 +610,7 @@ function AuthPanel() {
 }
 
 function AvatarPanel({ initial }: { initial: Avatar | null }) {
-  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", outfit: "lam", hair: "ngan", hairColor: HAIR_COLORS[0], accessory: "neck_mala" });
+  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", outfit: "lam", outfitColor: OUTFIT_COLORS.lam, hair: "ngan", hairColor: HAIR_COLORS[0], accessory: "neck_mala" });
   const gender = a.gender ?? "nam";
   const accessoryOptions: { id: AvatarAccessory; label: string }[] = [
     { id: "neck_mala", label: "📿 Tràng hạt đeo cổ" },
@@ -641,10 +641,19 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       </div>
       <div className="mb-1 text-sm font-semibold text-foreground">Bộ trang phục</div>
       <div className="mb-4 flex flex-wrap gap-2">
-        {(["lam", "trang", "nau", "tusi", "vang"] as Outfit[]).map((o) => (
-          <button key={o} className="hud-swatch" data-active={a.outfit === o} onClick={() => update({ ...a, outfit: o, hair: o === "tusi" ? "troc" : a.hair })}>
+        {(["lam", "trang", "nau", "tusi", "tusi_nau", "vang_nghe", "xam", "lam_dam"] as Outfit[]).map((o) => (
+          <button key={o} className="hud-swatch" data-active={a.outfit === o} onClick={() => update({ ...a, outfit: o, outfitColor: OUTFIT_COLORS[o], hair: o === "tusi" || o === "tusi_nau" || o === "vang_nghe" ? "troc" : a.hair })}>
             <span className="h-4 w-4 rounded-full border border-border" style={{ background: OUTFIT_COLORS[o] }} />
             {OUTFIT_LABEL[o]}
+          </button>
+        ))}
+      </div>
+      <div className="mb-1 text-sm font-semibold text-foreground">Màu trang phục</div>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {OUTFIT_COLOR_OPTIONS.map((color) => (
+          <button key={color} className="hud-swatch h-8 w-8 justify-center p-0" data-active={(a.outfitColor ?? OUTFIT_COLORS[a.outfit]) === color}
+            onClick={() => update({ ...a, outfitColor: color })} aria-label={`Màu ${color}`}>
+            <span className="h-5 w-5 rounded-full border border-border" style={{ background: color }} />
           </button>
         ))}
       </div>

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { Hair, Outfit, Pose } from "./sim";
+import { OUTFIT_COLORS, type Hair, type Outfit, type Pose } from "./sim";
 import { isBlocked, surfaceHeight } from './collision';
 
 // Per-frame mutable state (never put in React state)
@@ -19,6 +19,7 @@ export interface Avatar {
   modelId?: AvatarModelId;
   gender?: "nam" | "nu";
   outfit: Outfit;
+  outfitColor?: string | undefined;
   hair: Hair;
   hairColor: string;
   accessory?: AvatarAccessory;
@@ -67,7 +68,7 @@ export function loadAvatar(): Avatar | null {
   try {
     const raw = localStorage.getItem(AV_KEY);
     if (!raw) return null;
-    const saved = JSON.parse(raw) as Avatar;
+    const saved = normalizeAvatar(JSON.parse(raw) as Avatar);
     // Keep the selected gender mapped to its matching animated GLB character.
     saved.modelId = saved.gender === "nu" ? "female_animated" : "male_animated";
     localStorage.setItem(AV_KEY, JSON.stringify(saved));
@@ -77,9 +78,21 @@ export function loadAvatar(): Avatar | null {
   }
 }
 export function saveAvatar(a: Avatar) {
-  const originalAvatar: Avatar = { ...a, modelId: a.gender === "nu" ? "female_animated" : "male_animated" };
+  const originalAvatar = normalizeAvatar(a);
   localStorage.setItem(AV_KEY, JSON.stringify(originalAvatar));
   setUI({ avatar: originalAvatar, avatarPreview: null });
+}
+
+export function normalizeAvatar(a: Avatar): Avatar {
+  const gender = a.gender === "nu" ? "nu" : "nam";
+  const outfit = a.outfit in OUTFIT_COLORS ? a.outfit : "lam";
+  return {
+    ...a,
+    gender,
+    outfit,
+    outfitColor: a.outfitColor ?? OUTFIT_COLORS[outfit],
+    modelId: gender === "nu" ? "female_animated" : "male_animated",
+  };
 }
 
 export function teleport(x: number, z: number, rot: number) {

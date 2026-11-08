@@ -25,6 +25,7 @@ export interface RemotePlayer extends PresenceSyncPlayer {
   // Source timestamp is compared only for equality, never used as a cross-device clock.
   presenceStamp?: number;
   outfit?: Outfit;
+  outfitColor?: string | undefined;
   hair?: Hair;
   hairColor?: string;
   accessory?: AvatarAccessory;
@@ -295,6 +296,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
           updatedAt: Date.now(),
           seq: movementSeq,
           outfit: avatar?.outfit ?? "lam",
+          outfitColor: avatar?.outfitColor,
           hair: avatar?.hair ?? "ngan",
           hairColor: avatar?.hairColor ?? "#1b1410",
           accessory: avatar?.accessory ?? "neck_mala",
@@ -340,6 +342,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
                 name: currentAvatar?.name || "Phật tử",
                 x: player.x, z: player.z, rot: player.rot, updatedAt: now,
                 outfit: currentAvatar?.outfit ?? "lam",
+                outfitColor: currentAvatar?.outfitColor,
                 hair: currentAvatar?.hair ?? "ngan",
                 hairColor: currentAvatar?.hairColor ?? "#1b1410",
           accessory: currentAvatar?.accessory ?? "neck_mala",
@@ -358,6 +361,7 @@ function startMultiplayer(authenticatedClient: SupabaseClient, authenticatedUser
             x: player.x, z: player.z, rot: player.rot, updatedAt: now,
             seq: ++movementSeq,
             outfit: currentAvatar?.outfit ?? "lam",
+            outfitColor: currentAvatar?.outfitColor,
             hair: currentAvatar?.hair ?? "ngan",
             hairColor: currentAvatar?.hairColor ?? "#1b1410",
           accessory: currentAvatar?.accessory ?? "neck_mala",

@@ -20,7 +20,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
   const [isMoving, setIsMoving] = useState(false);
   const previous = useRef({ x: player.x, z: player.z });
   const phase = useRef(0);
-  const outfit = OUTFIT_COLORS[player.outfit ?? "lam"] ?? OUTFIT_COLORS.lam;
+  const outfit = player.outfitColor ?? OUTFIT_COLORS[player.outfit ?? "lam"] ?? OUTFIT_COLORS.lam;
   const hairColor = player.hairColor ?? HAIR_COLORS[0];
 
   useFrame(({ clock }, delta) => {
@@ -70,6 +70,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
         <AnimatedAvatarAppearance
           modelId={player.modelId}
           outfit={player.outfit ?? "lam"}
+          outfitColor={player.outfitColor}
           hair={player.hair ?? "ngan"}
           hairColor={player.hairColor ?? "#1b1410"}
           accessory={player.accessory ?? "neck_mala"}
