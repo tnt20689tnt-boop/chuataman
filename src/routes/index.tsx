@@ -13,7 +13,11 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Chùa Tâm An – Thế giới tâm linh 3D" },
       { property: "og:description", content: "Ngôi chùa ảo 3D để lễ Phật, thiền định và nghe pháp trực tuyến." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://chuataman.lovable.app/" },
       { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://chuataman.lovable.app/" },
     ],
   }),
   component: Index,
