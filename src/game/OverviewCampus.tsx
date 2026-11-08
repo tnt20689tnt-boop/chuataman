@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import * as THREE from "three";
-import { Buddha, Gate, MainHall, Pavilion, Pond, Roof, Tower, Waterfall } from "./Architecture";
+import { Buddha, Gate, MainHall, Pavilion, Pond, Roof, Tower } from "./Architecture";
 import { Surface } from "./Materials";
 import { Inscription } from "./TempleDetails";
 import { BUILDINGS, SCENE_COLORS as C, type TempleBuilding } from "./templeData";
@@ -178,9 +178,7 @@ export function OverviewCampus() {
     <Pond position={[30, 0, 12]} w={22} d={24} />
     <LotusBridge />
     <Pavilion position={[45, 0, 12]} />
-    {/* The main cascade sits behind the Buddha, leaving the ceremonial approach open. */}
-    <Waterfall position={[0, 0, -181]} />
-    <group position={[0, 0, -155]} name="Tượng Phật lớn và núi thiêng">
+    <group position={[0, 0, -155]} name="Tượng Phật lớn phía sau khuôn viên">
       <mesh position={[0, 0.25, 0]} receiveShadow><cylinderGeometry args={[14, 14, 0.5, 40]} /><meshStandardMaterial color="#cfc3ac" roughness={0.96} /></mesh>
       <Buddha position={[0, 0.5, 0]} scale={0.8} />
     </group>
