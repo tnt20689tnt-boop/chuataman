@@ -120,6 +120,45 @@ function AxialGardens() {
       <mesh rotation-x={-Math.PI / 2} receiveShadow><circleGeometry args={[15, 72]} /><meshStandardMaterial color="#b8ad98" roughness={1} /></mesh>
       <mesh rotation-x={Math.PI / 2} position={[0, 0.12, 0]}><torusGeometry args={[14.55, 0.25, 10, 96]} /><meshStandardMaterial color="#8e8879" roughness={0.92} /></mesh>
       <mesh position={[0, 0.16, -1.8]} rotation-x={-Math.PI / 2}><circleGeometry args={[4.7, 48]} /><meshStandardMaterial color="#557576" roughness={0.25} metalness={0.16} /></mesh>
+      {/* Lotus leaves and blossoms make the meditation pond read clearly from above. */}
+      {Array.from({ length: 15 }, (_, i) => {
+        const a = i * 2.399;
+        const radius = 1.15 + (i % 4) * 0.72;
+        const x = Math.cos(a) * radius;
+        const z = -1.8 + Math.sin(a) * radius * 0.78;
+        return <group key={i} position={[x, 0.22, z]} rotation-y={a}>
+          <mesh rotation-x={-Math.PI / 2} scale={[1, 0.72, 1]}>
+            <circleGeometry args={[0.48 + (i % 3) * 0.06, 24]} />
+            <meshStandardMaterial color={i % 2 ? "#477b4b" : "#5c8a50"} roughness={0.96} side={THREE.DoubleSide} />
+          </mesh>
+          {i % 4 === 0 && <group position={[0, 0.16, 0]}>
+            <mesh position={[0, 0.12, 0]}><sphereGeometry args={[0.14, 14, 10]} /><meshStandardMaterial color="#e99caf" roughness={0.7} /></mesh>
+            {Array.from({ length: 6 }, (_, petal) => <mesh key={petal} position={[Math.cos(petal * Math.PI / 3) * 0.16, 0.1, Math.sin(petal * Math.PI / 3) * 0.16]} scale={[0.8, 0.55, 1]}><sphereGeometry args={[0.12, 12, 10]} /><meshStandardMaterial color="#f4c5d0" roughness={0.72} /></mesh>)}
+          </group>}
+        </group>;
+      })}
+      {/* Low moss stones define the water edge without blocking the walking ring. */}
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = i * Math.PI / 6;
+        const radius = 5.65 + (i % 3) * 0.22;
+        return <mesh key={i} position={[Math.cos(a) * radius, 0.34, -1.8 + Math.sin(a) * radius * 0.82]} scale={[0.75, 0.48, 0.62]} castShadow>
+          <dodecahedronGeometry args={[0.72, 1]} />
+          <meshStandardMaterial color={i % 2 ? "#727c61" : "#898b73"} roughness={1} />
+        </mesh>;
+      })}
+      {/* Bamboo and flowering shrubs stay on the outer rim; the central route remains open. */}
+      {[-1, 1].map((side) => <group key={side} position={[side * 11.6, 0, -1]}>
+        {[0, 1, 2, 3].map((n) => <group key={n} position={[side * (n % 2) * 0.55, 0, n * 2.2 - 3.3]}>
+          <mesh position={[0, 2.1 + (n % 2) * 0.25, 0]} castShadow><cylinderGeometry args={[0.09, 0.13, 4.2 + (n % 2) * 0.5, 8]} /><meshStandardMaterial color="#66804b" roughness={0.88} /></mesh>
+          {[1.2, 2.3, 3.4].map((y) => <mesh key={y} position={[side * 0.28, y, 0]} rotation-z={side * -0.55}><coneGeometry args={[0.12, 0.85, 5]} /><meshStandardMaterial color="#78945b" roughness={0.92} /></mesh>)}
+        </group>)}
+      </group>)}
+      {[-1, 1].map((side) => <group key={side} position={[side * 8.2, 0, 10.2]}>
+        <mesh position={[0, 0.62, 0]} castShadow><cylinderGeometry args={[0.22, 0.32, 1.24, 8]} /><meshStandardMaterial color="#898579" roughness={1} /></mesh>
+        <mesh position={[0, 1.28, 0]}><boxGeometry args={[0.82, 0.14, 0.82]} /><meshStandardMaterial color="#77776d" roughness={1} /></mesh>
+        <mesh position={[0, 1.58, 0]}><boxGeometry args={[0.5, 0.46, 0.5]} /><meshStandardMaterial color="#d9b779" emissive="#d39a4e" emissiveIntensity={0.25} /></mesh>
+        <mesh position={[0, 1.86, 0]}><coneGeometry args={[0.56, 0.24, 4]} /><meshStandardMaterial color="#77776d" roughness={1} /></mesh>
+      </group>)}
       {Array.from({ length: 8 }, (_, i) => <mesh key={i} position={[Math.sin(i * 0.42) * 2.1, 0.2, 12 - i * 2.15]} rotation-y={i * 0.48} castShadow receiveShadow>
         <cylinderGeometry args={[0.72 + (i % 3) * 0.12, 0.82 + (i % 3) * 0.12, 0.28, 7]} /><meshStandardMaterial color={i % 2 ? "#aaa18f" : "#c2b9a6"} roughness={0.96} />
       </mesh>)}
