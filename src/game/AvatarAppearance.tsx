@@ -116,6 +116,8 @@ export function AnimatedAvatarAppearance({
     const head = findBone("mixamorigHead");
     const leftHand = findBone("mixamorigLeftHand");
     const rightHand = findBone("mixamorigRightHand");
+    const leftFoot = findBone("mixamorigLeftFoot");
+    const rightFoot = findBone("mixamorigRightFoot");
     const leftForeArm = findBone("mixamorigLeftForeArm");
     const rightForeArm = findBone("mixamorigRightForeArm");
     const wristPoint = (forearm: THREE.Bone | null, hand: THREE.Bone | null) => {
@@ -138,6 +140,9 @@ export function AnimatedAvatarAppearance({
       sash: attachAt(spine, worldPos(spine), new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.42, 0, 0))),
       hairBun: attachAt(head, worldPos(head)),
       hairTail: attachAt(head, worldPos(head), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.14))),
+      robe: attachAt(spine, worldPos(spine)),
+      leftFoot: attachAt(leftFoot, worldPos(leftFoot)),
+      rightFoot: attachAt(rightFoot, worldPos(rightFoot)),
     };
   }, [model]);
   const clips = useMemo(() => {
@@ -272,59 +277,47 @@ export function AnimatedAvatarAppearance({
         {/* The GLBs face local +X. Rotate -90 degrees so their forward axis agrees with player.rot and camera-relative movement. */}
         <group rotation-y={-Math.PI / 2}>
           <primitive object={model} />
-          {hair === "bui" && rig.hairBun && createPortal(
-            <mesh position={[0, size.y * 0.10, -size.z * 0.02]} castShadow>
-              <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
+          {hair !== "troc" && rig.hairBun && createPortal(
+            <mesh position={[0, size.y * 0.035, 0]} scale={[1, 0.72, 1]} castShadow>
+              <sphereGeometry args={[Math.max(size.x, size.z) * 0.16, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
               <meshStandardMaterial color={hairColor} roughness={0.9} />
             </mesh>,
             rig.hairBun.bone,
           )}
           {hair === "dai" && rig.hairTail && createPortal(
-            <mesh position={[0, size.y * 0.01, -size.z * 0.16]} rotation-x={-0.12} castShadow>
-              <capsuleGeometry args={[Math.max(size.x, size.z) * 0.075, size.y * 0.18, 5, 10]} />
+            <mesh position={[0, -size.y * 0.045, -size.z * 0.13]} scale={[0.82, 1.45, 0.56]} castShadow>
+              <sphereGeometry args={[Math.max(size.x, size.z) * 0.16, 18, 14]} />
               <meshStandardMaterial color={hairColor} roughness={0.92} />
             </mesh>,
             rig.hairTail.bone,
           )}
-          {accessory === "neck_mala" && rig.neckMala && createPortal(
-            <group position={rig.neckMala.pos} quaternion={rig.neckMala.quat}>
-              <mesh rotation-x={Math.PI / 2} castShadow>
-                <torusGeometry args={[size.y * 0.075, size.y * 0.009, 8, 48]} />
-                <meshStandardMaterial color="#70452d" roughness={0.72} />
-              </mesh>
-              <mesh position={[0, -size.y * 0.09, size.z * 0.025]}>
-                <sphereGeometry args={[size.y * 0.018, 12, 10]} />
-                <meshStandardMaterial color="#c49a54" metalness={0.2} roughness={0.55} />
-              </mesh>
-            </group>,
-            rig.neckMala.bone,
+          {hair === "bui" && rig.hairBun && createPortal(
+            <mesh position={[0, size.y * 0.13, -size.z * 0.03]} castShadow>
+              <sphereGeometry args={[Math.max(size.x, size.z) * 0.105, 16, 12]} />
+              <meshStandardMaterial color={hairColor} roughness={0.9} />
+            </mesh>,
+            rig.hairBun.bone,
           )}
-          {accessory === "wrist_mala" && rig.leftWrist && createPortal(
-            <group position={rig.leftWrist.pos} quaternion={rig.leftWrist.quat}>
-              <mesh rotation-x={Math.PI / 2} castShadow>
-                <torusGeometry args={[size.y * 0.028, size.y * 0.008, 7, 24]} />
-                <meshStandardMaterial color="#70452d" roughness={0.8} />
-              </mesh>
-            </group>,
-            rig.leftWrist.bone,
+          {rig.robe && createPortal(
+            <mesh position={[0, -size.y * 0.18, 0]} scale={[1.08, 1.0, 0.82]} castShadow>
+              <capsuleGeometry args={[Math.max(size.x, size.z) * 0.19, size.y * 0.30, 8, 16]} />
+              <meshStandardMaterial color={outfitColor ?? OUTFIT_COLORS[outfit]} roughness={0.88} />
+            </mesh>,
+            rig.robe.bone,
           )}
-          {accessory === "wrist_mala" && rig.rightWrist && createPortal(
-            <group position={rig.rightWrist.pos} quaternion={rig.rightWrist.quat}>
-              <mesh rotation-x={Math.PI / 2} castShadow>
-                <torusGeometry args={[size.y * 0.028, size.y * 0.008, 7, 24]} />
-                <meshStandardMaterial color="#70452d" roughness={0.8} />
-              </mesh>
-            </group>,
-            rig.rightWrist.bone,
+          {rig.leftFoot && createPortal(
+            <mesh position={[0, size.y * 0.025, size.z * 0.025]} scale={[1.12, 0.62, 1.55]} castShadow>
+              <sphereGeometry args={[Math.max(size.x, size.z) * 0.085, 16, 10]} />
+              <meshStandardMaterial color="#3f3029" roughness={0.9} />
+            </mesh>,
+            rig.leftFoot.bone,
           )}
-          {accessory === "shoulder_sash" && rig.sash && createPortal(
-            <group position={rig.sash.pos} quaternion={rig.sash.quat}>
-              <mesh rotation-z={-0.28} rotation-y={0.12} castShadow>
-                <boxGeometry args={[Math.max(size.x * 0.16, 0.035), size.y * 0.40, Math.max(size.z * 0.055, 0.018)]} />
-                <meshStandardMaterial color="#c49a54" roughness={0.75} />
-              </mesh>
-            </group>,
-            rig.sash.bone,
+          {rig.rightFoot && createPortal(
+            <mesh position={[0, size.y * 0.025, size.z * 0.025]} scale={[1.12, 0.62, 1.55]} castShadow>
+              <sphereGeometry args={[Math.max(size.x, size.z) * 0.085, 16, 10]} />
+              <meshStandardMaterial color="#3f3029" roughness={0.9} />
+            </mesh>,
+            rig.rightFoot.bone,
           )}
         </group>
       </group>
