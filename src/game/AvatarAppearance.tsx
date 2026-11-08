@@ -14,6 +14,9 @@ export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
 // the run cycle ~3.65 game units per second. Playback rate = speed / reference
 // keeps footsteps exactly matched to world movement (no foot sliding).
 const GAIT_REFERENCE_SPEED = { walk: 1.07, run: 3.65 };
+// Keep the existing GLB meshes and skeletons, but present both avatars at a
+// consistent adult height about 22% larger than the previous 1.8m.
+const TARGET_AVATAR_HEIGHT = 2.2;
 
 interface BoneAttachment {
   bone: THREE.Bone;
@@ -74,7 +77,7 @@ export function AnimatedAvatarAppearance({
   const bounds = useMemo(() => new THREE.Box3().setFromObject(model), [model]);
   const size = useMemo(() => bounds.getSize(new THREE.Vector3()), [bounds]);
   const center = useMemo(() => bounds.getCenter(new THREE.Vector3()), [bounds]);
-  const unitScale = 1.8 / Math.max(size.y, 0.001);
+  const unitScale = TARGET_AVATAR_HEIGHT / Math.max(size.y, 0.001);
   const neckY = bounds.min.y + size.y * 0.72;
 
   // Accessories and extra hair attach to bones so they follow every animation

@@ -117,7 +117,7 @@ export function walkerPos(n: Npc, t: number) {
 // Player movement — camera relative
 // Speeds are in scene units/second (the 1.8-unit avatar represents an adult).
 // Slightly brisker walk and responsive run, while keeping collision steps manageable.
-export const MOVE = { SPEED: 1.65, RUN: 4.2, TURN: 12 };
+export const MOVE = { SPEED: 1.45, RUN: 3.4, TURN: 12 };
 export const WORLD_LIMIT = 140;
 
 export function stepPlayer(

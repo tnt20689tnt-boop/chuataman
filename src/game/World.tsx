@@ -209,8 +209,10 @@ function Controller() {
     };
     const pm = (e: PointerEvent) => {
       if (!drag || drag.id !== e.pointerId) return;
-      cam.yaw -= (e.clientX - drag.x) * 0.006;
-      cam.pitch = clamp(cam.pitch + (e.clientY - drag.y) * 0.004, 0.05, 1.3);
+      // Calibrated pointer response: responsive on touchpads, but damped
+      // enough to avoid sudden spins on a phone or mouse.
+      cam.yaw -= (e.clientX - drag.x) * 0.0045;
+      cam.pitch = clamp(cam.pitch + (e.clientY - drag.y) * 0.003, 0.05, 1.3);
       drag.x = e.clientX;
       drag.y = e.clientY;
     };
@@ -238,6 +240,9 @@ function Controller() {
   }, [gl]);
 
   const target = useMemo(() => new THREE.Vector3(), []);
+  const smoothedTarget = useMemo(() => new THREE.Vector3(), []);
+  const smoothedCamera = useMemo(() => new THREE.Vector3(), []);
+  const cameraInitialized = useRef(false);
   // The camera ray must not treat the controlled avatar as a wall.
   // Otherwise it can hit the avatar's own head/body and suddenly pull the
   // camera toward the character, which looks like a backward snap.
@@ -325,11 +330,22 @@ function Controller() {
       safeDistance.current = THREE.MathUtils.clamp(available, 1.9, desiredDistance);
     }
 
+    const followAlpha = 1 - Math.exp(-dt * 12);
+    const lookAlpha = 1 - Math.exp(-dt * 16);
     safeCamera.copy(target).addScaledVector(cameraDirection, safeDistance.current);
-    // Follow the avatar directly each rendered frame. Camera lag made the
-    // fast walk cycle look disconnected from actual world movement.
-    camera.position.copy(safeCamera);
-    camera.lookAt(target);
+    // Smooth both the follow point and camera position. This removes the
+    // one-frame snaps caused by collision checks while keeping the avatar
+    // movement and camera heading in sync on desktop and mobile.
+    if (!cameraInitialized.current) {
+      smoothedTarget.copy(target);
+      smoothedCamera.copy(safeCamera);
+      cameraInitialized.current = true;
+    } else {
+      smoothedTarget.lerp(target, lookAlpha);
+      smoothedCamera.lerp(safeCamera, followAlpha);
+    }
+    camera.position.copy(smoothedCamera);
+    camera.lookAt(smoothedTarget);
 
     const t = state.clock.elapsedTime;
     if (t - last.current > 0.5) {

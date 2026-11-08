@@ -64,19 +64,28 @@ interface Key {
  */
 export function buildTemplePoseClips(root: THREE.Object3D): THREE.AnimationClip[] {
   const rest = new Map<string, { q: THREE.Quaternion; p: THREE.Vector3 }>();
+  const normalize = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
   root.traverse((o) => {
     if ((o as THREE.Bone).isBone) {
       rest.set(o.name, { q: (o as THREE.Bone).quaternion.clone(), p: (o as THREE.Bone).position.clone() });
     }
   });
-  const hips = rest.get("mixamorigHips");
+  const resolveBoneName = (expected: string) => {
+    const target = normalize(expected);
+    return [...rest.keys()].find((name) => normalize(name) === target) ??
+      [...rest.keys()].find((name) => normalize(name).endsWith(target));
+  };
+  const hipsName = resolveBoneName("mixamorigHips");
+  const hips = hipsName ? rest.get(hipsName) : undefined;
   const euler = new THREE.Euler();
   const delta = new THREE.Quaternion();
 
   const posedQuat = (name: string, pose: PoseDelta | null): THREE.Quaternion | null => {
-    const r = rest.get(name);
+    const actualName = resolveBoneName(name);
+    const r = actualName ? rest.get(actualName) : undefined;
     if (!r) return null;
-    const d = pose?.rot?.[name];
+    const deltaName = Object.keys(pose?.rot ?? {}).find((key) => normalize(key) === normalize(name));
+    const d = deltaName ? pose?.rot?.[deltaName] : undefined;
     if (!d) return r.q;
     euler.set(d[0] * D2R, d[1] * D2R, d[2] * D2R, "XYZ");
     return r.q.clone().multiply(delta.setFromEuler(euler));
@@ -85,7 +94,10 @@ export function buildTemplePoseClips(root: THREE.Object3D): THREE.AnimationClip[
   const makeClip = (name: string, keys: Key[]): THREE.AnimationClip => {
     const times = keys.map((k) => k.t);
     const boneNames = new Set<string>();
-    keys.forEach((k) => Object.keys(k.pose?.rot ?? {}).forEach((n) => boneNames.add(n)));
+    keys.forEach((k) => Object.keys(k.pose?.rot ?? {}).forEach((n) => {
+      const actualName = resolveBoneName(n);
+      if (actualName) boneNames.add(actualName);
+    }));
     const tracks: THREE.KeyframeTrack[] = [];
     for (const n of boneNames) {
       const values: number[] = [];
@@ -105,9 +117,9 @@ export function buildTemplePoseClips(root: THREE.Object3D): THREE.AnimationClip[
         if (k.pose?.hipsDrop) p.z -= k.pose.hipsDrop;
         values.push(p.x, p.y, p.z);
       }
-      tracks.push(new THREE.VectorKeyframeTrack("mixamorigHips.position", times, values));
+      if (hipsName) tracks.push(new THREE.VectorKeyframeTrack(`${hipsName}.position`, times, values));
     }
-    return new THREE.AnimationClip(name, keys[keys.length - 1].t, tracks);
+    return new THREE.AnimationClip(name, keys.at(-1)!.t, tracks);
   };
 
   return [
