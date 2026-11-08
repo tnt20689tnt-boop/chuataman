@@ -179,8 +179,9 @@ export function OverviewCampus() {
     <LotusBridge />
     <Pavilion position={[45, 0, 12]} />
     <group position={[0, 0, -155]} name="Tượng Phật lớn phía sau khuôn viên">
-      <mesh position={[0, 0.25, 0]} receiveShadow><cylinderGeometry args={[14, 14, 0.5, 40]} /><meshStandardMaterial color="#cfc3ac" roughness={0.96} /></mesh>
-      <Buddha position={[0, 0.5, 0]} scale={0.8} />
+      <mesh position={[0, 0.25, 0]} receiveShadow><cylinderGeometry args={[18, 18, 0.7, 48]} /><meshStandardMaterial color="#cfc3ac" roughness={0.96} /></mesh>
+      <mesh position={[0, 0.7, 0]} receiveShadow><cylinderGeometry args={[14, 14, 0.22, 48]} /><meshStandardMaterial color="#d7b56e" metalness={0.45} roughness={0.42} /></mesh>
+      <Buddha position={[0, 0.82, 0]} scale={1.8} />
     </group>
     {/* Núi đá và thác nước nằm ở lớp cảnh quan phía sau tượng Phật, không nằm trước Chính điện. */}
     <Waterfall position={[0, 0, -181]} />

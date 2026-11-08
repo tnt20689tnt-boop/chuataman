@@ -83,7 +83,7 @@ const polygons = solids.map(s => ({ ...s, shape: new SAT.Box(new SAT.Vector(s.x 
 // is also solid, but this explicit statue volume protects the full seated form.
 const statues = [
   new SAT.Circle(new SAT.Vector(0, -68.5), 3.8),
-  new SAT.Circle(new SAT.Vector(0, -155), 2.8),
+  new SAT.Circle(new SAT.Vector(0, -155), 6.2),
 ];
 // The waterfall basin is solid only at the far rear edge, behind the Buddha.
 const waterBodies = [new SAT.Circle(new SAT.Vector(0, -176.9), 6.2)];

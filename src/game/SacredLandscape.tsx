@@ -11,8 +11,8 @@ function seededRandom(seed: number) {
   };
 }
 
-// Keep the temple silhouette open: the approved site plan uses a green tree
-// perimeter, not enclosing mountain ridges or waterfalls.
+// The north end of the site is the sacred mountain backdrop from the reference
+// plan: the temple axis leads to a large Buddha, waterfall and layered peaks.
 function createPerimeterForest(existing: ForestPoint[]): ForestPoint[] {
   const random = seededRandom(7281);
   const points: ForestPoint[] = [];
@@ -52,7 +52,30 @@ function createPerimeterForest(existing: ForestPoint[]): ForestPoint[] {
 
 export function SacredLandscape({ existingTrees }: { existingTrees: ForestPoint[] }) {
   const trees = useMemo(() => createPerimeterForest(existingTrees), [existingTrees]);
-  return <group name="Hàng cây xanh bao quanh Chùa Tâm An">
+  return <group name="Núi thiêng, thác nước và rừng bao quanh Chùa Tâm An">
+    <group position={[0, 0, -198]} name="Dãy núi thiêng hậu cảnh">
+      {([
+        [-58, 23, 52, 34, 38],
+        [-23, 31, 66, 42, 46],
+        [18, 38, 78, 48, 54],
+        [58, 25, 54, 36, 40],
+      ] as const).map(([x, y, z, radius, height], i) => (
+        <group key={i} position={[x, y, z]}>
+          <mesh scale={[1.2, 1, 0.72]} castShadow receiveShadow>
+            <coneGeometry args={[radius, height, 7]} />
+            <meshStandardMaterial color={i % 2 ? "#355b4a" : "#2d503f"} roughness={1} flatShading />
+          </mesh>
+          <mesh position={[0, height * 0.28, 1.6]} scale={[0.7, 0.42, 0.25]}>
+            <coneGeometry args={[radius * 0.72, height * 0.34, 7]} />
+            <meshStandardMaterial color="#70806a" roughness={1} flatShading />
+          </mesh>
+        </group>
+      ))}
+      <mesh position={[0, 13, 8]} scale={[1.25, 0.32, 0.5]}>
+        <boxGeometry args={[96, 8, 12]} />
+        <meshStandardMaterial color="#3f6651" roughness={1} />
+      </mesh>
+    </group>
     <Forest points={trees} />
   </group>;
 }

@@ -33,7 +33,7 @@ describe('PR9 visitor access', () => {
     const visitor = { x: 0, z: -140, y: 0 };
     moveVisitor(visitor, 0, -25);
     expect(visitor.z).toBeGreaterThan(-152); // Stops respectfully at the Buddha plinth.
-    expect(visitor.z).toBeLessThan(-151);
+    expect(visitor.z).toBeLessThan(-147.5); // Larger statue keeps a wider respectful buffer.
   });
   it('follows each of the three visible staircase treads', () => {
     expect(surfaceHeight(0, -43.9)).toBe(0);
