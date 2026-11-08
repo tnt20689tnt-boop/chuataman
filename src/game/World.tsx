@@ -150,6 +150,13 @@ function treePoints(): [number, number, number][] {
     pts.push([-8, z, 0.9 + r() * 0.3], [8, z, 0.9 + r() * 0.3]);
   }
 
+  // Frame the broad side courtyards with instanced trees while keeping doors and paths open.
+  for (const side of [-1, 1]) {
+    for (const z of [-88, -34, 22, 76, 98]) {
+      pts.push([side * 82 + (r() - 0.5) * 3, z + (r() - 0.5) * 3, 0.82 + r() * 0.26]);
+    }
+  }
+
   // Decorative forest is kept outside the main walking enclosure. The former
   // random 260-tree scatter placed invisible trunk colliders across side paths,
   // the meditation garden approach and the rear Buddha route.
@@ -393,7 +400,7 @@ export default function World() {
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.38 }}
       style={{ touchAction: "none" }}
     >
-      <fog attach="fog" args={[C.fog, 140, 400]} />
+      <fog attach="fog" args={[C.fog, 110, 300]} />
       <DayNightCycle mobile={mobile} />
       <Environment resolution={64}>
         <Lightformer intensity={2} position={[0, 5, 0]} scale={[10, 10, 1]} color="#ffe2bd" />

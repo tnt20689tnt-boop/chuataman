@@ -393,7 +393,7 @@ export function Fireflies({ centers }: { centers?: [number, number][] }) {
 export function Effects() {
   return (
     <EffectComposer multisampling={0}>
-      <Bloom mipmapBlur intensity={0.35} luminanceThreshold={0.76} luminanceSmoothing={0.18} />
+      <Bloom mipmapBlur intensity={0.46} luminanceThreshold={0.72} luminanceSmoothing={0.18} />
       <Vignette eskil={false} offset={0.22} darkness={0.28} />
     </EffectComposer>
   );

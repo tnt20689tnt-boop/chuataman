@@ -5,7 +5,7 @@ import { isBlocked, surfaceHeight } from './collision';
 // Per-frame mutable state (never put in React state)
 // Spawn on the main approach, 5m before the near end of the lotus bridge, facing straight toward it.
 export const player = { x: 0, y: 0, z: 34, rot: Math.PI };
-export const cam = { yaw: 0, pitch: 0.42, dist: 14 };
+export const cam = { yaw: 0, pitch: 0.42, dist: 12.5 };
 export const input = { fwd: 0, right: 0, run: false, joyF: 0, joyR: 0 };
 
 export type Action = "none" | "le" | "chap" | "thien" | "kinh";

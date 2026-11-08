@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import * as THREE from "three";
+import { Sparkles } from "@react-three/drei";
 import { Buddha, Gate, MainHall, Pavilion, Pond, Roof, Tower, Waterfall } from "./Architecture";
 import { LotusField, PetalFall, Fireflies } from "./NatureUpgrade";
 import { Surface } from "./Materials";
@@ -118,6 +119,7 @@ function LotusPond({ x, z, w, d, count = 120 }: { x: number; z: number; w: numbe
   return (
     <group position={[x, 0, z]} name="Hồ sen">
       <Pond position={[0, 0, 0]} w={w} d={d} />
+      <Sparkles position={[0, 0.58, 0]} count={28} scale={[w * 0.86, 0.24, d * 0.84]} size={2.4} speed={0.18} opacity={0.55} color="#ffe6a8" noise={0.6} />
       <LotusField w={w} d={d} count={count} />
       {[-1, 1].map((s) => (
         <group key={s}>
