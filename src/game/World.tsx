@@ -3,25 +3,14 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, Sky, Cloud, Clouds } from "@react-three/drei";
 import { grassTexture, stoneTexture } from "./textures";
-import {
-  Forest,
-  Gate,
-  MainHall,
-  Pavilion,
-  Pond,
-  StoneLanterns,
-  SkyLanterns,
-  Tower,
-  Buddha,
-  Waterfall,
-} from "./Architecture";
+import { Forest, StoneLanterns, SkyLanterns } from "./Architecture";
 import { PlayerAvatar } from "./Characters";
 import { RemotePlayers } from "./RemotePlayers";
 import { ZONES, clamp, rng, stepPlayer } from "./sim";
 import { cam, getUI, input, player, setUI } from "./store";
 import { playFootstep, stopFootsteps, setAudioZone } from "./audio";
 import { Surface } from './Materials';
-import { TempleCampus } from './TempleCampus';
+import { OverviewCampus } from "./OverviewCampus";
 import { SacredLandscape } from './SacredLandscape';
 import { BUILDINGS, SCENE_COLORS as C } from './templeData';
 import { surfaceHeight, setTreeCollisionPoints } from './collision';
@@ -412,30 +401,7 @@ export default function World() {
       <Forest points={trees} />
       <Suspense fallback={null}>
       <SacredLandscape existingTrees={trees} />
-      <MainHall />
-      <Gate z={112} />
-      <Tower position={[-55, 0, -112]} tiers={5} label="Bảo tháp" />
-      <Pond position={[30, 0, 12]} w={22} d={24} />
-      {/* Tượng Phật lớn và thác nước nằm ở cuối trục thần đạo. */}
-      <group position={[0, 0, -155]}>
-        <mesh position={[0, 0.25, 0]} receiveShadow>
-          <cylinderGeometry args={[14, 14, 0.5, 40]} />
-          <meshStandardMaterial color="#cfc3ac" />
-        </mesh>
-        <Buddha position={[0, 0.5, 0]} scale={0.8} />
-        {Array.from({ length: 24 }).map((_, i) => {
-          const a = (i / 24) * Math.PI * 2;
-          return (
-            <mesh key={i} position={[Math.cos(a) * 9 + 1, 0.6, Math.sin(a) * 9]} receiveShadow>
-              <cylinderGeometry args={[0.5, 0.5, 0.18, 14]} />
-              <meshStandardMaterial color="#a8432a" />
-            </mesh>
-          );
-        })}
-      </group>
-      <Waterfall position={[0, 0, -147]} />
-      <Pavilion position={[45, 0, 12]} rot={0} />
-      <TempleCampus />
+      <OverviewCampus />
       <StoneLanterns points={lanterns} />
       <SkyLanterns />
       </Suspense>
