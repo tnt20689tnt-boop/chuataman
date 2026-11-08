@@ -199,8 +199,9 @@ export function AnimatedAvatarAppearance({
 
   useLayoutEffect(() => {
     activeClip.current = "";
+    mixer.stopAllAction();
     return () => Object.values(actions).forEach((clip) => clip?.stop());
-  }, [actions]);
+  }, [actions, mixer]);
 
   useEffect(() => {
     const handleFinished = (event: { action: THREE.AnimationAction }) => {

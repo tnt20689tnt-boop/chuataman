@@ -299,6 +299,7 @@ export function PlayerAvatar() {
     <group ref={g} userData={{ cameraIgnore: true }}>
       {displayedAvatar && pose !== "lie" ? (
         <AnimatedAvatarAppearance
+          key={modelId}
           modelId={modelId}
           outfit={displayedAvatar.outfit}
           outfitColor={displayedAvatar.outfitColor}
