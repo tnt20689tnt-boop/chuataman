@@ -294,7 +294,6 @@ export function PlayerAvatar() {
 
   return (
     <group ref={g} userData={{ cameraIgnore: true }}>
-      {pose !== "lie" ? (
       <group>
       <mesh ref={robeRef} position={[0, 0, 0]} scale={[sxz, sy, sxz]} castShadow>
         <primitive object={robeGeometry} attach="geometry" />
@@ -532,7 +531,6 @@ export function PlayerAvatar() {
         </group>
       )}
       </group>
-      ) : null}
       <Html position={[0, hy + 1.0, 0]} center distanceFactor={14} zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
         <div className="name-tag name-tag-self">{displayedAvatar?.name ?? "Phật tử"}</div>
       </Html>
