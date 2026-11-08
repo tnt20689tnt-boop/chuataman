@@ -50,11 +50,11 @@ describe('PR9 visitor access', () => {
     const p = { x: 3.6, z: 25.13, y: 0, rot: Math.PI };
     expect(stepPlayer(p, { fwd: 1, right: 0, run: false }, 0, 0.05)).toBe(false);
   });
-  it('uses realistic walking and light-running speeds for a 1.8 m avatar', () => {
-    expect(MOVE.SPEED).toBeGreaterThanOrEqual(1.2);
-    expect(MOVE.SPEED).toBeLessThanOrEqual(1.5);
-    expect(MOVE.RUN).toBeGreaterThanOrEqual(2.8);
-    expect(MOVE.RUN).toBeLessThanOrEqual(3.5);
+  it('uses responsive walking and running speeds for the enlarged 2.2 m avatar', () => {
+    expect(MOVE.SPEED).toBeGreaterThanOrEqual(3.8);
+    expect(MOVE.SPEED).toBeLessThanOrEqual(4.2);
+    expect(MOVE.RUN).toBeGreaterThanOrEqual(6.0);
+    expect(MOVE.RUN).toBeLessThanOrEqual(7.0);
   });
   it('uses gait-matched walk and run world speeds at the tested movement timestep', () => {
     const walker = { x: 0, y: 0, z: 34, rot: Math.PI };

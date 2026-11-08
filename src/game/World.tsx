@@ -330,8 +330,8 @@ function Controller() {
       safeDistance.current = THREE.MathUtils.clamp(available, 1.9, desiredDistance);
     }
 
-    const followAlpha = 1 - Math.exp(-dt * 12);
-    const lookAlpha = 1 - Math.exp(-dt * 16);
+    const followAlpha = 1 - Math.exp(-dt * 20);
+    const lookAlpha = 1 - Math.exp(-dt * 24);
     safeCamera.copy(target).addScaledVector(cameraDirection, safeDistance.current);
     // Smooth both the follow point and camera position. This removes the
     // one-frame snaps caused by collision checks while keeping the avatar

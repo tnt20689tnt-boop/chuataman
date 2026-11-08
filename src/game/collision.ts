@@ -22,9 +22,8 @@ const solids: Solid[] = [
   // Keep the central 3.2m bridge and both approaches open.
   { id: 'pond-left', x: -5.3, z: 8, w: 7.4, d: 24 },
   { id: 'pond-right', x: 5.3, z: 8, w: 7.4, d: 24 },
-  // Side rails guide visitors along the bridge; there are no barriers across either end.
-  { id: 'lotus-bridge-rail-left', x: -1.55, z: 8, w: 0.2, d: 24 },
-  { id: 'lotus-bridge-rail-right', x: 1.55, z: 8, w: 0.2, d: 24 },
+  // The rendered bridge rails are decorative and must not trap a visitor who
+  // drifts slightly sideways on a mobile joystick. Pond water remains solid.
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
   { id: 'perimeter-back', x: 0, z: -185, w: 240, d: 1.8 },
   { id: 'perimeter-left', x: -120, z: -36.5, w: 1.8, d: 297 },
