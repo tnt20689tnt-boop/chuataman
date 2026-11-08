@@ -29,6 +29,7 @@ describe('PR9 visitor access', () => {
   it('keeps the walkable approach open between the main hall and rear Buddha', () => {
     expect(isBlocked(0, -140)).toBe(false);
     expect(isBlocked(0, -165)).toBe(false);
+    expect(isBlocked(0, -176.9)).toBe(true); // Waterfall basin is behind the Buddha, at the rear edge.
     const visitor = { x: 0, z: -140, y: 0 };
     moveVisitor(visitor, 0, -25);
     expect(visitor.z).toBeGreaterThan(-152); // Stops respectfully at the Buddha plinth.
