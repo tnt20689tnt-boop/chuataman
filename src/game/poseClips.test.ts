@@ -84,6 +84,45 @@ function worldAxis(node: THREE.Object3D, localAxis: THREE.Vector3) {
     .normalize();
 }
 
+function addSeatContactProbe(root: THREE.Object3D, nodes: THREE.Object3D[]) {
+  const hips = findNode(nodes, "Hips") as THREE.Bone;
+  const bones = nodes.filter((node) => (node as THREE.Bone).isBone) as THREE.Bone[];
+  const hipIndex = bones.indexOf(hips);
+  const hip = worldPosition(hips);
+  const positions = [
+    hip.x - 0.04,
+    hip.y - 0.16,
+    hip.z - 0.04,
+    hip.x + 0.04,
+    hip.y - 0.16,
+    hip.z - 0.04,
+    hip.x - 0.04,
+    hip.y - 0.16,
+    hip.z + 0.04,
+    hip.x + 0.04,
+    hip.y - 0.16,
+    hip.z + 0.04,
+  ];
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  const skinIndices = new Uint16Array(16);
+  const skinWeights = new Float32Array(16);
+  for (let i = 0; i < 4; i++) {
+    skinIndices[i * 4] = hipIndex;
+    skinWeights[i * 4] = 1;
+  }
+  geometry.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(skinIndices, 4));
+  geometry.setAttribute("skinWeight", new THREE.Float32BufferAttribute(skinWeights, 4));
+  const mesh = new THREE.SkinnedMesh(geometry, new THREE.MeshBasicMaterial());
+  root.add(mesh);
+  root.updateMatrixWorld(true);
+  const skeleton = new THREE.Skeleton(bones);
+  skeleton.calculateInverses();
+  mesh.bind(skeleton);
+  root.updateMatrixWorld(true);
+  return { mesh, supportY: new THREE.Box3().setFromObject(root).min.y };
+}
+
 const avatarAssets = [
   ["male", "public/models/male_custom_poses.glb"],
   ["female", "public/models/female_custom_poses.glb"],
@@ -134,17 +173,34 @@ describe("temple avatar pose clips", () => {
     "places both meditation hands on the lap with palms up for %s",
     (_gender, path) => {
       const { root, nodes } = makeRig(path);
-      sampleClip(root, nodes, "meditation", 1.55);
+      const seatProbe = addSeatContactProbe(root, nodes);
       const hips = findNode(nodes, "Hips");
+      const restHip = worldPosition(hips);
+      sampleClip(root, nodes, "meditation", 1.55);
       const leftShoulder = worldPosition(findNode(nodes, "LeftShoulder"));
       const rightShoulder = worldPosition(findNode(nodes, "RightShoulder"));
       const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
       const hip = worldPosition(hips);
+      const leftFoot = worldPosition(findNode(nodes, "LeftFoot"));
+      const rightFoot = worldPosition(findNode(nodes, "RightFoot"));
       const leftHand = findNode(nodes, "LeftHand");
       const rightHand = findNode(nodes, "RightHand");
       const leftWrist = worldPosition(leftHand);
       const rightWrist = worldPosition(rightHand);
 
+      expect(hip.x).toBeCloseTo(restHip.x, 3);
+      expect(leftFoot.z).toBeGreaterThan(hip.z + 0.01);
+      expect(rightFoot.z).toBeLessThan(hip.z - 0.01);
+      seatProbe.mesh.skeleton.update();
+      let lowestSeatVertex = Number.POSITIVE_INFINITY;
+      for (let i = 0; i < seatProbe.mesh.geometry.getAttribute("position").count; i++) {
+        const vertex = new THREE.Vector3();
+        seatProbe.mesh.getVertexPosition(i, vertex);
+        seatProbe.mesh.localToWorld(vertex);
+        root.worldToLocal(vertex);
+        lowestSeatVertex = Math.min(lowestSeatVertex, vertex.y);
+      }
+      expect(lowestSeatVertex).toBeCloseTo(seatProbe.supportY, 3);
       expect(leftWrist.y).toBeLessThan(shoulderY - 0.08);
       expect(rightWrist.y).toBeLessThan(shoulderY - 0.08);
       expect(Math.abs(leftWrist.y - rightWrist.y)).toBeLessThan(0.03);
@@ -162,6 +218,22 @@ describe("temple avatar pose clips", () => {
       expect(
         worldAxis(rightHand, new THREE.Vector3(0, 0, 1)).dot(new THREE.Vector3(0, 1, 0)),
       ).toBeGreaterThan(0.9);
+    },
+  );
+
+  it.each(avatarAssets)(
+    "holds a continuous seated pose across meditation loop boundaries for %s",
+    (_gender, path) => {
+      const { root } = makeRig(path);
+      const clip = buildTemplePoseClips(root).find((candidate) => candidate.name === "meditation");
+      expect(clip).toBeDefined();
+      expect(clip!.duration).toBe(2);
+      for (const track of clip!.tracks) {
+        const size = track.getValueSize();
+        for (let i = 0; i < size; i++) {
+          expect(track.values[i]).toBeCloseTo(track.values[track.values.length - size + i]!, 6);
+        }
+      }
     },
   );
 });

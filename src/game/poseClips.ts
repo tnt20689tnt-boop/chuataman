@@ -192,6 +192,32 @@ function aimBoneAt(
   root.updateMatrixWorld(true);
 }
 
+function solveCrossedLeg(root: THREE.Object3D, side: Side): void {
+  const upperLeg = findBone(root, `mixamorig${side}UpLeg`);
+  const lowerLeg = findBone(root, `mixamorig${side}Leg`);
+  const foot = findBone(root, `mixamorig${side}Foot`);
+  if (!upperLeg || !lowerLeg || !foot) return;
+  root.updateMatrixWorld(true);
+  const sideSign = side === "Left" ? -1 : 1;
+  const modelRotation = root.getWorldQuaternion(new THREE.Quaternion());
+  const upperOrigin = upperLeg.getWorldPosition(new THREE.Vector3());
+  const knee = lowerLeg.getWorldPosition(new THREE.Vector3());
+  const upperLength = upperOrigin.distanceTo(knee);
+  const kneeDirection = new THREE.Vector3(0.65, 0.35, sideSign * 0.58)
+    .normalize()
+    .applyQuaternion(modelRotation);
+  aimBoneAt(root, upperLeg, lowerLeg, upperOrigin.addScaledVector(kneeDirection, upperLength));
+
+  root.updateMatrixWorld(true);
+  const ankle = foot.getWorldPosition(new THREE.Vector3());
+  const kneePosition = lowerLeg.getWorldPosition(new THREE.Vector3());
+  const lowerLength = kneePosition.distanceTo(ankle);
+  const ankleDirection = new THREE.Vector3(0.18, 0.12, -sideSign * 0.976)
+    .normalize()
+    .applyQuaternion(modelRotation);
+  aimBoneAt(root, lowerLeg, foot, kneePosition.addScaledVector(ankleDirection, lowerLength));
+}
+
 function solveArm(
   root: THREE.Object3D,
   side: Side,
@@ -269,6 +295,63 @@ function solveArms(root: THREE.Object3D, pose: HandPose, handAxes: Record<Side, 
   solveArm(root, "Right", targets[1]!, rightSide, pose, handAxes.Right);
 }
 
+function offsetBoneInModelSpace(
+  root: THREE.Object3D,
+  bone: THREE.Bone,
+  offset: THREE.Vector3,
+): void {
+  root.updateMatrixWorld(true);
+  const modelRotation = root.getWorldQuaternion(new THREE.Quaternion());
+  const parentRotation =
+    bone.parent?.getWorldQuaternion(new THREE.Quaternion()) ?? new THREE.Quaternion();
+  const localOffset = offset
+    .clone()
+    .applyQuaternion(modelRotation)
+    .applyQuaternion(parentRotation.invert());
+  bone.position.add(localOffset);
+  root.updateMatrixWorld(true);
+}
+
+function getSkinnedBoneBottomY(root: THREE.Object3D, bone: THREE.Bone): number | null {
+  root.updateMatrixWorld(true);
+  let bottomY = Number.POSITIVE_INFINITY;
+  let foundVertex = false;
+  const vertex = new THREE.Vector3();
+  root.traverse((object) => {
+    if (!(object as THREE.SkinnedMesh).isSkinnedMesh) return;
+    const mesh = object as THREE.SkinnedMesh;
+    const position = mesh.geometry.getAttribute("position");
+    const skinIndex = mesh.geometry.getAttribute("skinIndex");
+    const skinWeight = mesh.geometry.getAttribute("skinWeight");
+    const boneIndex = mesh.skeleton.bones.indexOf(bone);
+    if (!position || !skinIndex || !skinWeight || boneIndex < 0) return;
+    mesh.updateMatrixWorld(true);
+    mesh.skeleton.update();
+    for (let i = 0; i < position.count; i++) {
+      let weight = 0;
+      for (let influence = 0; influence < 4; influence++) {
+        if (skinIndex.getComponent(i, influence) === boneIndex)
+          weight += skinWeight.getComponent(i, influence);
+      }
+      if (weight < 0.2) continue;
+      mesh.getVertexPosition(i, vertex);
+      mesh.localToWorld(vertex);
+      root.worldToLocal(vertex);
+      bottomY = Math.min(bottomY, vertex.y);
+      foundVertex = true;
+    }
+  });
+  return foundVertex ? bottomY : null;
+}
+
+function alignHipsToSupport(root: THREE.Object3D, hips: THREE.Bone, supportY: number): void {
+  const pelvisBottomY = getSkinnedBoneBottomY(root, hips);
+  if (pelvisBottomY === null) return;
+  // Use the actual Hips-weighted skin as the seat-contact point; the GLB parents
+  // do not share local axes, so the correction is applied in model-space Y.
+  offsetBoneInModelSpace(root, hips, new THREE.Vector3(0, supportY - pelvisBottomY, 0));
+}
+
 function setEulerDelta(bone: THREE.Bone | null, delta: [number, number, number] | undefined): void {
   if (!bone || !delta) return;
   const euler = new THREE.Euler(delta[0] * D2R, delta[1] * D2R, delta[2] * D2R, "XYZ");
@@ -304,6 +387,7 @@ export function buildTemplePoseClips(root: THREE.Object3D): THREE.AnimationClip[
     rest.set(bone, { quaternion: bone.quaternion.clone(), position: bone.position.clone() });
   });
   root.updateMatrixWorld(true);
+  const supportY = new THREE.Box3().setFromObject(root).min.y;
   const hips = findBone(root, "mixamorigHips");
   const leftHand = findBone(root, "mixamorigLeftHand");
   const rightHand = findBone(root, "mixamorigRightHand");
@@ -330,14 +414,16 @@ export function buildTemplePoseClips(root: THREE.Object3D): THREE.AnimationClip[
       setEulerDelta(findBone(root, "mixamorigSpine1"), [20, 0, 0]);
       setEulerDelta(findBone(root, "mixamorigHead"), [8, 0, 0]);
     } else if (kind === "meditation") {
-      if (hips) hips.position.y -= 0.3; // model-space Y is vertical in both GLBs
-      setEulerDelta(findBone(root, "mixamorigLeftUpLeg"), [75, -40, 35]);
-      setEulerDelta(findBone(root, "mixamorigRightUpLeg"), [75, 40, -35]);
-      setEulerDelta(findBone(root, "mixamorigLeftLeg"), [-95, 0, -15]);
-      setEulerDelta(findBone(root, "mixamorigRightLeg"), [-95, 0, 15]);
+      if (hips) offsetBoneInModelSpace(root, hips, new THREE.Vector3(0, -0.3, 0));
       setEulerDelta(findBone(root, "mixamorigHead"), [6, 0, 0]);
     }
     root.updateMatrixWorld(true);
+    if (kind === "meditation" && hips) {
+      alignHipsToSupport(root, hips, supportY);
+      solveCrossedLeg(root, "Left");
+      solveCrossedLeg(root, "Right");
+      alignHipsToSupport(root, hips, supportY);
+    }
     solveArms(root, kind === "meditation" ? "meditation" : "prayer", handAxes);
     return capturePose(root, rest);
   };
@@ -391,8 +477,7 @@ export function buildTemplePoseClips(root: THREE.Object3D): THREE.AnimationClip[
       { t: 3.4, pose: null },
     ]),
     makeClip("meditation", [
-      { t: 0, pose: null },
-      { t: 1.1, pose: meditation },
+      { t: 0, pose: meditation },
       { t: 2.0, pose: meditation },
     ]),
   ];

@@ -691,19 +691,22 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
 function MeditationOverlay() {
   const [mins, setMins] = useState<number | null>(null);
   const [left, setLeft] = useState(0);
+  const leftRef = useRef(0);
   useEffect(() => {
     if (mins === null) return;
-    setLeft(mins * 60);
+    leftRef.current = mins * 60;
+    setLeft(leftRef.current);
     const id = window.setInterval(() => {
-      setLeft((l) => {
-        if (l <= 1) {
-          window.clearInterval(id);
-          ringBell(0.6);
-          setTimeout(() => setUI({ action: "none", pose: "stand" }), 1500);
-          return 0;
-        }
-        return l - 1;
-      });
+      if (leftRef.current <= 1) {
+        leftRef.current = 0;
+        setLeft(0);
+        window.clearInterval(id);
+        ringBell(0.6);
+        setUI({ action: "none", pose: "stand" });
+        return;
+      }
+      leftRef.current -= 1;
+      setLeft(leftRef.current);
     }, 1000);
     return () => window.clearInterval(id);
   }, [mins]);
