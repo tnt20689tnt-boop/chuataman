@@ -15,40 +15,40 @@ export interface PoseDelta {
 
 const D2R = Math.PI / 180;
 
-// Chắp tay: palms meet in front of the chest, fingers up, elbows relaxed.
+// Chắp tay: rotate the shoulders/forearms toward the FRONT of the torso (the previous X signs drove both arms behind the back).
 export const PRAYER_POSE: PoseDelta = {
   rot: {
-    mixamorigLeftArm: [56, 0, -44],
-    mixamorigRightArm: [56, 0, 44],
-    mixamorigLeftForeArm: [66, 0, -75],
-    mixamorigRightForeArm: [66, 0, 75],
+    mixamorigLeftArm: [-56, 0, -44],
+    mixamorigRightArm: [-56, 0, 44],
+    mixamorigLeftForeArm: [-66, 0, -75],
+    mixamorigRightForeArm: [-66, 0, 75],
     mixamorigLeftHand: [0, 0, -12],
     mixamorigRightHand: [0, 0, 12],
   },
 };
 
-// Lễ Phật: prayer hands held while the spine bows forward with dignity.
+// Lễ Phật: prayer hands held while the spine flexes FORWARD with dignity.
 export const BOW_POSE: PoseDelta = {
   rot: {
     ...PRAYER_POSE.rot,
-    mixamorigSpine: [-48, 0, 0],
-    mixamorigSpine1: [-20, 0, 0],
-    mixamorigHead: [-8, 0, 0],
+    mixamorigSpine: [48, 0, 0],
+    mixamorigSpine1: [20, 0, 0],
+    mixamorigHead: [8, 0, 0],
   },
 };
 
-// Ngồi thiền: upright cross-legged seat, head/neck/back straight, hands on lap.
+// Ngồi thiền: upright cross-legged seat, thighs fold forward, knees bend forward, hands rest on lap.
 export const MEDITATION_POSE: PoseDelta = {
   hipsDrop: 0.3,
   rot: {
-    mixamorigLeftUpLeg: [-75, -40, 35],
-    mixamorigRightUpLeg: [-75, 40, -35],
-    mixamorigLeftLeg: [95, 0, -15],
-    mixamorigRightLeg: [95, 0, 15],
-    mixamorigLeftArm: [55, 0, -18],
-    mixamorigRightArm: [55, 0, 18],
-    mixamorigLeftForeArm: [58, 0, -34],
-    mixamorigRightForeArm: [58, 0, 34],
+    mixamorigLeftUpLeg: [75, -40, 35],
+    mixamorigRightUpLeg: [75, 40, -35],
+    mixamorigLeftLeg: [-95, 0, -15],
+    mixamorigRightLeg: [-95, 0, 15],
+    mixamorigLeftArm: [-55, 0, -18],
+    mixamorigRightArm: [-55, 0, 18],
+    mixamorigLeftForeArm: [-58, 0, -34],
+    mixamorigRightForeArm: [-58, 0, 34],
     mixamorigHead: [6, 0, 0],
   },
 };
