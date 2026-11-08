@@ -1,15 +1,25 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF, useAnimations } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { createPortal, useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { MOVE, OUTFIT_COLORS, type Outfit, type Hair, type Pose } from "./sim";
 import { input, type Action } from "./store";
 import { isRootMotionBoneName, stabilizeRootPositionTrack } from "./rootMotion";
 import { interactionActionForCompletedClip, type CompletedInteractionAction } from "./interactionAnimation";
+import { buildTemplePoseClips } from "./poseClips";
 
 export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
-const GAIT_REFERENCE_SPEED = { walk: 1.2, run: 4 };
+// Measured from the GLB clips: at 1x playback the walk cycle covers ~1.07 and
+// the run cycle ~3.65 game units per second. Playback rate = speed / reference
+// keeps footsteps exactly matched to world movement (no foot sliding).
+const GAIT_REFERENCE_SPEED = { walk: 1.07, run: 3.65 };
+
+interface BoneAttachment {
+  bone: THREE.Bone;
+  pos: THREE.Vector3;
+  quat: THREE.Quaternion;
+}
 
 export function AnimatedAvatarAppearance({
   modelId, outfit, hair, hairColor, accessory, pose = "stand", action = "none", onActionComplete,
@@ -67,7 +77,73 @@ export function AnimatedAvatarAppearance({
   const unitScale = 1.8 / Math.max(size.y, 0.001);
   const neckY = bounds.min.y + size.y * 0.72;
 
-  const clips = useMemo(() => gltf.animations.map((source) => {
+  // Accessories and extra hair attach to bones so they follow every animation
+  // (walk, run, prayer, bow, meditation) instead of floating at fixed offsets.
+  // Attachments are computed while the clone is still in its bind pose.
+  const rig = useMemo(() => {
+    model.updateMatrixWorld(true);
+    const bones: Record<string, THREE.Bone> = {};
+    model.traverse((o) => {
+      if ((o as THREE.Bone).isBone) bones[o.name] = o as THREE.Bone;
+    });
+    const attach = (boneName: string, world: THREE.Vector3, worldQuat: THREE.Quaternion): BoneAttachment | null => {
+      const bone = bones[boneName];
+      if (!bone) return null;
+      const pos = bone.worldToLocal(world.clone());
+      const quat = bone.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(worldQuat);
+      return { bone, pos, quat };
+    };
+    const handWorld = (name: string) => {
+      const hand = bones[name];
+      if (!hand) return null;
+      const hp = hand.getWorldPosition(new THREE.Vector3());
+      const fp = hand.parent?.getWorldPosition(new THREE.Vector3());
+      return fp ? hp.lerp(fp, 0.3) : hp;
+    };
+    // The model faces local -X; its left side is -Z.
+    return {
+      neckMala: attach(
+        "mixamorigNeck",
+        new THREE.Vector3(center.x - size.x * 0.10, neckY, center.z),
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)),
+      ),
+      malaBead: attach(
+        "mixamorigNeck",
+        new THREE.Vector3(center.x - size.x * 0.22, neckY - size.y * 0.09, center.z),
+        new THREE.Quaternion(),
+      ),
+      leftWrist: handWorld("mixamorigLeftHand")
+        ? attach("mixamorigLeftHand", handWorld("mixamorigLeftHand")!, new THREE.Quaternion())
+        : null,
+      rightWrist: handWorld("mixamorigRightHand")
+        ? attach("mixamorigRightHand", handWorld("mixamorigRightHand")!, new THREE.Quaternion())
+        : null,
+      sash: attach(
+        "mixamorigSpine2",
+        new THREE.Vector3(center.x - size.x * 0.06, bounds.min.y + size.y * 0.60, center.z - size.z * 0.02),
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.42, 0, 0)),
+      ),
+      hairBun: attach(
+        "mixamorigHead",
+        new THREE.Vector3(center.x + size.x * 0.14, bounds.max.y - size.y * 0.03, center.z),
+        new THREE.Quaternion(),
+      ),
+      hairTail: attach(
+        "mixamorigHead",
+        new THREE.Vector3(center.x + size.x * 0.18, bounds.min.y + size.y * 0.80, center.z),
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.14)),
+      ),
+    };
+  }, [model, bounds, size, center, neckY]);
+
+  const clips = useMemo(() => {
+    // Replace the GLB's incorrect custom prayer/kneel/meditation clips with
+    // corrected ones built from this rig's rest pose (verified via FK on both
+    // the male and female models).
+    const built = buildTemplePoseClips(model);
+    const builtNames = new Set(built.map((c) => c.name));
+    return [
+      ...gltf.animations.filter((s) => !builtNames.has(s.name)).map((source) => {
     const clip = source.clone();
     const locomotion = source.name === "walk" || source.name === "run";
     // Only lock the actual root/hips/pelvis channel. Never match the full
