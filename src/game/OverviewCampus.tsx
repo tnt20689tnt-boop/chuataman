@@ -72,17 +72,20 @@ function BrickPaving({ w, d, x = 0, z = 0 }: { w: number; d: number; x?: number;
 
 // ---------- Cây cảnh khuôn viên (xanh) & cây hoa anh đào (theo bản đồ) ----------
 function MiniTree({ position, scale = 1, blossom = false }: { position: [number, number, number]; scale?: number; blossom?: boolean }) {
+  const form = Math.floor(Math.abs(Math.sin(position[0] * 12.9898 + position[2] * 78.233)) * 3);
+  const profiles: [number, number, number][] = [[0.92, 1.12, 0.92], [1.18, 0.86, 1.08], [0.82, 1.04, 1.2]];
+  const greenShades = ["#3d7042", "#477b48", "#35684c"];
   const canopies: [number, number, number, number, number, number][] = [
     [0, 2.95, 0, 1.22, 0.82, 1.08], [-0.9, 2.65, 0.15, 0.74, 0.66, 0.78],
     [0.88, 2.7, -0.18, 0.78, 0.68, 0.8], [0.08, 2.72, 0.86, 0.7, 0.62, 0.72],
   ];
   return (
-    <group position={position} scale={scale} name="Cây cảnh khuôn viên">
+    <group position={position} scale={[scale * profiles[form][0], scale * profiles[form][1], scale * profiles[form][2]]} rotation-y={form * 0.9} name="Cây cảnh khuôn viên">
       <mesh position={[0, 1.25, 0]} castShadow><cylinderGeometry args={[0.28, 0.46, 2.5, 9]} /><meshStandardMaterial color="#68412d" roughness={1} /></mesh>
       {canopies.map(([x, y, z, sx, sy, sz], i) => (
         <mesh key={i} position={[x, y, z]} scale={[sx, sy, sz]} castShadow>
           <sphereGeometry args={[1.55, 14, 10]} />
-          <meshStandardMaterial color={i % 2 === 0 ? (blossom ? "#8aa864" : "#3d7042") : "#4c7c49"} roughness={0.96} />
+          <meshStandardMaterial color={blossom && i % 2 === 0 ? "#8aa864" : greenShades[(form + i) % greenShades.length]} roughness={0.96} />
         </mesh>
       ))}
       {blossom && Array.from({ length: 8 }, (_, i) => {
@@ -100,11 +103,15 @@ function MiniTree({ position, scale = 1, blossom = false }: { position: [number,
 
 // Cây hoa (sakura) như trong bản đồ: tán hoa hồng phủ kín.
 function SakuraTree({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
+  const variation = Math.abs(Math.sin(position[0] * 7.13 + position[2] * 3.71));
+  const crownX = 0.84 + variation * 0.42;
+  const crownY = 0.88 + ((variation * 3) % 1) * 0.32;
+  const crownZ = 1.18 - variation * 0.34;
   return (
-    <group position={position} scale={scale} name="Cây hoa anh đào">
+    <group position={position} scale={[scale * crownX, scale * crownY, scale * crownZ]} rotation-y={variation * Math.PI * 2} name="Cây hoa anh đào">
       <mesh position={[0, 1.5, 0]} castShadow><cylinderGeometry args={[0.26, 0.44, 3, 9]} /><meshStandardMaterial color="#5d3d2c" roughness={1} /></mesh>
       <mesh position={[0.35, 2.9, 0.15]} rotation-z={-0.5} castShadow><cylinderGeometry args={[0.12, 0.18, 1.6, 7]} /><meshStandardMaterial color="#5d3d2c" roughness={1} /></mesh>
-      {[[0, 3.7, 0, 1.35, 0.9, 1.2], [-0.95, 3.35, 0.25, 0.8, 0.62, 0.8], [1, 3.4, -0.25, 0.85, 0.66, 0.85], [0.15, 3.35, 0.95, 0.75, 0.58, 0.75]].map(([x, y, z, sx, sy, sz], i) => (
+      {[[0, 3.7 + variation * 0.42, 0, 1.2 + variation * 0.24, 0.82, 1.1], [-0.95, 3.35, 0.25, 0.8, 0.62, 0.8], [1, 3.4, -0.25, 0.85, 0.66, 0.85], [0.15, 3.35, 0.95, 0.75, 0.58, 0.75]].map(([x, y, z, sx, sy, sz], i) => (
         <mesh key={i} position={[x, y, z]} scale={[sx, sy, sz]} castShadow>
           <sphereGeometry args={[1.5, 14, 10]} />
           <meshStandardMaterial color={i % 2 ? "#e8a7b8" : "#f2c4d0"} roughness={0.9} />

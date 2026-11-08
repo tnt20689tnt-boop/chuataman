@@ -1,6 +1,6 @@
 // ============================================================================
 // NATURE UPGRADE — nâng cấp thiên nhiên Chùa Tâm An
-//   • Forest:        rừng cây sinh động (instanced, 3 loại cây, màu ngẫu nhiên)
+//   • Forest:        rừng cây sinh động (instanced, 6 dáng cây và bảng màu đa dạng)
 //   • LotusField:    hoa sen nhiều lớp cánh + lá sen khuyết + lắc lư theo nước
 //   • PetalFall:     cánh hoa anh đào rơi
 //   • Fireflies:     đom đóm bay đêm (theo giờ Việt Nam)
@@ -45,7 +45,8 @@ const _color = new THREE.Color();
 //    Drop-in: giữ nguyên prop `points`. Dùng instanced mesh nên vẫn mượt
 //    với hàng trăm cây.
 // ============================================================================
-const LEAFY = 0, PINE = 1, SAKURA = 2;
+const LEAFY = 0, PINE = 1, SAKURA = 2, WILLOW = 3, CYPRESS = 4, GOLDEN = 5;
+const FOREST_TYPES = [LEAFY, PINE, SAKURA, WILLOW, CYPRESS, GOLDEN];
 
 export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; seed?: number }) {
   const count = points.length;
@@ -56,11 +57,11 @@ export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; see
   const layout = useMemo(() => {
     const rand = mulberry32(seed);
     return points.map(([x, z, s]) => {
-      const roll = rand();
-      const type = roll < 0.2 ? SAKURA : roll < 0.42 ? PINE : LEAFY;
+      // Cycle species in a seeded order so neighboring trees do not repeat the same silhouette.
+      const type = FOREST_TYPES[(i + seed) % FOREST_TYPES.length];
       const rot = rand() * Math.PI * 2;
-      const tall = 0.9 + rand() * 0.35;
-      return { x, z, s: s * (0.9 + rand() * 0.25), type, rot, tall, jitter: rand() };
+      const tall = 0.78 + rand() * 0.64;
+      return { x, z, s: s * (0.78 + rand() * 0.5), type, rot, tall, jitter: rand() };
     });
   }, [points, seed]);
 
@@ -72,31 +73,35 @@ export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; see
       // thân cây: hơi nghiêng, độ dày theo loại
       _dummy.position.set(t.x, 1.3 * t.tall * t.s, t.z);
       _dummy.rotation.set(0, t.rot, (t.jitter - 0.5) * 0.12);
-      const trunkW = t.type === PINE ? 0.8 : t.type === SAKURA ? 1.05 : 1.15;
+      const trunkW = t.type === PINE ? 0.78 : t.type === CYPRESS ? 0.6 : t.type === WILLOW ? 1.24 : t.type === SAKURA ? 1.08 : 1.0;
       _dummy.scale.set(t.s * trunkW, t.tall * t.s, t.s * trunkW);
       _dummy.updateMatrix();
       trunks.setMatrixAt(i, _dummy.matrix);
-      _color.setHSL(0.07, 0.32, 0.24 + t.jitter * 0.08);
+      _color.setHSL(0.055 + t.jitter * 0.04, 0.28 + t.jitter * 0.08, 0.19 + t.jitter * 0.13);
       trunks.setColorAt(i, _color);
 
-      if (t.type === PINE) {
-        // 2 tầng lá thông hình nón, xanh đậm
-        for (let tier = 0; tier < 2; tier++) {
-          const k = tier === 0 ? 1 : 0.66;
-          _dummy.position.set(t.x, (2.6 + tier * 1.5) * t.tall * t.s, t.z);
+      if (t.type === PINE || t.type === CYPRESS) {
+        // Three tiered conifers: broad pine or narrow, taller cypress.
+        const tiers = t.type === CYPRESS ? [0.7, 0.52, 0.35] : [1, 0.72, 0.49];
+        const heights = t.type === CYPRESS ? [2.8, 4.25, 5.55] : [2.5, 3.85, 5.0];
+        for (let tier = 0; tier < tiers.length; tier++) {
+          const k = tiers[tier];
+          _dummy.position.set(t.x, (heights[tier] + (t.jitter - 0.5) * 0.45) * t.tall * t.s, t.z);
           _dummy.rotation.set(0, t.rot + tier, 0);
-          _dummy.scale.set(t.s * k, t.s * (0.95 - tier * 0.18) * t.tall, t.s * k);
+          _dummy.scale.set(t.s * k, t.s * (0.92 - tier * 0.13) * t.tall, t.s * k);
           _dummy.updateMatrix();
           pines.setMatrixAt(pineIndex, _dummy.matrix);
-          _color.setHSL(0.36, 0.42, 0.2 + t.jitter * 0.07);
+          _color.setHSL(t.type === CYPRESS ? 0.37 : 0.32, 0.42 + t.jitter * 0.1, 0.17 + t.jitter * 0.11);
           pines.setColorAt(pineIndex, _color);
           pineIndex++;
         }
       } else {
-        // 3 cụm tán: chính + 2 phụ, méo nhẹ như tán cây thật
-        const clusters: [number, number, number, number][] = [
-          [0, 3.5, 0, 1.35], [-0.85, 3.05, 0.3, 0.85], [0.8, 3.1, -0.35, 0.9],
-        ];
+        // Round canopy, drooping willow, cherry blossoms and golden-leaf tree silhouettes.
+        const clusters: [number, number, number, number][] = t.type === WILLOW
+          ? [[0, 3.25, 0, 1.5], [-1.05, 2.65, 0.42, 1.0], [1.05, 2.58, -0.38, 1.02]]
+          : t.type === GOLDEN
+            ? [[0, 3.7, 0, 1.28], [-0.95, 3.0, 0.35, 0.96], [0.9, 3.05, -0.42, 1.02]]
+            : [[0, 3.5, 0, 1.35], [-0.85, 3.05, 0.3, 0.85], [0.8, 3.1, -0.35, 0.9]];
         for (const [cx, cy, cz, cs] of clusters) {
           const cos = Math.cos(t.rot), sin = Math.sin(t.rot);
           _dummy.position.set(
@@ -105,26 +110,30 @@ export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; see
             t.z + (cx * sin + cz * cos) * t.s,
           );
           _dummy.rotation.set(t.jitter * 0.6, t.rot, t.jitter * 0.5);
-          const flat = 0.75 + t.jitter * 0.2;
-          _dummy.scale.set(t.s * cs * (1 + t.jitter * 0.2), t.s * cs * flat, t.s * cs);
+          const flat = t.type === WILLOW ? 0.58 : 0.72 + t.jitter * 0.3;
+          _dummy.scale.set(t.s * cs * (1 + t.jitter * 0.28), t.s * cs * flat, t.s * cs * (1 + (0.5 - t.jitter) * 0.18));
           _dummy.updateMatrix();
           blobs.setMatrixAt(blobIndex, _dummy.matrix);
           if (t.type === SAKURA) {
             // hồng phấn anh đào, vài cụm sáng hơn để Bloom bắt sáng
             _color.setHSL(0.93 + t.jitter * 0.03, 0.5, 0.72 + t.jitter * 0.12);
+          } else if (t.type === GOLDEN) {
+            _color.setHSL(0.105 + t.jitter * 0.035, 0.58 + t.jitter * 0.12, 0.42 + t.jitter * 0.18);
+          } else if (t.type === WILLOW) {
+            _color.setHSL(0.27 + t.jitter * 0.035, 0.36 + t.jitter * 0.1, 0.25 + t.jitter * 0.14);
           } else {
-            _color.setHSL(0.29 + t.jitter * 0.06, 0.42, 0.3 + t.jitter * 0.12);
+            _color.setHSL(0.27 + t.jitter * 0.1, 0.38 + t.jitter * 0.12, 0.23 + t.jitter * 0.19);
           }
           blobs.setColorAt(blobIndex, _color);
           blobIndex++;
         }
       }
     });
-    // ẩn các instance thừa
+    // Ẩn các instance thừa; ba tier cho mỗi cây thông vẫn dùng chung một draw call.
     _dummy.scale.set(0, 0, 0); _dummy.position.set(0, -50, 0); _dummy.rotation.set(0, 0, 0);
     _dummy.updateMatrix();
     for (let i = blobIndex; i < count * 3; i++) blobs.setMatrixAt(i, _dummy.matrix);
-    for (let i = pineIndex; i < count * 2; i++) pines.setMatrixAt(i, _dummy.matrix);
+    for (let i = pineIndex; i < count * 3; i++) pines.setMatrixAt(i, _dummy.matrix);
     trunks.instanceMatrix.needsUpdate = true;
     blobs.instanceMatrix.needsUpdate = true;
     pines.instanceMatrix.needsUpdate = true;
@@ -143,7 +152,7 @@ export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; see
         <icosahedronGeometry args={[1.4, 1]} />
         <meshStandardMaterial roughness={0.92} flatShading={false} />
       </instancedMesh>
-      <instancedMesh ref={pineRef} args={[undefined as any, undefined as any, count * 2]} castShadow receiveShadow frustumCulled={false}>
+      <instancedMesh ref={pineRef} args={[undefined as any, undefined as any, count * 3]} castShadow receiveShadow frustumCulled={false}>
         <coneGeometry args={[1.35, 2.9, 8]} />
         <meshStandardMaterial roughness={0.95} flatShading />
       </instancedMesh>
