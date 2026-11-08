@@ -325,7 +325,7 @@ function Controller() {
 
     cameraDirection.subVectors(desiredCamera, target).normalize();
     safeCamera.copy(target).addScaledVector(cameraDirection, safeDistance.current);
-    camera.position.lerp(safeCamera, 1 - Math.exp(-12 * dt));
+    camera.position.lerp(safeCamera, 1 - Math.exp(-20 * dt));
     camera.lookAt(target);
 
     const t = state.clock.elapsedTime;
