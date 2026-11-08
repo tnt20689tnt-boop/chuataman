@@ -153,7 +153,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
       </group>
       </group>
       )}
-      <Html position={[0, 2.2, 0]} center distanceFactor={13} zIndexRange={[20, 5]}>
+      <Html position={[0, 2.62, 0]} center distanceFactor={13} zIndexRange={[20, 5]}>
         <div
           ref={label}
           className="name-tag"

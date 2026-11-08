@@ -271,14 +271,20 @@ export function AnimatedAvatarAppearance({
         {/* The GLBs face local +X. Rotate -90 degrees so their forward axis agrees with player.rot and camera-relative movement. */}
         <group rotation-y={-Math.PI / 2}>
           <primitive object={model} />
-          {hair === "bui" && <mesh position={[center.x, bounds.max.y - size.y * 0.045, center.z - size.z * 0.12]} castShadow>
-            <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
-            <meshStandardMaterial color={hairColor} roughness={0.9} />
-          </mesh>}
-          {hair === "dai" && <mesh position={[center.x, bounds.min.y + size.y * 0.79, center.z - size.z * 0.19]} rotation-x={-0.12} castShadow>
-            <capsuleGeometry args={[Math.max(size.x, size.z) * 0.075, size.y * 0.18, 5, 10]} />
-            <meshStandardMaterial color={hairColor} roughness={0.92} />
-          </mesh>}
+          {hair === "bui" && rig.hairBun && createPortal(
+            <mesh position={[0, size.y * 0.10, -size.z * 0.02]} castShadow>
+              <sphereGeometry args={[Math.max(size.x, size.z) * 0.10, 16, 12]} />
+              <meshStandardMaterial color={hairColor} roughness={0.9} />
+            </mesh>,
+            rig.hairBun.bone,
+          )}
+          {hair === "dai" && rig.hairTail && createPortal(
+            <mesh position={[0, size.y * 0.01, -size.z * 0.16]} rotation-x={-0.12} castShadow>
+              <capsuleGeometry args={[Math.max(size.x, size.z) * 0.075, size.y * 0.18, 5, 10]} />
+              <meshStandardMaterial color={hairColor} roughness={0.92} />
+            </mesh>,
+            rig.hairTail.bone,
+          )}
           {accessory === "neck_mala" && rig.neckMala && createPortal(
             <group position={rig.neckMala.pos} quaternion={rig.neckMala.quat}>
               <mesh rotation-x={Math.PI / 2} castShadow>

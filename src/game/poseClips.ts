@@ -203,6 +203,9 @@ function solveCrossedLeg(root: THREE.Object3D, side: Side): void {
   const upperOrigin = upperLeg.getWorldPosition(new THREE.Vector3());
   const knee = lowerLeg.getWorldPosition(new THREE.Vector3());
   const upperLength = upperOrigin.distanceTo(knee);
+  // Open the knees to the sides first, then sweep each lower leg across the
+  // lap. The feet stay offset on opposite thighs instead of meeting at the
+  // center as if the soles were pressed together.
   const kneeDirection = new THREE.Vector3(0.65, 0.35, sideSign * 0.58)
     .normalize()
     .applyQuaternion(modelRotation);
@@ -216,6 +219,9 @@ function solveCrossedLeg(root: THREE.Object3D, side: Side): void {
     .normalize()
     .applyQuaternion(modelRotation);
   aimBoneAt(root, lowerLeg, foot, kneePosition.addScaledVector(ankleDirection, lowerLength));
+  // Turn each foot slightly outward so the soles rest independently on the
+  // opposite thigh instead of visually pressing together at the center.
+  setEulerDelta(foot, [0, 0, sideSign * 14]);
 }
 
 function solveArm(
