@@ -101,6 +101,7 @@ export function Hud() {
         <SideBtn label="Âm thanh" icon="🔊" onClick={() => setUI({ panel: panel === "audio" ? null : "audio" })} />
         <SideBtn label="Tủ trang phục" icon="👘" onClick={() => setUI({ panel: "avatar" })} />
         <SideBtn label="Phòng" icon="🏯" onClick={() => setUI({ panel: panel === "rooms" ? null : "rooms" })} />
+        <SideBtn label="Sơ đồ" icon="🗺️" onClick={() => setUI({ panel: panel === "map" ? null : "map" })} />
       </nav>
 
       {/* action bar */}
@@ -130,6 +131,7 @@ export function Hud() {
       {action === "thien" && <MeditationOverlay />}
       {action === "kinh" && <SutraOverlay />}
       {panel === "tour" && <TourPanel />}
+      {panel === "map" && <CampusMapPanel />}
       {panel === "phap" && <PhapPanel />}
       {panel === "pray" && <PrayPanel />}
       {panel === "chat" && <ChatPanel name={avatar?.name ?? "Phật tử"} />}
@@ -215,6 +217,46 @@ function TourPanel() {
             <span className="mr-1 text-primary">{String(i + 1).padStart(2, "0")}.</span>{z.name}
           </button>
         ))}
+      </div>
+    </Panel>
+  );
+}
+
+function CampusMapPanel() {
+  const places = [
+    { name: "Tượng Phật lớn · Núi thiêng", x: 0, z: -155, cx: 50, cy: 10, w: 42, h: 17, fill: "#d9c79c" },
+    { name: "Bảo tháp", x: -55, z: -112, cx: 22, cy: 38, w: 17, h: 17, fill: "#c87945" },
+    { name: "Chính điện", x: 0, z: -62, cx: 50, cy: 46, w: 30, h: 19, fill: "#b94d32" },
+    { name: "Nhà thờ Tổ", x: -42, z: -62, cx: 17, cy: 58, w: 22, h: 14, fill: "#a65b3d" },
+    { name: "Nhà giảng pháp", x: 42, z: -62, cx: 83, cy: 58, w: 22, h: 14, fill: "#a65b3d" },
+    { name: "Vườn thiền · Cây bồ đề", x: -34, z: 24, cx: 17, cy: 83, w: 27, h: 17, fill: "#72945b" },
+    { name: "Hồ sen · Cầu đá", x: 30, z: 12, cx: 78, cy: 82, w: 25, h: 18, fill: "#4f9290" },
+    { name: "Tam Quan", x: 0, z: 112, cx: 50, cy: 97, w: 26, h: 9, fill: "#b94d32" },
+  ];
+  return (
+    <Panel title="Sơ đồ tổng thể Chùa Tâm An" onClose={() => setUI({ panel: null })} wide>
+      <div className="mb-3 rounded-xl border border-border bg-card p-2">
+        <svg viewBox="0 0 100 108" role="img" aria-label="Sơ đồ từ Tam Quan phía Nam đến tượng Phật và núi thiêng phía Bắc" className="w-full" style={{ maxHeight: 440 }}>
+          <defs><linearGradient id="campus-ground" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#e8dfc9" /><stop offset="100%" stopColor="#c8d4b0" /></linearGradient></defs>
+          <rect x="2" y="2" width="96" height="104" rx="5" fill="url(#campus-ground)" stroke="#92784e" strokeWidth="1.2" />
+          <path d="M50 7 V101 M5 70 H95 M5 48 H95" stroke="#b6a88e" strokeWidth="2.2" fill="none" />
+          <path d="M50 10 V98" stroke="#e8e0ce" strokeWidth="5" fill="none" />
+          <path d="M50 77 L50 89" stroke="#e8e0ce" strokeWidth="7" />
+          <ellipse cx="78" cy="82" rx="12" ry="8" fill="#6da6a0" stroke="#e7d8b6" strokeWidth="1.3" />
+          <ellipse cx="17" cy="83" rx="13" ry="9" fill="#8ba66c" stroke="#e7d8b6" strokeWidth="1.3" />
+          <g fill="#d4b878" opacity=".8"><circle cx="14" cy="81" r="1.2"/><circle cx="20" cy="85" r="1.2"/><circle cx="76" cy="80" r="1.2"/><circle cx="82" cy="84" r="1.2"/></g>
+          {places.map((p) => <g key={p.name} onClick={() => { teleport(p.x, p.z, Math.PI); setUI({ panel: null, pose: "stand", action: "none" }); }} style={{ cursor: "pointer" }}>
+            <rect x={p.cx-p.w/2} y={p.cy-p.h/2} width={p.w} height={p.h} rx="2" fill={p.fill} stroke="#6b4b32" strokeWidth=".8" />
+            <rect x={p.cx-p.w/2+1.2} y={p.cy-p.h/2+1.2} width={p.w-2.4} height={p.h-2.4} rx="1" fill="none" stroke="#f4dfaa" strokeWidth=".55" />
+            <text x={p.cx} y={p.cy+.8} textAnchor="middle" fontSize="3.2" fill="#fff8e8" fontWeight="bold">{p.name.split(" · ")[0]}</text>
+          </g>)}
+          <text x="50" y="5.5" textAnchor="middle" fontSize="3.2" fill="#43523b" fontWeight="bold">BẮC ↑</text>
+          <text x="50" y="104" textAnchor="middle" fontSize="3.2" fill="#43523b" fontWeight="bold">NAM · CỔNG CHÍNH</text>
+        </svg>
+      </div>
+      <p className="mb-3 text-xs text-muted-foreground">Chạm vào từng công trình trên sơ đồ để di chuyển đến khu vực đó. Bố cục: Tam Quan phía Nam, tượng Phật và núi thiêng phía Bắc.</p>
+      <div className="grid grid-cols-2 gap-2">
+        {places.map((p) => <button key={p.name} className="hud-tile text-left" onClick={() => { teleport(p.x, p.z, Math.PI); setUI({ panel: null, pose: "stand", action: "none" }); }}>{p.name}</button>)}
       </div>
     </Panel>
   );
