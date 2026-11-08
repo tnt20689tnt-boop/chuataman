@@ -175,14 +175,15 @@ function LotusPond({ x, z, w, d, count = 120 }: { x: number; z: number; w: numbe
 
 // ---------- Cầu đá cong bắc qua hồ sen (theo bản đồ) ----------
 function LotusBridge({ x, z }: { x: number; z: number }) {
-  const length = 24;
+  // Span the full 40m pond, with stone landing pads at both banks.
+  const length = 40;
   const rail = useMemo(() => {
-    const points = Array.from({ length: 73 }, (_, i) => new THREE.Vector3(
+    const points = Array.from({ length: 121 }, (_, i) => new THREE.Vector3(
       0,
-      0.45 + Math.sin((i / 72) * Math.PI) * 1.1,
-      -length / 2 + (i / 72) * length,
+      0.45 + Math.sin((i / 120) * Math.PI) * 1.1,
+      -length / 2 + (i / 120) * length,
     ));
-    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 72, 0.08, 6, false);
+    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 120, 0.08, 6, false);
   }, []);
   return (
     <group position={[x, 0, z]} name="Cầu đá cong hồ sen">
