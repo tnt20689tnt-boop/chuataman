@@ -176,6 +176,23 @@ export function AnimatedAvatarAppearance({
   }, [gltf.animations, model]);
   const { actions, mixer } = useAnimations(clips, root);
   const activeClip = useRef("");
+  const locomotionBones = useMemo(() => {
+    const bones: Record<string, THREE.Bone | null> = {
+      leftUpLeg: null,
+      rightUpLeg: null,
+      leftLeg: null,
+      rightLeg: null,
+    };
+    const normalize = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    model.traverse((object) => {
+      if (!(object as THREE.Bone).isBone) return;
+      const name = normalize(object.name);
+      for (const key of Object.keys(bones)) {
+        if (name.endsWith(`mixamorig${key}`)) bones[key] = object as THREE.Bone;
+      }
+    });
+    return bones;
+  }, [model]);
 
   useLayoutEffect(() => {
     activeClip.current = "";
@@ -206,13 +223,12 @@ export function AnimatedAvatarAppearance({
     // In that case keep the walk cycle and speed up its cadence to match
     // the faster world movement instead of letting the feet lag behind.
     const selected = desired === "run" && !actions["run"] ? "walk" : desired;
+    // Keep cadence readable while the world movement is faster. The stride
+    // extension below increases distance per step instead of making feet
+    // flicker at the world-speed ratio.
     const playbackRate = desired === "run"
-      ? selected === "walk"
-        ? MOVE.RUN / GAIT_REFERENCE_SPEED.walk
-        : 1.25 * (MOVE.RUN / GAIT_REFERENCE_SPEED.run)
-      : desired === "walk"
-        ? MOVE.SPEED / GAIT_REFERENCE_SPEED.walk
-        : 1;
+      ? selected === "walk" ? 1.15 : 1.2
+      : desired === "walk" ? 1 : 1;
 
     // Run may use the same walk clip, so update its playback rate even when
     // the selected clip name has not changed.
@@ -233,6 +249,17 @@ export function AnimatedAvatarAppearance({
       next.fadeIn(0.12).play();
     }
     activeClip.current = selected;
+  });
+
+  useFrame(({ clock }) => {
+    if (action !== "none" || pose !== "walk") return;
+    const phase = clock.elapsedTime * (input.run ? 7.5 : 6.2);
+    const stride = Math.sin(phase) * (input.run ? 0.24 : 0.20);
+    const counterStride = -stride;
+    if (locomotionBones["leftUpLeg"]) locomotionBones["leftUpLeg"].rotation.x += stride;
+    if (locomotionBones["rightUpLeg"]) locomotionBones["rightUpLeg"].rotation.x += counterStride;
+    if (locomotionBones["leftLeg"]) locomotionBones["leftLeg"].rotation.x += counterStride * 0.42;
+    if (locomotionBones["rightLeg"]) locomotionBones["rightLeg"].rotation.x += stride * 0.42;
   });
 
   return (
