@@ -8,7 +8,7 @@ import { CarvedPanel, Inscription } from './TempleDetails';
 function CampusBuilding({ building }: { building: typeof BUILDINGS[number] }) {
   const b = building;
   return <group position={[b.x, 0, b.z]} name={b.label}>
-    <mesh position={[0, 0.15, 0]} receiveShadow><boxGeometry args={[b.w + 2, 0.3, b.d + 2]} /><Surface kind="stone" repeat={3} /></mesh>
+    <mesh position={[0, 0.15, 0]} receiveShadow><boxGeometry args={[b.w + 2.8, 0.3, b.d + 2.8]} /><Surface kind="stone" repeat={3} /></mesh>
     <mesh position={[0, b.h / 2 + 0.3, -b.d / 2]} castShadow><boxGeometry args={[b.w, b.h, 0.5]} /><Surface kind="wood" repeat={3} /></mesh>
     {[-1, 1].map(side => <group key={side}>
       <mesh position={[side * b.w / 2, b.h / 2 + 0.3, 0]} castShadow><boxGeometry args={[0.5, b.h, b.d]} /><Surface kind="wood" repeat={3} /></mesh>
@@ -16,7 +16,8 @@ function CampusBuilding({ building }: { building: typeof BUILDINGS[number] }) {
       <CarvedPanel position={[side * b.w / 3, b.h * 0.55, b.d / 2 + 0.3]} w={b.w / 4} h={b.h * 0.65} />
       <mesh position={[side * b.w / 6, b.h / 2 + 0.3, b.d / 2]} castShadow><cylinderGeometry args={[0.24, 0.3, b.h, 12]} /><Surface kind="wood" /></mesh>
     </group>)}
-    <Roof w={b.w + 2} d={b.d + 2} h={3.5} y={b.h + 0.3} />
+    <Roof w={b.w + 2.8} d={b.d + 2.8} h={3.8} y={b.h + 0.3} />
+    <Roof w={b.w * 0.72} d={b.d * 0.42} h={1.55} y={b.h + 2.18} />
     {/* Formal stone entrance steps and a red-gold open doorway for each campus hall. */}
     <group name={b.label + " - bậc tam cấp"}>
       {[0, 1, 2].map((step) => <mesh key={step} position={[0, 0.12 + step * 0.16, b.d / 2 + 1.15 - step * 0.72]} castShadow receiveShadow>
@@ -38,6 +39,10 @@ function CampusBuilding({ building }: { building: typeof BUILDINGS[number] }) {
         </mesh>
       </group>)}
     </group>
+    <mesh position={[0, 0.42, b.d / 2 + 1.48]} receiveShadow>
+      <boxGeometry args={[Math.min(b.w * 0.72, 15), 0.18, 2.2]} />
+      <meshStandardMaterial color="#c7b79b" roughness={0.94} />
+    </mesh>
     <Inscription text={b.label} width={b.w * 0.5} height={1.1} position={[0, b.h - 0.4, b.d / 2 + 0.35]} />
     {b.kind === 'ancestral' && <>
       <mesh position={[0, 0.8, -4]} castShadow><boxGeometry args={[10, 1, 4]} /><Surface kind="wood" /></mesh>
@@ -258,9 +263,57 @@ function BoundaryWalls() {
   </group>;
 }
 
+function CourtyardGardens() {
+  const trees: [number, number, number, boolean][] = [
+    [-68, 78, 1.35, false], [-45, 70, 1.05, true], [58, 74, 1.2, true], [76, 58, 1.45, false],
+    [-74, 18, 1.4, false], [-58, -8, 1.1, true], [66, -8, 1.2, true], [76, 20, 1.35, false],
+    [-70, -48, 1.2, true], [70, -46, 1.25, true], [-58, -91, 1.5, false], [58, -91, 1.35, false],
+    [-20, 35, 0.9, true], [20, 38, 0.9, true], [-20, -22, 0.95, true], [20, -22, 0.95, true],
+  ];
+  return <group name="Sân đá và vườn cây theo sơ đồ tổng thể">
+    <mesh position={[0, 0.035, 30]} receiveShadow>
+      <boxGeometry args={[6.5, 0.07, 128]} />
+      <meshStandardMaterial color="#c9bda7" roughness={0.96} />
+    </mesh>
+    {[-1, 1].map((side) => <mesh key={side} position={[side * 30, 0.04, -18]} receiveShadow>
+      <boxGeometry args={[52, 0.08, 4.2]} />
+      <meshStandardMaterial color="#c9bda7" roughness={0.96} />
+    </mesh>)}
+    {[-1, 1].map((side) => <group key={side}>
+      {[-28, 12, 52].map((z) => <mesh key={z} position={[side * 22, 0.06, z]} receiveShadow>
+        <boxGeometry args={[11, 0.12, 7]} />
+        <meshStandardMaterial color={side < 0 ? "#6f8e55" : "#78975b"} roughness={1} />
+      </mesh>)}
+      {[-25, 15, 55].map((z) => <mesh key={z} position={[side * 22, 0.18, z]} receiveShadow>
+        <boxGeometry args={[7.5, 0.28, 0.35]} />
+        <meshStandardMaterial color="#587244" roughness={1} />
+      </mesh>)}
+    </group>)}
+    {trees.map(([x, z, scale, blossom], i) => <group key={i} position={[x, 0, z]} scale={scale}>
+      <mesh position={[0, 1.45, 0]} castShadow><cylinderGeometry args={[0.28, 0.42, 2.9, 9]} /><meshStandardMaterial color="#68432f" roughness={1} /></mesh>
+      <mesh position={[0, 3.35, 0]} scale={[1.35, 0.85, 1.18]} castShadow>
+        <sphereGeometry args={[1.65, 14, 10]} />
+        <meshStandardMaterial color={blossom ? "#729755" : "#3f7044"} roughness={0.96} />
+      </mesh>
+      {blossom && <mesh position={[0.62, 3.72, 0.48]} scale={0.36}>
+        <sphereGeometry args={[1, 12, 10]} />
+        <meshStandardMaterial color="#e7a8a7" roughness={0.86} />
+      </mesh>}
+    </group>)}
+    {Array.from({ length: 20 }, (_, i) => {
+      const side = i % 2 ? 1 : -1;
+      const z = 96 - Math.floor(i / 2) * 9.5;
+      return <group key={i} position={[side * (8.2 + (i % 3) * 0.35), 0, z]}>
+        <mesh position={[0, 0.42, 0]} castShadow><sphereGeometry args={[0.55 + (i % 3) * 0.08, 10, 8]} /><meshStandardMaterial color={i % 4 === 0 ? "#d88c9a" : "#7aa052"} roughness={0.92} /></mesh>
+      </group>;
+    })}
+  </group>;
+}
+
 export function TempleCampus() {
   return <>
     <BoundaryWalls />
+    <CourtyardGardens />
     {BUILDINGS.map(b => <CampusBuilding key={b.id} building={b} />)}
     <Bridge /><Garden />
     <group position={[-12, 0, 42]}>

@@ -17,8 +17,8 @@ export const BUILDINGS: readonly TempleBuilding[] = [
   { id: "nhaKhach", label: "NHÀ KHÁCH", x: 42, z: -15, w: 25, d: 16, h: 6, kind: "guest" },
 ] as const;
 export const SCENE_COLORS = {
-  wood: "#553629", woodDark: "#30221b", lacquer: "#793f32", gold: "#b99b58",
-  stone: "#b0b3a9", roof: "#655f58", bronze: "#9c834f", sky: "#d9e8e8", fog: "#d4e1da",
+  wood: "#7a3d2d", woodDark: "#4b241b", lacquer: "#b5482c", gold: "#d6a653",
+  stone: "#b8b19e", roof: "#bd4b2f", bronze: "#9c834f", sky: "#d9e8e8", fog: "#d4e1da",
   sun: "#fff3de", ambient: "#e5eef3", groundLight: "#657452", foliage: "#426447",
   altarRed: "#72251f", altarGold: "#d1ac61", porcelain: "#e5e9de", porcelainInk: "#386157",
   candle: "#ead7a7", flame: "#ffce79", warmLight: "#ffdfad", smoke: "#e8e5dc",
