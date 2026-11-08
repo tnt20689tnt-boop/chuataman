@@ -91,7 +91,7 @@ const visitor = new SAT.Circle(new SAT.Vector(), PLAYER_RADIUS);
 // Populated from the exact rendered forest positions by World before movement starts.
 let treeTrunks: SAT.Circle[] = [];
 export function setTreeCollisionPoints(points: [number, number, number][]) {
-  treeTrunks = points.map(([x, z, scale]) => new SAT.Circle(new SAT.Vector(x, z), 0.42 * scale));
+  treeTrunks = points.map(([x, z, scale]) => new SAT.Circle(new SAT.Vector(x, z), 0.28 * scale));
 }
 export function isBlocked(x: number, z: number) {
   visitor.pos.x = x; visitor.pos.y = z;
