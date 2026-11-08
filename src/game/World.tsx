@@ -142,22 +142,28 @@ function Ground() {
 function treePoints(): [number, number, number][] {
   const r = rng(11);
   const pts: [number, number, number][] = [];
-  // Avenue trees frame the Tam Quan, but leave a clear arrival court around the gate.
-  for (let z = 26; z < 96; z += 7) {
+
+  // Keep the ceremonial approach lined with trees, but leave the walking lane
+  // between them completely clear.
+  for (let z = 38; z < 108; z += 14) {
     pts.push([-8, z, 0.9 + r() * 0.3], [8, z, 0.9 + r() * 0.3]);
   }
-  let tries = 0;
-  while (pts.length < 260 && tries++ < 4000) {
-    const x = (r() - 0.5) * 300;
-    const z = (r() - 0.5) * 300;
-    const inCourt = Math.abs(x) < 52 && z > -88 && z < 45;
-    const onPath = Math.abs(x) < 9 && z > -180 && z < 118;
-    const nearZone = ZONES.some((zn) => (zn.x - x) ** 2 + (zn.z - z) ** 2 < 220);
-    const crossPath = (Math.abs(z - 30) < 5 && Math.abs(x) < 100) || (Math.abs(z + 13) < 4 && Math.abs(x) < 60);
-    const lotusWaterAndBridge = x > 17 && x < 43 && z > -2 && z < 26;
-    const roomFootprint = BUILDINGS.some((building) => Math.abs(x - building.x) < building.w / 2 + 3 && Math.abs(z - building.z) < building.d / 2 + 3);
-    if (inCourt || onPath || nearZone || crossPath || lotusWaterAndBridge || roomFootprint) continue;
-    pts.push([x, z, 0.8 + r() * 0.8]);
+
+  // Decorative forest is kept outside the main walking enclosure. The former
+  // random 260-tree scatter placed invisible trunk colliders across side paths,
+  // the meditation garden approach and the rear Buddha route.
+  for (const side of [-1, 1]) {
+    for (let z = -174; z <= 112; z += 12) {
+      for (const offset of [0, 11, 22]) {
+        pts.push([side * (128 + offset), z + (r() - 0.5) * 3, 0.8 + r() * 0.8]);
+      }
+    }
+  }
+  for (let z of [-196, -184, 128, 140]) {
+    for (let x = -118; x <= 118; x += 12) {
+      if (Math.abs(x) < 24 && z > 110) continue;
+      pts.push([x + (r() - 0.5) * 3, z, 0.8 + r() * 0.8]);
+    }
   }
   return pts;
 }
