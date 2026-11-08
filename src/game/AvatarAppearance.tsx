@@ -227,8 +227,8 @@ export function AnimatedAvatarAppearance({
     // extension below increases distance per step instead of making feet
     // flicker at the world-speed ratio.
     const playbackRate = desired === "run"
-      ? selected === "walk" ? 1.15 : 1.2
-      : desired === "walk" ? 1 : 1;
+      ? selected === "walk" ? 0.95 : 1
+      : desired === "walk" ? 0.88 : 1;
 
     // Run may use the same walk clip, so update its playback rate even when
     // the selected clip name has not changed.
@@ -253,13 +253,13 @@ export function AnimatedAvatarAppearance({
 
   useFrame(({ clock }) => {
     if (action !== "none" || pose !== "walk") return;
-    const phase = clock.elapsedTime * (input.run ? 7.5 : 6.2);
-    const stride = Math.sin(phase) * (input.run ? 0.24 : 0.20);
+    const phase = clock.elapsedTime * (input.run ? 6.2 : 4.8);
+    const stride = Math.sin(phase) * (input.run ? 0.44 : 0.38);
     const counterStride = -stride;
     if (locomotionBones["leftUpLeg"]) locomotionBones["leftUpLeg"].rotation.x += stride;
     if (locomotionBones["rightUpLeg"]) locomotionBones["rightUpLeg"].rotation.x += counterStride;
-    if (locomotionBones["leftLeg"]) locomotionBones["leftLeg"].rotation.x += counterStride * 0.42;
-    if (locomotionBones["rightLeg"]) locomotionBones["rightLeg"].rotation.x += stride * 0.42;
+    if (locomotionBones["leftLeg"]) locomotionBones["leftLeg"].rotation.x += counterStride * 0.65;
+    if (locomotionBones["rightLeg"]) locomotionBones["rightLeg"].rotation.x += stride * 0.65;
   });
 
   return (
