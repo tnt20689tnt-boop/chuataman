@@ -85,7 +85,8 @@ const statues = [
   new SAT.Circle(new SAT.Vector(0, -68.5), 3.8),
   new SAT.Circle(new SAT.Vector(0, -155), 2.8),
 ];
-// No hidden waterfall basin collider: the rear garden route stays open.
+// The waterfall basin is solid only at the far rear edge, behind the Buddha.
+const waterBodies = [new SAT.Circle(new SAT.Vector(0, -176.9), 6.2)];
 const visitor = new SAT.Circle(new SAT.Vector(), PLAYER_RADIUS);
 // Populated from the exact rendered forest positions by World before movement starts.
 let treeTrunks: SAT.Circle[] = [];
@@ -98,7 +99,7 @@ export function isBlocked(x: number, z: number) {
   return polygons.some(s => {
     if (s.id.startsWith('foundation') && z < -47.4 && z > -73.1 && Math.abs(x) < 19.2) return false;
     return SAT.testCirclePolygon(visitor, s.shape);
-  }) || statues.some(s => SAT.testCircleCircle(visitor, s)) || treeTrunks.some(s => SAT.testCircleCircle(visitor, s));
+  }) || statues.some(s => SAT.testCircleCircle(visitor, s)) || waterBodies.some(s => SAT.testCircleCircle(visitor, s)) || treeTrunks.some(s => SAT.testCircleCircle(visitor, s));
 }
 export function surfaceHeight(x: number, z: number) {
   // Existing cushions are walkable; support the avatar above their padded tops.
