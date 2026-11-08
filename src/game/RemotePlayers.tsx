@@ -73,7 +73,7 @@ function RemoteAvatar({ player, peers }: { player: RemotePlayer; peers: RemotePl
           outfitColor={player.outfitColor}
           hair={player.hair ?? "ngan"}
           hairColor={player.hairColor ?? "#1b1410"}
-          accessory={player.accessory ?? "neck_mala"}
+          accessory="none"
           pose={player.action && player.action !== "none" ? (player.pose ?? "stand") : isMoving ? "walk" : "stand"}
           action={player.action ?? "none"}
         />

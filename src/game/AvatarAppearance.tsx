@@ -9,7 +9,7 @@ import { isRootMotionBoneName, stabilizeRootPositionTrack } from "./rootMotion";
 import { interactionActionForCompletedClip, type CompletedInteractionAction } from "./interactionAnimation";
 import { buildTemplePoseClips } from "./poseClips";
 
-export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
+export type AvatarAccessory = "none";
 // Measured from the GLB clips: at 1x playback the walk cycle covers ~1.07 and
 // the run cycle ~3.65 game units per second. Playback rate = speed / reference
 // keeps footsteps exactly matched to world movement (no foot sliding).

@@ -305,7 +305,7 @@ export function PlayerAvatar() {
           outfitColor={displayedAvatar.outfitColor}
           hair={displayedAvatar.hair}
           hairColor={displayedAvatar.hairColor}
-          accessory={displayedAvatar.accessory ?? "neck_mala"}
+          accessory="none"
           pose={pose}
           action={action}
           onActionComplete={completePlayerInteraction}

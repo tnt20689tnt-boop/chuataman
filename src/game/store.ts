@@ -12,7 +12,7 @@ export type Action = "none" | "le" | "chap" | "thien" | "kinh";
 
 export type AvatarModelId = "male_animated" | "female_animated";
 
-export type AvatarAccessory = "neck_mala" | "wrist_mala" | "shoulder_sash";
+export type AvatarAccessory = "none";
 
 export interface Avatar {
   name: string;
@@ -92,6 +92,7 @@ export function normalizeAvatar(a: Avatar): Avatar {
     outfit,
     outfitColor: a.outfitColor ?? OUTFIT_COLORS[outfit],
     modelId: gender === "nu" ? "female_animated" : "male_animated",
+    accessory: "none",
   };
 }
 

@@ -1,6 +1,6 @@
 import { memo, Suspense, useEffect, useRef, useState } from "react";
 import { HAIR_COLORS, HAIR_LABEL, OUTFIT_COLORS, OUTFIT_COLOR_OPTIONS, OUTFIT_LABEL, PHAP_THOAI, TAM_KINH, ZONES, quoteOfDay, type Hair, type Outfit } from "./sim";
-import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar, type AvatarAccessory } from "./store";
+import { input, loadAvatar, saveAvatar, setUI, teleport, useUI, type Avatar } from "./store";
 import { checkAudioFiles, disableAudio, enableAudio, getAudioSettings, playSound, ringBell, speak, stopSpeak, pauseSpeak, resumeSpeak, subscribeAudioSettings, testFootsteps, updateAudioSettings } from "./audio";
 import { connectMultiplayer, disconnectMultiplayer, sendTempleChat, sendTemplePrayer, switchMultiplayerRoom, useMultiplayer, useMultiplayerConnected, useTempleChat, useTemplePrayers } from "./multiplayer";
 import { getAuthClient, type User } from "./auth";
@@ -610,13 +610,8 @@ function AuthPanel() {
 }
 
 function AvatarPanel({ initial }: { initial: Avatar | null }) {
-  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", outfit: "lam", outfitColor: OUTFIT_COLORS.lam, hair: "ngan", hairColor: HAIR_COLORS[0], accessory: "neck_mala" });
+  const [a, setA] = useState<Avatar>(initial ?? { name: "", gender: "nam", outfit: "lam", outfitColor: OUTFIT_COLORS.lam, hair: "ngan", hairColor: HAIR_COLORS[0], accessory: "none" });
   const gender = a.gender ?? "nam";
-  const accessoryOptions: { id: AvatarAccessory; label: string }[] = [
-    { id: "neck_mala", label: "📿 Tràng hạt đeo cổ" },
-    { id: "wrist_mala", label: "Tràng hạt đeo tay" },
-    { id: "shoulder_sash", label: "Đai vai trang trí" },
-  ];
   const ok = a.name.trim().length >= 2;
   useEffect(() => {
     setUI({ avatarPreview: a });
@@ -631,7 +626,7 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
       <div className="mb-3 flex gap-2">
         {(["nam", "nu"] as const).map((nextGender) => (
           <button key={nextGender} className="hud-swatch" data-active={gender === nextGender}
-            onClick={() => update({ ...a, gender: nextGender })}>
+            onClick={() => update({ ...a, gender: nextGender, hair: nextGender === "nu" ? "dai" : "ngan", accessory: "none" })}>
             {nextGender === "nam" ? "👨 Nam" : "👩 Nữ"}
           </button>
         ))}
@@ -662,15 +657,6 @@ function AvatarPanel({ initial }: { initial: Avatar | null }) {
         {(["ngan", "bui", "dai"] as Hair[]).map((h) => (
           <button key={h} className="hud-swatch" data-active={a.hair === h} onClick={() => update({ ...a, hair: h })}>
             {HAIR_LABEL[h]}
-          </button>
-        ))}
-      </div>
-      <div className="mb-1 text-sm font-semibold text-foreground">Phụ kiện</div>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {accessoryOptions.map((item) => (
-          <button key={item.id} className="hud-swatch" data-active={(a.accessory ?? "neck_mala") === item.id}
-            onClick={() => update({ ...a, accessory: item.id })}>
-            {item.label}
           </button>
         ))}
       </div>
