@@ -62,6 +62,12 @@ describe('PR9 visitor access', () => {
     moveVisitor(visitor, 0, 39);
     expect(visitor.z).toBeCloseTo(34.5);
   });
+  it('keeps the central route and meditation garden approaches free of phantom pavilion posts', () => {
+    expect(isBlocked(0, -20)).toBe(false);
+    expect(isBlocked(-34, 39)).toBe(false);
+    expect(isBlocked(-34, 24)).toBe(false);
+    expect(isBlocked(-34, 9)).toBe(false);
+  });
   it('keeps the center doorway open at the ancestral, meditation, lecture and guest rooms', () => {
     expect(isBlocked(-42, -52)).toBe(false);
     expect(isBlocked(-42, -5)).toBe(false);
