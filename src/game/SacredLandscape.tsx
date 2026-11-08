@@ -55,10 +55,10 @@ export function SacredLandscape({ existingTrees }: { existingTrees: ForestPoint[
   return <group name="Núi thiêng, thác nước và rừng bao quanh Chùa Tâm An">
     <group position={[0, 0, -198]} name="Dãy núi thiêng hậu cảnh">
       {([
-        [-58, 23, 52, 34, 38],
-        [-23, 31, 66, 42, 46],
-        [18, 38, 78, 48, 54],
-        [58, 25, 54, 36, 40],
+        [-58, 23, -4, 34, 38],
+        [-23, 31, 0, 42, 46],
+        [18, 38, 4, 48, 54],
+        [58, 25, -2, 36, 40],
       ] as const).map(([x, y, z, radius, height], i) => (
         <group key={i} position={[x, y, z]}>
           <mesh scale={[1.2, 1, 0.72]} castShadow receiveShadow>

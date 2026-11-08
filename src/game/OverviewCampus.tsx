@@ -178,10 +178,12 @@ export function OverviewCampus() {
     <Pond position={[30, 0, 12]} w={22} d={24} />
     <LotusBridge />
     <Pavilion position={[45, 0, 12]} />
-    <group position={[0, 0, -155]} name="Tượng Phật lớn phía sau khuôn viên">
-      <mesh position={[0, 0.25, 0]} receiveShadow><cylinderGeometry args={[18, 18, 0.7, 48]} /><meshStandardMaterial color="#cfc3ac" roughness={0.96} /></mesh>
-      <mesh position={[0, 0.7, 0]} receiveShadow><cylinderGeometry args={[14, 14, 0.22, 48]} /><meshStandardMaterial color="#d7b56e" metalness={0.45} roughness={0.42} /></mesh>
-      <Buddha position={[0, 0.82, 0]} scale={1.8} />
+    <group position={[0, 0, -155]} name="Tượng Quan Thế Âm Bồ Tát đại cảnh">
+      <mesh position={[0, 0.25, 0]} receiveShadow><cylinderGeometry args={[42, 42, 1.6, 64]} /><meshStandardMaterial color="#cfc3ac" roughness={0.96} /></mesh>
+      <mesh position={[0, 1.15, 0]} receiveShadow><cylinderGeometry args={[34, 34, 0.32, 64]} /><meshStandardMaterial color="#d7b56e" metalness={0.45} roughness={0.42} /></mesh>
+      <mesh position={[0, 39, 0]} rotation-x={Math.PI / 2} castShadow><torusGeometry args={[15, 0.75, 16, 64]} /><meshStandardMaterial color="#e4bd62" emissive="#b8812f" emissiveIntensity={0.22} metalness={0.5} roughness={0.38} /></mesh>
+      <Buddha position={[0, 1.45, 0]} scale={10} />
+      <Inscription text="QUAN THẾ ÂM BỒ TÁT" width={24} height={2.2} position={[0, 2.1, 34.2]} stone />
     </group>
     {/* Núi đá và thác nước nằm ở lớp cảnh quan phía sau tượng Phật, không nằm trước Chính điện. */}
     <Waterfall position={[0, 0, -181]} />

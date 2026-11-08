@@ -224,7 +224,7 @@ function TourPanel() {
 
 function CampusMapPanel() {
   const places = [
-    { name: "Tượng Phật lớn · Núi thiêng", x: 0, z: -155, cx: 50, cy: 10, w: 42, h: 17, fill: "#d9c79c" },
+    { name: "Quan Thế Âm Bồ Tát · Núi thiêng", x: 0, z: -155, cx: 50, cy: 10, w: 42, h: 17, fill: "#d9c79c" },
     { name: "Bảo tháp", x: -55, z: -112, cx: 22, cy: 38, w: 17, h: 17, fill: "#c87945" },
     { name: "Chính điện", x: 0, z: -62, cx: 50, cy: 46, w: 30, h: 19, fill: "#b94d32" },
     { name: "Nhà thờ Tổ", x: -42, z: -62, cx: 17, cy: 58, w: 22, h: 14, fill: "#a65b3d" },
@@ -236,7 +236,7 @@ function CampusMapPanel() {
   return (
     <Panel title="Sơ đồ tổng thể Chùa Tâm An" onClose={() => setUI({ panel: null })} wide>
       <div className="mb-3 rounded-xl border border-border bg-card p-2">
-        <svg viewBox="0 0 100 108" role="img" aria-label="Sơ đồ từ Tam Quan phía Nam đến tượng Phật và núi thiêng phía Bắc" className="w-full" style={{ maxHeight: 440 }}>
+        <svg viewBox="0 0 100 108" role="img" aria-label="Sơ đồ từ Tam Quan phía Nam đến Quan Thế Âm Bồ Tát và núi thiêng phía Bắc" className="w-full" style={{ maxHeight: 440 }}>
           <defs><linearGradient id="campus-ground" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#e8dfc9" /><stop offset="100%" stopColor="#c8d4b0" /></linearGradient></defs>
           <rect x="2" y="2" width="96" height="104" rx="5" fill="url(#campus-ground)" stroke="#92784e" strokeWidth="1.2" />
           <path d="M50 7 V101 M5 70 H95 M5 48 H95" stroke="#b6a88e" strokeWidth="2.2" fill="none" />
@@ -254,7 +254,7 @@ function CampusMapPanel() {
           <text x="50" y="104" textAnchor="middle" fontSize="3.2" fill="#43523b" fontWeight="bold">NAM · CỔNG CHÍNH</text>
         </svg>
       </div>
-      <p className="mb-3 text-xs text-muted-foreground">Chạm vào từng công trình trên sơ đồ để di chuyển đến khu vực đó. Bố cục: Tam Quan phía Nam, tượng Phật và núi thiêng phía Bắc.</p>
+      <p className="mb-3 text-xs text-muted-foreground">Chạm vào từng công trình trên sơ đồ để di chuyển đến khu vực đó. Bố cục: Tam Quan phía Nam, Quan Thế Âm Bồ Tát và núi thiêng phía Bắc.</p>
       <div className="grid grid-cols-2 gap-2">
         {places.map((p) => <button key={p.name} className="hud-tile text-left" onClick={() => { teleport(p.x, p.z, Math.PI); setUI({ panel: null, pose: "stand", action: "none" }); }}>{p.name}</button>)}
       </div>
