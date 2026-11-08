@@ -227,8 +227,8 @@ export function AnimatedAvatarAppearance({
     // extension below increases distance per step instead of making feet
     // flicker at the world-speed ratio.
     const playbackRate = desired === "run"
-      ? selected === "walk" ? 1.05 : 1.1
-      : desired === "walk" ? 0.98 : 1;
+      ? selected === "walk" ? 1.14 : 1.2
+      : desired === "walk" ? 1.08 : 1;
 
     // Run may use the same walk clip, so update its playback rate even when
     // the selected clip name has not changed.
@@ -253,7 +253,7 @@ export function AnimatedAvatarAppearance({
 
   useFrame(({ clock }) => {
     if (action !== "none" || pose !== "walk") return;
-    const phase = clock.elapsedTime * (input.run ? 6.8 : 5.4);
+    const phase = clock.elapsedTime * (input.run ? 7.6 : 6.2);
     const stride = Math.sin(phase) * (input.run ? 0.44 : 0.38);
     const counterStride = -stride;
     if (locomotionBones["leftUpLeg"]) locomotionBones["leftUpLeg"].rotation.x += stride;
