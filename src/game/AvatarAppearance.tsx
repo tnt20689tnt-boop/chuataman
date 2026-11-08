@@ -1,15 +1,14 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF, useAnimations } from "@react-three/drei";
-import { createPortal, useFrame } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { MOVE, OUTFIT_COLORS, type Outfit, type Hair, type Pose } from "./sim";
+import { MOVE, OUTFIT_COLORS, type Outfit, type Pose } from "./sim";
 import { input, type Action } from "./store";
 import { isRootMotionBoneName, stabilizeRootPositionTrack } from "./rootMotion";
 import { interactionActionForCompletedClip, type CompletedInteractionAction } from "./interactionAnimation";
 import { buildTemplePoseClips } from "./poseClips";
 
-export type AvatarAccessory = "none";
 // Measured from the GLB clips: at 1x playback the walk cycle covers ~1.07 and
 // the run cycle ~3.65 game units per second. Playback rate = speed / reference
 // keeps footsteps exactly matched to world movement (no foot sliding).
@@ -18,21 +17,13 @@ const GAIT_REFERENCE_SPEED = { walk: 1.07, run: 3.65 };
 // consistent adult height about 22% larger than the previous 1.8m.
 const TARGET_AVATAR_HEIGHT = 2.2;
 
-interface BoneAttachment {
-  bone: THREE.Bone;
-  pos: THREE.Vector3;
-  quat: THREE.Quaternion;
-}
-
 export function AnimatedAvatarAppearance({
-  modelId, outfit, outfitColor, hair, hairColor, accessory, pose = "stand", action = "none", onActionComplete,
+  modelId, outfit, outfitColor, hairColor, pose = "stand", action = "none", onActionComplete,
 }: {
   modelId: "male_animated" | "female_animated";
   outfit: Outfit;
   outfitColor?: string | undefined;
-  hair: Hair;
   hairColor: string;
-  accessory: AvatarAccessory;
   pose?: Pose;
   action?: Action;
   onActionComplete?: (action: CompletedInteractionAction) => void;
@@ -83,65 +74,6 @@ export function AnimatedAvatarAppearance({
   const size = useMemo(() => bounds.getSize(new THREE.Vector3()), [bounds]);
   const center = useMemo(() => bounds.getCenter(new THREE.Vector3()), [bounds]);
   const unitScale = TARGET_AVATAR_HEIGHT / Math.max(size.y, 0.001);
-  const neckY = bounds.min.y + size.y * 0.72;
-
-  // Accessories and extra hair attach to bones so they follow every animation
-  // (walk, run, prayer, bow, meditation) instead of floating at fixed offsets.
-  // Attachments are computed while the clone is still in its bind pose.
-  const rig = useMemo(() => {
-    model.updateMatrixWorld(true);
-    const bones: THREE.Bone[] = [];
-    model.traverse((o) => {
-      if ((o as THREE.Bone).isBone) bones.push(o as THREE.Bone);
-    });
-    // GLB exporters may prefix Mixamo names with an armature/namespace.
-    // Resolve by normalized suffix instead of requiring one exact spelling.
-    const normalize = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const findBone = (expected: string) => {
-      const target = normalize(expected);
-      return bones.find((bone) => normalize(bone.name) === target) ??
-        bones.find((bone) => normalize(bone.name).endsWith(target)) ?? null;
-    };
-    const attachAt = (
-      bone: THREE.Bone | null,
-      world: THREE.Vector3 | null,
-      worldQuat = new THREE.Quaternion(),
-    ): BoneAttachment | null => {
-      if (!bone || !world) return null;
-      const pos = bone.worldToLocal(world.clone());
-      const quat = bone.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(worldQuat);
-      return { bone, pos, quat };
-    };
-    const worldPos = (bone: THREE.Bone | null) =>
-      bone ? bone.getWorldPosition(new THREE.Vector3()) : null;
-    const neck = findBone("mixamorigNeck");
-    const head = findBone("mixamorigHead");
-    const leftHand = findBone("mixamorigLeftHand");
-    const rightHand = findBone("mixamorigRightHand");
-    const leftForeArm = findBone("mixamorigLeftForeArm");
-    const rightForeArm = findBone("mixamorigRightForeArm");
-    const wristPoint = (forearm: THREE.Bone | null, hand: THREE.Bone | null) => {
-      const a = worldPos(forearm);
-      const b = worldPos(hand);
-      return a && b ? a.lerp(b, 0.82) : b;
-    };
-    const neckPoint = (() => {
-      const n = worldPos(neck);
-      const h = worldPos(head);
-      // Sit the mala at the base of the neck, not floating in front of the face.
-      return n && h ? n.lerp(h, 0.16) : n;
-    })();
-    const spine = findBone("mixamorigSpine2");
-    return {
-      neckMala: attachAt(neck, neckPoint),
-      malaBead: attachAt(neck, neckPoint),
-      leftWrist: attachAt(findBone("mixamorigLeftHand"), wristPoint(leftForeArm, leftHand)),
-      rightWrist: attachAt(findBone("mixamorigRightHand"), wristPoint(rightForeArm, rightHand)),
-      sash: attachAt(spine, worldPos(spine), new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.42, 0, 0))),
-      hairBun: attachAt(head, worldPos(head)),
-      hairTail: attachAt(head, worldPos(head), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.14))),
-    };
-  }, [model]);
   const clips = useMemo(() => {
     // Replace the GLB's incorrect custom prayer/kneel/meditation clips with
     // corrected ones built from this rig's rest pose (verified via FK on both

@@ -303,9 +303,7 @@ export function PlayerAvatar() {
           modelId={modelId}
           outfit={displayedAvatar.outfit}
           outfitColor={displayedAvatar.outfitColor}
-          hair={displayedAvatar.hair}
           hairColor={displayedAvatar.hairColor}
-          accessory="none"
           pose={pose}
           action={action}
           onActionComplete={completePlayerInteraction}
