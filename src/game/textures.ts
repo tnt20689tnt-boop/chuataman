@@ -13,6 +13,15 @@ function canvasTex(size: number, draw: (g: CanvasRenderingContext2D, s: number) 
   return t;
 }
 
+export function foliageTexture(kind: "green" | "sakura") {
+  const texture = new THREE.TextureLoader().load(`/textures/foliage-${kind}.webp`);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
+}
+
 export function grassTexture() {
   return canvasTex(256, (g, s) => {
     g.fillStyle = "#5d8a3c";

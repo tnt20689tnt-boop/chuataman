@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html, Sparkles } from "@react-three/drei";
-import { tileTexture, fallTexture, waterTexture } from "./textures";
+import { tileTexture, fallTexture, waterTexture, foliageTexture } from "./textures";
 import { Surface } from "./Materials";
 import { CarvedPanel, Inscription } from "./TempleDetails";
 import { SCENE_COLORS as C } from "./templeData";
@@ -802,71 +802,172 @@ export function Waterfall({ position }: { position: [number, number, number] }) 
   );
 }
 
-/** Instanced trees (trunk + two canopy blobs). */
+const TREE_CANOPY_LAYOUTS = [
+  { offset: [0, 5.25, 0], size: [2.35, 2.2, 2.3] },
+  { offset: [-1.25, 5.05, 0.15], size: [1.72, 1.8, 1.75] },
+  { offset: [1.25, 5.12, -0.12], size: [1.78, 1.82, 1.72] },
+  { offset: [0.12, 5.02, 1.32], size: [1.68, 1.72, 1.55] },
+  { offset: [-0.1, 5.1, -1.3], size: [1.65, 1.78, 1.58] },
+  { offset: [0.05, 6.62, 0.02], size: [1.5, 1.62, 1.48] },
+  { offset: [-0.28, 4.48, 0.26], size: [1.43, 1.4, 1.42] },
+] as const;
+
+function isFloweringTree(x: number, z: number) {
+  const hash = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
+  return hash - Math.floor(hash) > 0.925;
+}
+
+/** Layered instanced trees with textured green canopies and scattered sakura. */
 export function Forest({ points }: { points: [number, number, number][] }) {
+  const greenLeaves = useMemo(() => foliageTexture("green"), []);
+  const sakuraLeaves = useMemo(() => foliageTexture("sakura"), []);
+  const greenTrees = useMemo(() => points.filter(([x, z]) => !isFloweringTree(x, z)), [points]);
+  const sakuraTrees = useMemo(() => points.filter(([x, z]) => isFloweringTree(x, z)), [points]);
   const trunk = useRef<THREE.InstancedMesh>(null);
-  const crown = useRef<THREE.InstancedMesh>(null);
-  const crownLeft = useRef<THREE.InstancedMesh>(null);
-  const crownRight = useRef<THREE.InstancedMesh>(null);
-  const crownTop = useRef<THREE.InstancedMesh>(null);
+  const branches = useRef<THREE.InstancedMesh>(null);
+  const greenCrown = useRef<THREE.InstancedMesh>(null);
+  const greenCrownLeft = useRef<THREE.InstancedMesh>(null);
+  const greenCrownRight = useRef<THREE.InstancedMesh>(null);
+  const greenCrownFront = useRef<THREE.InstancedMesh>(null);
+  const greenCrownBack = useRef<THREE.InstancedMesh>(null);
+  const greenCrownTop = useRef<THREE.InstancedMesh>(null);
+  const greenCrownLow = useRef<THREE.InstancedMesh>(null);
+  const sakuraCrown = useRef<THREE.InstancedMesh>(null);
+  const sakuraCrownLeft = useRef<THREE.InstancedMesh>(null);
+  const sakuraCrownRight = useRef<THREE.InstancedMesh>(null);
+  const sakuraCrownFront = useRef<THREE.InstancedMesh>(null);
+  const sakuraCrownBack = useRef<THREE.InstancedMesh>(null);
+  const sakuraCrownTop = useRef<THREE.InstancedMesh>(null);
+  const sakuraCrownLow = useRef<THREE.InstancedMesh>(null);
+  const greenCrowns = useMemo(
+    () => [
+      greenCrown,
+      greenCrownLeft,
+      greenCrownRight,
+      greenCrownFront,
+      greenCrownBack,
+      greenCrownTop,
+      greenCrownLow,
+    ],
+    [
+      greenCrown,
+      greenCrownLeft,
+      greenCrownRight,
+      greenCrownFront,
+      greenCrownBack,
+      greenCrownTop,
+      greenCrownLow,
+    ],
+  );
+  const sakuraCrowns = useMemo(
+    () => [
+      sakuraCrown,
+      sakuraCrownLeft,
+      sakuraCrownRight,
+      sakuraCrownFront,
+      sakuraCrownBack,
+      sakuraCrownTop,
+      sakuraCrownLow,
+    ],
+    [
+      sakuraCrown,
+      sakuraCrownLeft,
+      sakuraCrownRight,
+      sakuraCrownFront,
+      sakuraCrownBack,
+      sakuraCrownTop,
+      sakuraCrownLow,
+    ],
+  );
+
   useLayoutEffect(() => {
     const m = new THREE.Object3D();
-    const col = new THREE.Color();
-    points.forEach(([x, z, s], i) => {
-      m.position.set(x, 2 * s, z);
-      m.rotation.set(0, s * 10, 0);
-      m.scale.set(s, s, s);
+    const color = new THREE.Color();
+    points.forEach(([x, z, scale], index) => {
+      m.position.set(x, 2.3 * scale, z);
+      m.rotation.set(0, scale * 10, 0);
+      m.scale.set(scale, scale, scale);
       m.updateMatrix();
-      trunk.current?.setMatrixAt(i, m.matrix);
+      trunk.current?.setMatrixAt(index, m.matrix);
 
-      // Main rounded canopy with three overlapping foliage clusters for a fuller tree silhouette.
-      m.position.set(x, 5.4 * s, z);
-      m.scale.set(2.65 * s, 2.25 * s, 2.65 * s);
+      m.position.set(x - 0.42 * scale, 3.35 * scale, z);
+      m.rotation.set(0, 0, 0.62);
       m.updateMatrix();
-      crown.current?.setMatrixAt(i, m.matrix);
-      col.setHSL(0.285 + (i % 5) * 0.012, 0.48, 0.27 + (i % 4) * 0.025);
-      crown.current?.setColorAt(i, col);
-
-      m.position.set(x - 1.35 * s, 5.15 * s, z + 0.18 * s);
-      m.scale.set(1.75 * s, 1.75 * s, 1.8 * s);
+      branches.current?.setMatrixAt(index * 2, m.matrix);
+      m.position.set(x + 0.42 * scale, 3.35 * scale, z - 0.08 * scale);
+      m.rotation.set(0, 0, -0.62);
       m.updateMatrix();
-      crownLeft.current?.setMatrixAt(i, m.matrix);
-      col.setHSL(0.29 + (i % 4) * 0.012, 0.5, 0.3 + (i % 3) * 0.025);
-      crownLeft.current?.setColorAt(i, col);
-
-      m.position.set(x + 1.35 * s, 5.25 * s, z - 0.16 * s);
-      m.scale.set(1.8 * s, 1.8 * s, 1.75 * s);
-      m.updateMatrix();
-      crownRight.current?.setMatrixAt(i, m.matrix);
-      col.setHSL(0.265 + (i % 5) * 0.012, 0.5, 0.29 + (i % 3) * 0.025);
-      crownRight.current?.setColorAt(i, col);
-
-      m.position.set(x, 7.05 * s, z);
-      m.scale.set(1.75 * s, 1.8 * s, 1.75 * s);
-      m.updateMatrix();
-      crownTop.current?.setMatrixAt(i, m.matrix);
-      col.setHSL(0.30 + (i % 4) * 0.01, 0.46, 0.32 + (i % 3) * 0.025);
-      crownTop.current?.setColorAt(i, col);
+      branches.current?.setMatrixAt(index * 2 + 1, m.matrix);
     });
-    [trunk, crown, crownLeft, crownRight, crownTop].forEach(ref => {
+
+    const placeCanopies = (
+      forestPoints: [number, number, number][],
+      crowns: { current: THREE.InstancedMesh | null }[],
+    ) => {
+      forestPoints.forEach(([x, z, scale], index) => {
+        TREE_CANOPY_LAYOUTS.forEach((layout, layer) => {
+          m.position.set(
+            x + layout.offset[0] * scale,
+            layout.offset[1] * scale,
+            z + layout.offset[2] * scale,
+          );
+          m.rotation.set(
+            Math.sin(index * 0.71 + layer) * 0.09,
+            index * 0.37 + layer * 0.81,
+            Math.cos(index * 0.43 + layer) * 0.08,
+          );
+          m.scale.set(layout.size[0] * scale, layout.size[1] * scale, layout.size[2] * scale);
+          m.updateMatrix();
+          crowns[layer]?.current?.setMatrixAt(index, m.matrix);
+
+          const variation = Math.abs(Math.sin(x * 5.37 + z * 2.18 + layer * 4.1));
+          color.setScalar(0.84 + variation * 0.16);
+          crowns[layer]?.current?.setColorAt(index, color);
+        });
+      });
+    };
+
+    placeCanopies(greenTrees, greenCrowns);
+    placeCanopies(sakuraTrees, sakuraCrowns);
+    [trunk, branches, ...greenCrowns, ...sakuraCrowns].forEach((ref) => {
       if (ref.current) {
         ref.current.instanceMatrix.needsUpdate = true;
         if (ref.current.instanceColor) ref.current.instanceColor.needsUpdate = true;
       }
     });
-  }, [points]);
+  }, [points, greenTrees, sakuraTrees, greenCrowns, sakuraCrowns]);
+
+  const renderCanopies = (
+    crowns: { current: THREE.InstancedMesh | null }[],
+    count: number,
+    texture: THREE.Texture,
+    prefix: string,
+  ) =>
+    crowns.map((ref, index) => (
+      <instancedMesh
+        key={`${prefix}-${index}`}
+        ref={ref}
+        args={[undefined, undefined, count]}
+        castShadow
+        receiveShadow
+      >
+        <dodecahedronGeometry args={[1, 1]} />
+        <meshStandardMaterial map={texture} color="#ffffff" roughness={0.94} flatShading />
+      </instancedMesh>
+    ));
+
   return (
     <>
       <instancedMesh ref={trunk} args={[undefined, undefined, points.length]} castShadow>
-        <cylinderGeometry args={[0.25, 0.4, 4, 8]} />
+        <cylinderGeometry args={[0.18, 0.38, 4.6, 8]} />
         <meshStandardMaterial color="#59402b" roughness={1} />
       </instancedMesh>
-      {[crown, crownLeft, crownRight, crownTop].map((ref, i) => (
-        <instancedMesh key={i} ref={ref} args={[undefined, undefined, points.length]} castShadow receiveShadow>
-          <sphereGeometry args={[1, 9, 7]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.94} flatShading />
-        </instancedMesh>
-      ))}
+      <instancedMesh ref={branches} args={[undefined, undefined, points.length * 2]} castShadow>
+        <cylinderGeometry args={[0.055, 0.15, 2.5, 6]} />
+        <meshStandardMaterial color="#59402b" roughness={1} />
+      </instancedMesh>
+      {renderCanopies(greenCrowns, greenTrees.length, greenLeaves, "green")}
+      {renderCanopies(sakuraCrowns, sakuraTrees.length, sakuraLeaves, "sakura")}
     </>
   );
 }
