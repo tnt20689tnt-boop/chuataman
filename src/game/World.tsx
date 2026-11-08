@@ -3,7 +3,8 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, Sky, Cloud, Clouds } from "@react-three/drei";
 import { grassTexture, stoneTexture } from "./textures";
-import { Forest, StoneLanterns, SkyLanterns } from "./Architecture";
+import { StoneLanterns, SkyLanterns } from "./Architecture";
+import { Forest, Effects } from "./NatureUpgrade";
 import { PlayerAvatar } from "./Characters";
 import { RemotePlayers } from "./RemotePlayers";
 import { ZONES, clamp, rng, stepPlayer } from "./sim";
@@ -414,6 +415,7 @@ export default function World() {
       <PlayerAvatar />
       <RemotePlayers />
       <Controller />
+      <Effects />
     </Canvas>
   );
 }
