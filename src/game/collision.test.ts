@@ -51,17 +51,21 @@ describe('PR9 visitor access', () => {
     expect(surfaceHeight(-55, -104.66)).toBeCloseTo(0.34);
     expect(isBlocked(-55, -106.3)).toBe(false);
   });
-  it('keeps visitors out of water while allowing the stone bridge', () => {
-    expect(isBlocked(38, 15)).toBe(true); // Lotus pond water on the right.
-    expect(isBlocked(30, 15)).toBe(false); // Clear stone bridge corridor.
-    expect(surfaceHeight(30, 15)).toBeCloseTo(1.4663);
+  it('blocks both lotus ponds while keeping the full stone bridge corridor open', () => {
+    expect(isBlocked(-27, 52)).toBe(true); // Left pond water.
+    expect(isBlocked(18, 52)).toBe(true); // Right pond, west of bridge.
+    expect(isBlocked(38, 52)).toBe(true); // Right pond, east of bridge.
+    expect(isBlocked(28, 52)).toBe(false); // Stone bridge corridor.
+    expect(surfaceHeight(28, 52)).toBeCloseTo(1.55);
   });
-  it('lets visitors walk the full lotus bridge and its approaches', () => {
-    const visitor = { x: 30, z: -2, y: 0 };
-    expect(isBlocked(30, 12)).toBe(false);
-    expect(isBlocked(30, 26)).toBe(false);
-    moveVisitor(visitor, 0, 26.5);
-    expect(visitor.z).toBeCloseTo(24.5);
+  it('lets visitors cross the full 40m lotus bridge and both landings', () => {
+    const visitor = { x: 28, z: 27, y: 0 };
+    expect(isBlocked(28, 31)).toBe(false);
+    expect(isBlocked(28, 52)).toBe(false);
+    expect(isBlocked(28, 73)).toBe(false);
+    moveVisitor(visitor, 0, 48);
+    expect(visitor.z).toBeCloseTo(75);
+    expect(visitor.x).toBeCloseTo(28);
   });
   it('keeps the central route and meditation garden approaches free of phantom pavilion posts', () => {
     expect(isBlocked(0, -20)).toBe(false);
