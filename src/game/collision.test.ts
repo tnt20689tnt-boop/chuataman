@@ -51,10 +51,10 @@ describe('PR9 visitor access', () => {
     expect(stepPlayer(p, { fwd: 1, right: 0, run: false }, 0, 0.05)).toBe(false);
   });
   it('uses responsive walking and running speeds for the enlarged 2.2 m avatar', () => {
-    expect(MOVE.SPEED).toBeGreaterThanOrEqual(3.8);
-    expect(MOVE.SPEED).toBeLessThanOrEqual(4.2);
-    expect(MOVE.RUN).toBeGreaterThanOrEqual(6.0);
-    expect(MOVE.RUN).toBeLessThanOrEqual(7.0);
+    expect(MOVE.SPEED).toBeGreaterThanOrEqual(2.8);
+    expect(MOVE.SPEED).toBeLessThanOrEqual(3.2);
+    expect(MOVE.RUN).toBeGreaterThanOrEqual(5.2);
+    expect(MOVE.RUN).toBeLessThanOrEqual(6.2);
   });
   it('uses gait-matched walk and run world speeds at the tested movement timestep', () => {
     const walker = { x: 0, y: 0, z: 34, rot: Math.PI };
