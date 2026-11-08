@@ -300,7 +300,7 @@ function Controller() {
     // The narrow lotus bridge is flanked by rails. Do not let the camera
     // collision ray mistake those rails/bridge surfaces for a wall and pull
     // the view into the avatar while crossing the bridge.
-    const onLotusBridge = Math.abs(player.x - 30) < 2.2 && player.z >= -2 && player.z <= 26;
+    const onLotusBridge = Math.abs(player.x - 28) < 2.4 && player.z >= 29 && player.z <= 75;
     const now = state.clock.elapsedTime;
     cameraDirection.subVectors(desiredCamera, target);
     const desiredDistance = cameraDirection.length();
