@@ -292,23 +292,25 @@ function Controller() {
       player.z + Math.cos(cam.yaw) * cam.dist * cp,
     );
 
-    // Camera obstruction: raycast from the avatar toward the desired camera
-    // and pull the camera in front of walls, columns, roofs and other geometry.
-    // Run the expensive scene query at 12.5 Hz; interpolate every rendered frame.
+    // The narrow lotus bridge is flanked by rails. Do not let the camera
+    // collision ray mistake those rails/bridge surfaces for a wall and pull
+    // the view into the avatar while crossing the bridge.
+    const onLotusBridge = Math.abs(player.x) < 2.2 && player.z >= -5 && player.z <= 21;
     const now = state.clock.elapsedTime;
-    if (now - lastCameraCheck.current > 0.08) {
+    cameraDirection.subVectors(desiredCamera, target);
+    const desiredDistance = cameraDirection.length();
+    cameraDirection.normalize();
+
+    if (onLotusBridge) {
+      safeDistance.current = desiredDistance;
+    } else if (now - lastCameraCheck.current > 0.08) {
       lastCameraCheck.current = now;
-      cameraOrigin.copy(target);
-      cameraDirection.subVectors(desiredCamera, cameraOrigin);
-      const desiredDistance = cameraDirection.length();
-      cameraDirection.normalize();
-      cameraOrigin.addScaledVector(cameraDirection, 0.38); // ignore the avatar's own body
+      cameraOrigin.copy(target).addScaledVector(cameraDirection, 0.38);
       cameraRay.set(cameraOrigin, cameraDirection);
       cameraRay.near = 0.05;
       cameraRay.far = Math.max(0.5, desiredDistance - 0.2);
       const hits = cameraRay.intersectObjects(scene.children, true);
       const obstruction = hits.find((hit) => {
-        // Ignore every descendant of the local avatar, not just its root.
         if (isControlledAvatar(hit.object)) return false;
         const mesh = hit.object as THREE.Mesh;
         if (hit.distance <= 0.35 || !mesh.visible || !mesh.isMesh) return false;
@@ -323,9 +325,10 @@ function Controller() {
       safeDistance.current = THREE.MathUtils.clamp(available, 1.9, desiredDistance);
     }
 
-    cameraDirection.subVectors(desiredCamera, target).normalize();
     safeCamera.copy(target).addScaledVector(cameraDirection, safeDistance.current);
-    camera.position.lerp(safeCamera, 1 - Math.exp(-40 * dt));
+    // Follow the avatar directly each rendered frame. Camera lag made the
+    // fast walk cycle look disconnected from actual world movement.
+    camera.position.copy(safeCamera);
     camera.lookAt(target);
 
     const t = state.clock.elapsedTime;
