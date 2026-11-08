@@ -68,10 +68,11 @@ for (const b of BUILDINGS) {
 for (const z of [112]) for (const x of [-8, -3.6, 3.6, 8]) {
   solids.push({ id: 'gate-column', x, z, w: 1.25, d: 1.65 });
 }
-// Solid collision around every rendered pavilion column; the generous footprint
-// prevents the avatar capsule from clipping through the timber supports.
-for (const x of [-7, -2.333, 2.333, 7]) for (const z of [-26, -16]) {
-  solids.push({ id: 'pavilion-post', x, z, w: 1.45, d: 1.45 });
+// Solid collision around the actual pavilion columns at world position (45, 12).
+// The previous coordinates incorrectly placed invisible posts across the central
+// north-south walkway, blocking access between the courtyard and rear garden.
+for (const x of [-7, -2.333, 2.333, 7]) for (const z of [-5, 5]) {
+  solids.push({ id: 'pavilion-post', x: 45 + x, z: 12 + z, w: 0.9, d: 0.9 });
 }
 for (let i = 0; i < 8; i++) for (const z of [-50, -74]) {
   solids.push({ id: 'hall-column', x: -19 + i * 38 / 7, z, w: 1.05, d: 1.05 });
@@ -84,9 +85,7 @@ const statues = [
   new SAT.Circle(new SAT.Vector(0, -68.5), 3.8),
   new SAT.Circle(new SAT.Vector(0, -155), 2.8),
 ];
-// The waterfall is behind the outdoor Buddha. Only its shallow basin is solid;
-// the cascade itself must not become a wide invisible wall across the tour path.
-const waterBodies = [new SAT.Circle(new SAT.Vector(0, -176.9), 6.2)];
+// No hidden waterfall basin collider: the rear garden route stays open.
 const visitor = new SAT.Circle(new SAT.Vector(), PLAYER_RADIUS);
 // Populated from the exact rendered forest positions by World before movement starts.
 let treeTrunks: SAT.Circle[] = [];
@@ -99,7 +98,7 @@ export function isBlocked(x: number, z: number) {
   return polygons.some(s => {
     if (s.id.startsWith('foundation') && z < -47.4 && z > -73.1 && Math.abs(x) < 19.2) return false;
     return SAT.testCirclePolygon(visitor, s.shape);
-  }) || statues.some(s => SAT.testCircleCircle(visitor, s)) || waterBodies.some(s => SAT.testCircleCircle(visitor, s)) || treeTrunks.some(s => SAT.testCircleCircle(visitor, s));
+  }) || statues.some(s => SAT.testCircleCircle(visitor, s)) || treeTrunks.some(s => SAT.testCircleCircle(visitor, s));
 }
 export function surfaceHeight(x: number, z: number) {
   // Existing cushions are walkable; support the avatar above their padded tops.
