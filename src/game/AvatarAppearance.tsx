@@ -142,33 +142,37 @@ export function AnimatedAvatarAppearance({
     // the male and female models).
     const built = buildTemplePoseClips(model);
     const builtNames = new Set(built.map((c) => c.name));
-    return [
-      ...gltf.animations.filter((s) => !builtNames.has(s.name)).map((source) => {
-    const clip = source.clone();
-    const locomotion = source.name === "walk" || source.name === "run";
-    // Only lock the actual root/hips/pelvis channel. Never match the full
-    // track path: exporters often prefix every bone with "Armature".
-    clip.tracks = clip.tracks.filter((track) => {
-      if (!/\.position$/i.test(track.name)) return true;
-      let target = "";
-      try {
-        const parsed = THREE.PropertyBinding.parseTrackName(track.name);
-        target = [parsed.nodeName, parsed.objectIndex].filter(Boolean).join(" ").toLowerCase();
-      } catch {
-        target = track.name.toLowerCase().replace(/\.(position|quaternion|scale)$/i, "").split(/[|/]/).pop() ?? "";
-      }
-      const isRootMotion = isRootMotionBoneName(target);
-      if (!isRootMotion) return true;
-      const values = track.values as Float32Array;
-      const stride = track.getValueSize();
-      if (stride < 3 || values.length < stride) return false;
-      // The supplied walk/run hips tracks contain cumulative vertical drift;
-      // remove only that net cycle displacement while preserving body bounce.
-      stabilizeRootPositionTrack(values, track.times, stride, locomotion);
-      return true;
-    });
-    return clip;
-  }), [gltf.animations]);
+    const sourceClips = gltf.animations
+      .filter((source) => !builtNames.has(source.name))
+      .map((source) => {
+        const clip = source.clone();
+        const locomotion = source.name === "walk" || source.name === "run";
+        // Only lock the actual root/hips/pelvis channel. Never match the full
+        // track path: exporters often prefix every bone with "Armature".
+        clip.tracks = clip.tracks.filter((track) => {
+          if (!/\.position$/i.test(track.name)) return true;
+          let target = "";
+          try {
+            const parsed = THREE.PropertyBinding.parseTrackName(track.name);
+            target = [parsed.nodeName, parsed.objectIndex].filter(Boolean).join(" ").toLowerCase();
+          } catch {
+            target = track.name.toLowerCase().replace(/\.(position|quaternion|scale)$/i, "").split(/[|/]/).pop() ?? "";
+          }
+          const isRootMotion = isRootMotionBoneName(target);
+          if (!isRootMotion) return true;
+          const values = track.values as Float32Array;
+          const stride = track.getValueSize();
+          if (stride < 3 || values.length < stride) return false;
+          // The supplied walk/run hips tracks contain cumulative vertical drift;
+          // remove only that net cycle displacement while preserving body bounce.
+          stabilizeRootPositionTrack(values, track.times, stride, locomotion);
+          return true;
+        });
+        return clip;
+      });
+
+    return [...sourceClips, ...built];
+  }, [gltf.animations, model]);
   const { actions, mixer } = useAnimations(clips, root);
   const activeClip = useRef("");
 
@@ -244,24 +248,46 @@ export function AnimatedAvatarAppearance({
             <capsuleGeometry args={[Math.max(size.x, size.z) * 0.075, size.y * 0.18, 5, 10]} />
             <meshStandardMaterial color={hairColor} roughness={0.92} />
           </mesh>}
-          {accessory === "neck_mala" && <group position={[center.x, neckY, center.z + size.z * 0.04]}>
-            <mesh rotation-x={Math.PI / 2} castShadow>
-              <torusGeometry args={[size.y * 0.075, size.y * 0.009, 8, 48]} />
-              <meshStandardMaterial color="#70452d" roughness={0.72} />
-            </mesh>
-            <mesh position={[0, -size.y * 0.09, size.z * 0.025]}>
-              <sphereGeometry args={[size.y * 0.018, 12, 10]} />
-              <meshStandardMaterial color="#c49a54" metalness={0.2} roughness={0.55} />
-            </mesh>
-          </group>}
-          {accessory === "wrist_mala" && [-1, 1].map((side) => <mesh key={side} position={[center.x + side * size.x * 0.31, bounds.min.y + size.y * 0.52, center.z + size.z * 0.20]} rotation-x={Math.PI / 2}>
-            <torusGeometry args={[size.y * 0.028, size.y * 0.008, 7, 24]} />
-            <meshStandardMaterial color="#70452d" roughness={0.8} />
-          </mesh>)}
-          {accessory === "shoulder_sash" && <mesh position={[center.x + size.x * 0.08, bounds.min.y + size.y * 0.63, center.z + size.z * 0.22]} rotation-z={-0.28} rotation-y={0.12} castShadow>
-            <boxGeometry args={[Math.max(size.x * 0.16, 0.035), size.y * 0.40, Math.max(size.z * 0.055, 0.018)]} />
-            <meshStandardMaterial color="#c49a54" roughness={0.75} />
-          </mesh>}
+          {accessory === "neck_mala" && rig.neckMala && createPortal(
+            <group position={rig.neckMala.pos} quaternion={rig.neckMala.quat}>
+              <mesh rotation-x={Math.PI / 2} castShadow>
+                <torusGeometry args={[size.y * 0.075, size.y * 0.009, 8, 48]} />
+                <meshStandardMaterial color="#70452d" roughness={0.72} />
+              </mesh>
+              <mesh position={[0, -size.y * 0.09, size.z * 0.025]}>
+                <sphereGeometry args={[size.y * 0.018, 12, 10]} />
+                <meshStandardMaterial color="#c49a54" metalness={0.2} roughness={0.55} />
+              </mesh>
+            </group>,
+            rig.neckMala.bone,
+          )}
+          {accessory === "wrist_mala" && rig.leftWrist && createPortal(
+            <group position={rig.leftWrist.pos} quaternion={rig.leftWrist.quat}>
+              <mesh rotation-x={Math.PI / 2} castShadow>
+                <torusGeometry args={[size.y * 0.028, size.y * 0.008, 7, 24]} />
+                <meshStandardMaterial color="#70452d" roughness={0.8} />
+              </mesh>
+            </group>,
+            rig.leftWrist.bone,
+          )}
+          {accessory === "wrist_mala" && rig.rightWrist && createPortal(
+            <group position={rig.rightWrist.pos} quaternion={rig.rightWrist.quat}>
+              <mesh rotation-x={Math.PI / 2} castShadow>
+                <torusGeometry args={[size.y * 0.028, size.y * 0.008, 7, 24]} />
+                <meshStandardMaterial color="#70452d" roughness={0.8} />
+              </mesh>
+            </group>,
+            rig.rightWrist.bone,
+          )}
+          {accessory === "shoulder_sash" && rig.sash && createPortal(
+            <group position={rig.sash.pos} quaternion={rig.sash.quat}>
+              <mesh rotation-z={-0.28} rotation-y={0.12} castShadow>
+                <boxGeometry args={[Math.max(size.x * 0.16, 0.035), size.y * 0.40, Math.max(size.z * 0.055, 0.018)]} />
+                <meshStandardMaterial color="#c49a54" roughness={0.75} />
+              </mesh>
+            </group>,
+            rig.sash.bone,
+          )}
         </group>
       </group>
     </group>
