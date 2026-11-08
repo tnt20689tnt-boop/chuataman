@@ -21,6 +21,9 @@ const solids: Solid[] = [
   { id: 'lotus-pond-left', x: -27, z: 52, w: 30, d: 40 },
   { id: 'lotus-pond-right-west', x: 18.9, z: 52, w: 13.8, d: 40 },
   { id: 'lotus-pond-right-east', x: 37.1, z: 52, w: 13.8, d: 40 },
+  // Keep visitors on the stone deck: the two low bridge rails are real boundaries.
+  { id: 'lotus-bridge-rail-west', x: 26.5, z: 52, w: 0.2, d: 40 },
+  { id: 'lotus-bridge-rail-east', x: 29.5, z: 52, w: 0.2, d: 40 },
   // The rendered bridge rails are decorative and must not trap a visitor who
   // drifts slightly sideways on a mobile joystick. Pond water remains solid.
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
