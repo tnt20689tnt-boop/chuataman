@@ -26,10 +26,9 @@ describe('PR9 visitor access', () => {
     expect(isBlocked(0, -68.5)).toBe(true);
     expect(isBlocked(0, -155)).toBe(true); // Outdoor Buddha in the meditation garden.
   });
-  it('keeps the walkable approach open between the main hall, Buddha and waterfall', () => {
+  it('keeps the walkable approach open between the main hall and rear Buddha', () => {
     expect(isBlocked(0, -140)).toBe(false);
     expect(isBlocked(0, -165)).toBe(false);
-    expect(isBlocked(0, -176.9)).toBe(true); // Only the waterfall basin is solid.
     const visitor = { x: 0, z: -140, y: 0 };
     moveVisitor(visitor, 0, -25);
     expect(visitor.z).toBeGreaterThan(-152); // Stops respectfully at the Buddha plinth.
@@ -74,7 +73,7 @@ describe('PR9 visitor access', () => {
     expect(surfaceHeight(42, -6.55)).toBeCloseTo(0.21);
     expect(surfaceHeight(42, -7.2)).toBeCloseTo(0.3);
   });
-  it('allows walking past the former north edge to visit the Buddha and waterfall', () => {
+  it('allows walking past the former north edge to visit the rear Buddha', () => {
     const visitor = { x: 0, y: 0, z: -138, rot: Math.PI };
     expect(stepPlayer(visitor, { fwd: 1, right: 0, run: false }, 0, 1)).toBe(true);
     expect(visitor.z).toBeCloseTo(-143.8);
