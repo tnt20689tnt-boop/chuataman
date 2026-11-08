@@ -16,10 +16,11 @@ const solids: Solid[] = [
   // Double-size donation box mounted along the left inner wall of the main hall.
   { id: 'main-hall-donation-box', x: -18.445, z: -62, w: 2.5, d: 3.4 },
   { id: 'tower', x: -55, z: -112, w: 10, d: 10 },
-  // 22m x 24m lotus pond, proportioned to the 17m-wide Tam Quan.
-  // Keep the central 3.2m bridge and both approaches open.
-  { id: 'pond-left', x: 24.7, z: 12, w: 7.4, d: 24 },
-  { id: 'pond-right', x: 35.3, z: 12, w: 7.4, d: 24 },
+  // Match the current rendered lotus ponds: left pond (-27, 52), right pond (28, 52), each 40m deep.
+  // The left pond is fully blocked; the right pond is split around the 3.2m stone bridge.
+  { id: 'lotus-pond-left', x: -27, z: 52, w: 30, d: 40 },
+  { id: 'lotus-pond-right-west', x: 18.9, z: 52, w: 13.8, d: 40 },
+  { id: 'lotus-pond-right-east', x: 37.1, z: 52, w: 13.8, d: 40 },
   // The rendered bridge rails are decorative and must not trap a visitor who
   // drifts slightly sideways on a mobile joystick. Pond water remains solid.
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
@@ -124,9 +125,10 @@ export function surfaceHeight(x: number, z: number) {
   if (Math.abs(x - HALL.x) < HALL.halfW && z <= -47 && z >= -77) return HALL.floor;
   // Three 0.4m treads match the visible main-hall staircase exactly.
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
-  // Match the 24 stone slabs of the bridge at the right side of the courtyard.
-  if (Math.abs(x - 30) <= 1.0 && z >= 0 && z <= 24) {
-    return 0.45 + Math.sin((z / 24) * Math.PI) * 1.1;
+  // Match the 40m rendered bridge centered at (28, 52), including both approaches.
+  if (Math.abs(x - 28) <= 2.2 && z >= 29 && z <= 75) {
+    if (z < 32 || z > 72) return 0.16; // Flat stone landing pads beyond the pond banks.
+    return 0.45 + Math.sin(((z - 32) / 40) * Math.PI) * 1.1;
   }
   for (const b of BUILDINGS) {
     for (let step = 0; step < 3; step++) {
