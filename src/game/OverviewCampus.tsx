@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 import { Buddha, Gate, MainHall, Pavilion, Pond, Roof, Tower, Waterfall } from "./Architecture";
+import { LotusField, PetalFall, Fireflies } from "./NatureUpgrade";
 import { Surface } from "./Materials";
 import { Inscription } from "./TempleDetails";
 import { BUILDINGS, SCENE_COLORS as C, type TempleBuilding } from "./templeData";
@@ -113,51 +114,6 @@ function SakuraTree({ position, scale = 1 }: { position: [number, number, number
 }
 
 // ---------- Hoa sen (lá + bông sen hồng) ----------
-function LotusBlossom({ y = 0.14 }: { y?: number }) {
-  return (
-    <group position={[0, y, 0]}>
-      <mesh position={[0, 0.14, 0]}><sphereGeometry args={[0.16, 14, 10]} /><meshStandardMaterial color="#e98aa2" roughness={0.7} /></mesh>
-      {Array.from({ length: 7 }, (_, p) => {
-        const a = p * Math.PI * 2 / 7;
-        return (
-          <mesh key={p} position={[Math.cos(a) * 0.18, 0.1, Math.sin(a) * 0.18]} rotation-y={-a} scale={[0.85, 0.5, 1.15]}>
-            <sphereGeometry args={[0.13, 12, 10]} />
-            <meshStandardMaterial color="#f6c9d4" roughness={0.72} />
-          </mesh>
-        );
-      })}
-    </group>
-  );
-}
-
-function LotusField({ w, d, count = 120 }: { w: number; d: number; count?: number }) {
-  return (
-    <group name="Lá sen và hoa sen">
-      {Array.from({ length: count }, (_, i) => {
-        const a = i * 2.399963;
-        const rx = w / 2 - 2;
-        const rz = d / 2 - 2;
-        const spreadX = 0.3 + ((i * 37) % 100) / 100 * 0.7;
-        const spreadZ = 0.3 + ((i * 53) % 100) / 100 * 0.7;
-        const px = Math.cos(a) * rx * spreadX;
-        const pz = Math.sin(a) * rz * spreadZ;
-        const leaf = 0.46 + (i % 4) * 0.09;
-        return (
-          <group key={i} position={[px, 0.18, pz]} rotation-y={a}>
-            <mesh rotation-x={-Math.PI / 2} scale={[1, 0.72, 1]}>
-              <circleGeometry args={[leaf, 18]} />
-              <meshStandardMaterial color={i % 3 === 0 ? "#3f7040" : i % 3 === 1 ? "#4d7f45" : "#5c8a4c"} roughness={0.95} side={THREE.DoubleSide} />
-            </mesh>
-            {i % 6 === 0 && <LotusBlossom y={0.12} />}
-            {i % 6 === 3 && <mesh position={[0, 0.12, 0]}><sphereGeometry args={[0.09, 10, 8]} /><meshStandardMaterial color="#e9c46a" roughness={0.8} /></mesh>}
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
-// ---------- Hồ sen: nước + bờ đá + lá/bông sen phủ kín ----------
 function LotusPond({ x, z, w, d, count = 120 }: { x: number; z: number; w: number; d: number; count?: number }) {
   return (
     <group position={[x, 0, z]} name="Hồ sen">
@@ -495,8 +451,10 @@ export function OverviewCampus() {
       </group>
       <Waterfall position={[0, 0, -181]} />
 
-      {/* Cây cối, cây hoa */}
+      {/* Cây cối, cây hoa và hiệu ứng thiên nhiên */}
       <CampusPlantings />
+      <PetalFall />
+      <Fireflies />
     </group>
   );
 }
