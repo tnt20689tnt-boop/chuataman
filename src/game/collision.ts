@@ -16,9 +16,9 @@ const solids: Solid[] = [
   // Double-size donation box mounted along the left inner wall of the main hall.
   { id: 'main-hall-donation-box', x: -18.445, z: -62, w: 2.5, d: 3.4 },
   { id: 'tower', x: -55, z: -112, w: 10, d: 10 },
-  // Match the current rendered lotus ponds: left pond (-27, 52), right pond (28, 52), each 40m deep.
-  // The left pond is fully blocked; the right pond is split around the 3.2m stone bridge.
-  { id: 'lotus-pond-left', x: -27, z: 52, w: 30, d: 40 },
+  // Keep the pond collider clear of the meditation-garden approach at (-34, 39).
+  // The left pond remains solid at its center; the right pond is split around the bridge.
+  { id: 'lotus-pond-left', x: -27, z: 52, w: 30, d: 24 },
   { id: 'lotus-pond-right-west', x: 18.9, z: 52, w: 13.8, d: 40 },
   { id: 'lotus-pond-right-east', x: 37.1, z: 52, w: 13.8, d: 40 },
   // Keep visitors on the stone deck: the two low bridge rails are real boundaries.
