@@ -82,60 +82,58 @@ export function AnimatedAvatarAppearance({
   // Attachments are computed while the clone is still in its bind pose.
   const rig = useMemo(() => {
     model.updateMatrixWorld(true);
-    const bones: Record<string, THREE.Bone> = {};
+    const bones: THREE.Bone[] = [];
     model.traverse((o) => {
-      if ((o as THREE.Bone).isBone) bones[o.name] = o as THREE.Bone;
+      if ((o as THREE.Bone).isBone) bones.push(o as THREE.Bone);
     });
-    const attach = (boneName: string, world: THREE.Vector3, worldQuat: THREE.Quaternion): BoneAttachment | null => {
-      const bone = bones[boneName];
-      if (!bone) return null;
+    // GLB exporters may prefix Mixamo names with an armature/namespace.
+    // Resolve by normalized suffix instead of requiring one exact spelling.
+    const normalize = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const findBone = (expected: string) => {
+      const target = normalize(expected);
+      return bones.find((bone) => normalize(bone.name) === target) ??
+        bones.find((bone) => normalize(bone.name).endsWith(target)) ?? null;
+    };
+    const attachAt = (
+      bone: THREE.Bone | null,
+      world: THREE.Vector3 | null,
+      worldQuat = new THREE.Quaternion(),
+    ): BoneAttachment | null => {
+      if (!bone || !world) return null;
       const pos = bone.worldToLocal(world.clone());
       const quat = bone.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(worldQuat);
       return { bone, pos, quat };
     };
-    const handWorld = (name: string) => {
-      const hand = bones[name];
-      if (!hand) return null;
-      const hp = hand.getWorldPosition(new THREE.Vector3());
-      const fp = hand.parent?.getWorldPosition(new THREE.Vector3());
-      return fp ? hp.lerp(fp, 0.3) : hp;
+    const worldPos = (bone: THREE.Bone | null) =>
+      bone ? bone.getWorldPosition(new THREE.Vector3()) : null;
+    const neck = findBone("mixamorigNeck");
+    const head = findBone("mixamorigHead");
+    const leftHand = findBone("mixamorigLeftHand");
+    const rightHand = findBone("mixamorigRightHand");
+    const leftForeArm = findBone("mixamorigLeftForeArm");
+    const rightForeArm = findBone("mixamorigRightForeArm");
+    const wristPoint = (forearm: THREE.Bone | null, hand: THREE.Bone | null) => {
+      const a = worldPos(forearm);
+      const b = worldPos(hand);
+      return a && b ? a.lerp(b, 0.82) : b;
     };
-    // The model faces local -X; its left side is -Z.
+    const neckPoint = (() => {
+      const n = worldPos(neck);
+      const h = worldPos(head);
+      // Sit the mala at the base of the neck, not floating in front of the face.
+      return n && h ? n.lerp(h, 0.16) : n;
+    })();
+    const spine = findBone("mixamorigSpine2");
     return {
-      neckMala: attach(
-        "mixamorigNeck",
-        new THREE.Vector3(center.x - size.x * 0.10, neckY, center.z),
-        new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)),
-      ),
-      malaBead: attach(
-        "mixamorigNeck",
-        new THREE.Vector3(center.x - size.x * 0.22, neckY - size.y * 0.09, center.z),
-        new THREE.Quaternion(),
-      ),
-      leftWrist: handWorld("mixamorigLeftHand")
-        ? attach("mixamorigLeftHand", handWorld("mixamorigLeftHand")!, new THREE.Quaternion())
-        : null,
-      rightWrist: handWorld("mixamorigRightHand")
-        ? attach("mixamorigRightHand", handWorld("mixamorigRightHand")!, new THREE.Quaternion())
-        : null,
-      sash: attach(
-        "mixamorigSpine2",
-        new THREE.Vector3(center.x - size.x * 0.06, bounds.min.y + size.y * 0.60, center.z - size.z * 0.02),
-        new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.42, 0, 0)),
-      ),
-      hairBun: attach(
-        "mixamorigHead",
-        new THREE.Vector3(center.x + size.x * 0.14, bounds.max.y - size.y * 0.03, center.z),
-        new THREE.Quaternion(),
-      ),
-      hairTail: attach(
-        "mixamorigHead",
-        new THREE.Vector3(center.x + size.x * 0.18, bounds.min.y + size.y * 0.80, center.z),
-        new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.14)),
-      ),
+      neckMala: attachAt(neck, neckPoint),
+      malaBead: attachAt(neck, neckPoint),
+      leftWrist: attachAt(findBone("mixamorigLeftHand"), wristPoint(leftForeArm, leftHand)),
+      rightWrist: attachAt(findBone("mixamorigRightHand"), wristPoint(rightForeArm, rightHand)),
+      sash: attachAt(spine, worldPos(spine), new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.42, 0, 0))),
+      hairBun: attachAt(head, worldPos(head)),
+      hairTail: attachAt(head, worldPos(head), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.14))),
     };
-  }, [model, bounds, size, center, neckY]);
-
+  }, [model]);
   const clips = useMemo(() => {
     // Replace the GLB's incorrect custom prayer/kneel/meditation clips with
     // corrected ones built from this rig's rest pose (verified via FK on both
