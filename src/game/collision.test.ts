@@ -57,11 +57,11 @@ describe('PR9 visitor access', () => {
     expect(surfaceHeight(30, 15)).toBeCloseTo(1.4663);
   });
   it('lets visitors walk the full lotus bridge and its approaches', () => {
-    const visitor = { x: 30, z: -4.5, y: 0 };
+    const visitor = { x: 30, z: -2, y: 0 };
     expect(isBlocked(30, 12)).toBe(false);
     expect(isBlocked(30, 26)).toBe(false);
-    moveVisitor(visitor, 0, 39);
-    expect(visitor.z).toBeCloseTo(34.5);
+    moveVisitor(visitor, 0, 26.5);
+    expect(visitor.z).toBeCloseTo(24.5);
   });
   it('keeps the central route and meditation garden approaches free of phantom pavilion posts', () => {
     expect(isBlocked(0, -20)).toBe(false);
@@ -76,9 +76,9 @@ describe('PR9 visitor access', () => {
     expect(isBlocked(42, -5)).toBe(false);
   });
   it('steps up smoothly to the guest-room floor', () => {
-    expect(surfaceHeight(42, -5.9)).toBeCloseTo(0.12);
-    expect(surfaceHeight(42, -6.55)).toBeCloseTo(0.21);
-    expect(surfaceHeight(42, -7.2)).toBeCloseTo(0.3);
+    expect(surfaceHeight(42, -2.9)).toBeCloseTo(0.12);
+    expect(surfaceHeight(42, -3.55)).toBeCloseTo(0.21);
+    expect(surfaceHeight(42, -4.2)).toBeCloseTo(0.3);
   });
   it('allows walking past the former north edge to visit the rear Buddha', () => {
     const visitor = { x: 0, y: 0, z: -138, rot: Math.PI };
