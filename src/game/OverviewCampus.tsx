@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import * as THREE from "three";
-import { Buddha, Gate, MainHall, Pavilion, Pond, Roof, Tower } from "./Architecture";
+import { Buddha, Gate, MainHall, Pavilion, Pond, Roof, Tower, Waterfall } from "./Architecture";
 import { Surface } from "./Materials";
 import { Inscription } from "./TempleDetails";
 import { BUILDINGS, SCENE_COLORS as C, type TempleBuilding } from "./templeData";
@@ -182,5 +182,7 @@ export function OverviewCampus() {
       <mesh position={[0, 0.25, 0]} receiveShadow><cylinderGeometry args={[14, 14, 0.5, 40]} /><meshStandardMaterial color="#cfc3ac" roughness={0.96} /></mesh>
       <Buddha position={[0, 0.5, 0]} scale={0.8} />
     </group>
+    {/* Núi đá và thác nước nằm ở lớp cảnh quan phía sau tượng Phật, không nằm trước Chính điện. */}
+    <Waterfall position={[0, 0, -181]} />
   </group>;
 }
