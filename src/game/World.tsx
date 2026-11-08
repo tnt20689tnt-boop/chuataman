@@ -142,21 +142,21 @@ function Ground() {
 function treePoints(): [number, number, number][] {
   const r = rng(11);
   const pts: [number, number, number][] = [];
-  for (let z = 26; z < 116; z += 7) {
+  // Avenue trees frame the Tam Quan, but leave a clear arrival court around the gate.
+  for (let z = 26; z < 96; z += 7) {
     pts.push([-8, z, 0.9 + r() * 0.3], [8, z, 0.9 + r() * 0.3]);
   }
   let tries = 0;
   while (pts.length < 260 && tries++ < 4000) {
     const x = (r() - 0.5) * 300;
     const z = (r() - 0.5) * 300;
-    const inCourt = Math.abs(x) < 50 && z > -85 && z < 28;
-    const onPath = Math.abs(x) < 12 && z > 20;
+    const inCourt = Math.abs(x) < 52 && z > -88 && z < 45;
+    const onPath = Math.abs(x) < 9 && z > -180 && z < 118;
     const nearZone = ZONES.some((zn) => (zn.x - x) ** 2 + (zn.z - z) ** 2 < 220);
-    const sidePath = Math.abs(z - 30) < 5;
-    const pond = x > 50 && x < 102 && z > -36 && z < 8;
-    // Keep generated forest trees completely outside the ancestral hall footprint.
-    const insideAncestralHall = Math.abs(x) < 17 && z > -113 && z < -89;
-    if (inCourt || onPath || nearZone || sidePath || pond || insideAncestralHall) continue;
+    const crossPath = (Math.abs(z - 30) < 5 && Math.abs(x) < 100) || (Math.abs(z + 13) < 4 && Math.abs(x) < 60);
+    const lotusWaterAndBridge = x > 17 && x < 43 && z > -2 && z < 26;
+    const roomFootprint = BUILDINGS.some((building) => Math.abs(x - building.x) < building.w / 2 + 3 && Math.abs(z - building.z) < building.d / 2 + 3);
+    if (inCourt || onPath || nearZone || crossPath || lotusWaterAndBridge || roomFootprint) continue;
     pts.push([x, z, 0.8 + r() * 0.8]);
   }
   return pts;
@@ -294,7 +294,7 @@ function Controller() {
     // The narrow lotus bridge is flanked by rails. Do not let the camera
     // collision ray mistake those rails/bridge surfaces for a wall and pull
     // the view into the avatar while crossing the bridge.
-    const onLotusBridge = Math.abs(player.x) < 2.2 && player.z >= -5 && player.z <= 21;
+    const onLotusBridge = Math.abs(player.x - 30) < 2.2 && player.z >= -2 && player.z <= 26;
     const now = state.clock.elapsedTime;
     cameraDirection.subVectors(desiredCamera, target);
     const desiredDistance = cameraDirection.length();

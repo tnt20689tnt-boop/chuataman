@@ -26,6 +26,15 @@ describe('PR9 visitor access', () => {
     expect(isBlocked(0, -68.5)).toBe(true);
     expect(isBlocked(0, -155)).toBe(true); // Outdoor Buddha in the meditation garden.
   });
+  it('keeps the walkable approach open between the main hall, Buddha and waterfall', () => {
+    expect(isBlocked(0, -140)).toBe(false);
+    expect(isBlocked(0, -165)).toBe(false);
+    expect(isBlocked(0, -176.9)).toBe(true); // Only the waterfall basin is solid.
+    const visitor = { x: 0, z: -140, y: 0 };
+    moveVisitor(visitor, 0, -25);
+    expect(visitor.z).toBeGreaterThan(-152); // Stops respectfully at the Buddha plinth.
+    expect(visitor.z).toBeLessThan(-151);
+  });
   it('follows each of the three visible staircase treads', () => {
     expect(surfaceHeight(0, -43.9)).toBe(0);
     expect(surfaceHeight(0, -44.5)).toBe(0.4);
@@ -36,10 +45,39 @@ describe('PR9 visitor access', () => {
     expect(p.z).toBeCloseTo(-50);
     expect(p.y).toBe(1.2);
   });
+  it('follows the three rendered Bảo Tháp entry steps', () => {
+    expect(surfaceHeight(-55, -106.3)).toBeCloseTo(1.02);
+    expect(surfaceHeight(-55, -105.48)).toBeCloseTo(0.68);
+    expect(surfaceHeight(-55, -104.66)).toBeCloseTo(0.34);
+    expect(isBlocked(-55, -106.3)).toBe(false);
+  });
   it('keeps visitors out of water while allowing the stone bridge', () => {
     expect(isBlocked(38, 15)).toBe(true); // Lotus pond water on the right.
     expect(isBlocked(30, 15)).toBe(false); // Clear stone bridge corridor.
     expect(surfaceHeight(30, 15)).toBeCloseTo(1.4663);
+  });
+  it('lets visitors walk the full lotus bridge and its approaches', () => {
+    const visitor = { x: 30, z: -4.5, y: 0 };
+    expect(isBlocked(30, 12)).toBe(false);
+    expect(isBlocked(30, 26)).toBe(false);
+    moveVisitor(visitor, 0, 39);
+    expect(visitor.z).toBeCloseTo(34.5);
+  });
+  it('keeps the center doorway open at the ancestral, meditation, lecture and guest rooms', () => {
+    expect(isBlocked(-42, -52)).toBe(false);
+    expect(isBlocked(-42, -5)).toBe(false);
+    expect(isBlocked(42, -52)).toBe(false);
+    expect(isBlocked(42, -5)).toBe(false);
+  });
+  it('steps up smoothly to the guest-room floor', () => {
+    expect(surfaceHeight(42, -5.9)).toBeCloseTo(0.12);
+    expect(surfaceHeight(42, -6.55)).toBeCloseTo(0.21);
+    expect(surfaceHeight(42, -7.2)).toBeCloseTo(0.3);
+  });
+  it('allows walking past the former north edge to visit the Buddha and waterfall', () => {
+    const visitor = { x: 0, y: 0, z: -138, rot: Math.PI };
+    expect(stepPlayer(visitor, { fwd: 1, right: 0, run: false }, 0, 1)).toBe(true);
+    expect(visitor.z).toBeCloseTo(-143.8);
   });
   it('blocks new building walls but leaves their central doors open', () => {
     expect(isBlocked(29.5, -15)).toBe(true); // Left wall of the guest house.

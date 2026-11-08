@@ -605,6 +605,22 @@ export function Tower({ position, tiers = 3, label }: { position: [number, numbe
           </group>
         );
       })}
+      {[0, 1, 2].map((step) => {
+        const height = 0.34 + step * 0.34;
+        return <mesh key={step} position={[0, height / 2, 5.7 + step * 0.82]} castShadow receiveShadow>
+          <boxGeometry args={[6.2, height, 1.15]} />
+          <meshStandardMaterial color={step === 2 ? "#c8b99d" : "#938b7d"} roughness={0.95} />
+        </mesh>;
+      })}
+      {(() => {
+        const apex = 1 + (tiers - 1) * 5.5 + 6.35;
+        return <group name="Chóp vàng Bảo Tháp" position={[0, apex, 0]}>
+          <mesh position={[0, 0.46, 0]} castShadow><cylinderGeometry args={[0.25, 0.42, 0.82, 12]} /><meshStandardMaterial color={C.gold} metalness={0.68} roughness={0.34} /></mesh>
+          <mesh position={[0, 1.28, 0]} castShadow><sphereGeometry args={[0.34, 16, 12]} /><meshStandardMaterial color={C.gold} metalness={0.72} roughness={0.28} /></mesh>
+          <mesh position={[0, 2.45, 0]} castShadow><coneGeometry args={[0.38, 2.25, 10]} /><meshStandardMaterial color={C.gold} metalness={0.72} roughness={0.3} /></mesh>
+          {[0.7, 1.45, 2.2].map((y, i) => <mesh key={i} position={[0, y, 0]}><torusGeometry args={[0.27 - i * 0.045, 0.055, 8, 24]} /><meshStandardMaterial color={C.gold} metalness={0.76} roughness={0.28} /></mesh>)}
+        </group>;
+      })()}
     </group>
   );
 }

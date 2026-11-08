@@ -375,10 +375,9 @@ function capturePose(root: THREE.Object3D, rest: Map<THREE.Bone, RestTransform>)
   const hipsRest = hips ? rest.get(hips) : undefined;
   return {
     rotations,
-    hipsPosition:
-      hips && hipsRest && !hips.position.equals(hipsRest.position)
-        ? hips.position.clone()
-        : undefined,
+    ...(hips && hipsRest && !hips.position.equals(hipsRest.position)
+      ? { hipsPosition: hips.position.clone() }
+      : {}),
   };
 }
 

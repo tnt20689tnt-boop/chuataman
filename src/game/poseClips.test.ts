@@ -53,7 +53,9 @@ function sampleClip(root: THREE.Object3D, nodes: THREE.Object3D[], clipName: str
     const targetName = track.name.replace(/\.(quaternion|position)$/i, "");
     const target = nodes.find((node) => node.name === targetName);
     expect(target, `${track.name} resolves in the GLB skeleton`).toBeDefined();
-    const value = track.createInterpolant().evaluate(time);
+    const value = (track as THREE.KeyframeTrack & {
+      createInterpolant: () => { evaluate: (time: number) => ArrayLike<number> };
+    }).createInterpolant().evaluate(time);
     if (track.name.endsWith(".quaternion")) target!.quaternion.fromArray(value);
     else target!.position.fromArray(value);
   }

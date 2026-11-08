@@ -16,7 +16,6 @@ const solids: Solid[] = [
   // Double-size donation box mounted along the left inner wall of the main hall.
   { id: 'main-hall-donation-box', x: -18.445, z: -62, w: 2.5, d: 3.4 },
   { id: 'tower', x: -55, z: -112, w: 10, d: 10 },
-  { id: 'waterfall', x: 0, z: -147, w: 20, d: 12 },
   // 22m x 24m lotus pond, proportioned to the 17m-wide Tam Quan.
   // Keep the central 3.2m bridge and both approaches open.
   { id: 'pond-left', x: 24.7, z: 12, w: 7.4, d: 24 },
@@ -85,6 +84,9 @@ const statues = [
   new SAT.Circle(new SAT.Vector(0, -68.5), 3.8),
   new SAT.Circle(new SAT.Vector(0, -155), 2.8),
 ];
+// The waterfall is behind the outdoor Buddha. Only its shallow basin is solid;
+// the cascade itself must not become a wide invisible wall across the tour path.
+const waterBodies = [new SAT.Circle(new SAT.Vector(0, -176.9), 6.2)];
 const visitor = new SAT.Circle(new SAT.Vector(), PLAYER_RADIUS);
 // Populated from the exact rendered forest positions by World before movement starts.
 let treeTrunks: SAT.Circle[] = [];
@@ -97,7 +99,7 @@ export function isBlocked(x: number, z: number) {
   return polygons.some(s => {
     if (s.id.startsWith('foundation') && z < -47.4 && z > -73.1 && Math.abs(x) < 19.2) return false;
     return SAT.testCirclePolygon(visitor, s.shape);
-  }) || statues.some(s => SAT.testCircleCircle(visitor, s)) || treeTrunks.some(s => SAT.testCircleCircle(visitor, s));
+  }) || statues.some(s => SAT.testCircleCircle(visitor, s)) || waterBodies.some(s => SAT.testCircleCircle(visitor, s)) || treeTrunks.some(s => SAT.testCircleCircle(visitor, s));
 }
 export function surfaceHeight(x: number, z: number) {
   // Existing cushions are walkable; support the avatar above their padded tops.
@@ -113,12 +115,26 @@ export function surfaceHeight(x: number, z: number) {
     const radius = 0.72 + (i % 3) * 0.12;
     if (Math.hypot(x - sx, z - sz) <= radius * 0.82) return 0.34;
   }
+  // Three visible tower steps ascend toward the 1m-high plinth.
+  for (let step = 0; step < 3; step++) {
+    const stepZ = -112 + 5.7 + step * 0.82;
+    const top = 1.02 - step * 0.34;
+    if (Math.abs(x + 55) <= 3.1 && Math.abs(z - stepZ) <= 0.575) return top;
+  }
   if (Math.abs(x - HALL.x) < HALL.halfW && z <= -47 && z >= -77) return HALL.floor;
   // Three 0.4m treads match the visible main-hall staircase exactly.
   if (Math.abs(x) < 7 && z <= -44 && z > -47) return z <= -46 ? 1.2 : z <= -45 ? 0.8 : 0.4;
   // Match the 24 stone slabs of the bridge at the right side of the courtyard.
   if (Math.abs(x - 30) <= 1.0 && z >= 0 && z <= 24) {
     return 0.45 + Math.sin((z / 24) * Math.PI) * 1.1;
+  }
+  for (const b of BUILDINGS) {
+    for (let step = 0; step < 3; step++) {
+      const stepZ = b.z + b.d / 2 + 1.1 - step * 0.65;
+      if (Math.abs(x - b.x) <= Math.min(b.w * 0.58, 13) / 2 && Math.abs(z - stepZ) <= 0.45) {
+        return 0.12 + step * 0.09;
+      }
+    }
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
   // Pavilion deck and steps now sit beside the right-hand lotus pond.

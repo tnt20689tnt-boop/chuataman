@@ -126,7 +126,10 @@ export function walkerPos(n: Npc, t: number) {
 // The 2.2m avatar needs a clearly usable walking pace; collision still uses
 // swept substeps, so the faster walk/run speeds remain safe around geometry.
 export const MOVE = { SPEED: 5.8, RUN: 9.0, TURN: 14 };
-export const WORLD_LIMIT = 140;
+// Keep the visitor inside the east/west enclosure while allowing the full
+// north-south campus axis to reach the Buddha and waterfall behind the hall.
+export const WORLD_LIMIT = 180;
+export const WORLD_LIMIT_X = 118;
 
 export function stepPlayer(
   p: { x: number; y: number; z: number; rot: number },
@@ -146,7 +149,7 @@ export function stepPlayer(
   const dx = fx * f + rx * s;
   const dz = fz * f + rz * s;
   const sp = input.run ? MOVE.RUN : MOVE.SPEED;
-  const nextX = clamp(p.x + dx * sp * dt, -WORLD_LIMIT, WORLD_LIMIT);
+  const nextX = clamp(p.x + dx * sp * dt, -WORLD_LIMIT_X, WORLD_LIMIT_X);
   const nextZ = clamp(p.z + dz * sp * dt, -WORLD_LIMIT, WORLD_LIMIT);
 
   const moved = moveVisitor(p, nextX - p.x, nextZ - p.z);
