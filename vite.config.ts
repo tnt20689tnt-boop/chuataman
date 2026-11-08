@@ -24,5 +24,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  vite: { plugins: [stripTsdSourceFor3D] },
+  vite: {
+    server: { allowedHosts: ["localhost", ".sg2.manus.computer"] },
+    plugins: [stripTsdSourceFor3D],
+  },
 });

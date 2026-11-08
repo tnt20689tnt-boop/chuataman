@@ -11,10 +11,10 @@ export interface TempleBuilding {
   kind: "ancestral" | "meditation" | "lecture" | "guest" | "library";
 }
 export const BUILDINGS: readonly TempleBuilding[] = [
-  { id: "to", label: "NHÀ THỜ TỔ", x: -42, z: -62, w: 26, d: 17, h: 7, kind: "ancestral" },
-  { id: "thienDuong", label: "THIỀN ĐƯỜNG", x: -42, z: -15, w: 24, d: 18, h: 6, kind: "meditation" },
-  { id: "nhaGiang", label: "NHÀ GIẢNG PHÁP", x: 42, z: -62, w: 26, d: 18, h: 7, kind: "lecture" },
-  { id: "nhaKhach", label: "NHÀ KHÁCH", x: 42, z: -15, w: 25, d: 16, h: 6, kind: "guest" },
+  { id: "to", label: "NHÀ THỜ TỔ", x: -42, z: -54, w: 26, d: 17, h: 7, kind: "ancestral" },
+  { id: "thienDuong", label: "THIỀN ĐƯỜNG", x: -42, z: -12, w: 24, d: 18, h: 6, kind: "meditation" },
+  { id: "nhaGiang", label: "NHÀ GIẢNG PHÁP", x: 42, z: -54, w: 26, d: 18, h: 7, kind: "lecture" },
+  { id: "nhaKhach", label: "NHÀ KHÁCH", x: 42, z: -12, w: 25, d: 16, h: 6, kind: "guest" },
 ] as const;
 export const SCENE_COLORS = {
   wood: "#7a3d2d", woodDark: "#4b241b", lacquer: "#b5482c", gold: "#d6a653",
