@@ -18,8 +18,8 @@ import { BUILDINGS, SCENE_COLORS as C, type TempleBuilding } from "./templeData"
      7  Tượng Phật Lớn + Núi Thiên + thác nước (phía sau)
      8  Hồ Sen + Cầu Đá (hai hồ sen hai bên trục, cầu đá bắc qua hồ phải)
      9  Vườn Thiền Cây Bồ Đề (trước bên trái)
-   Mọi công trình đặt trên nền gạch lát, hồ sen phủ kín lá sen và hoa sen.
-============================================================================ */
+    Mọi công trình đặt trên nền gạch lát, hồ sen phủ kín lá sen và hoa sen.
+ ============================================================================ */
 
 // ---------- Nền gạch lát (theo ô gạch trong bản đồ) ----------
 function useBrickTexture() {
@@ -79,17 +79,24 @@ function MiniTree({ position, scale = 1, blossom = false }: { position: [number,
     [0, 2.95, 0, 1.22, 0.82, 1.08], [-0.9, 2.65, 0.15, 0.74, 0.66, 0.78],
     [0.88, 2.7, -0.18, 0.78, 0.68, 0.8], [0.08, 2.72, 0.86, 0.7, 0.62, 0.72],
   ];
+  const branchAngles = Array.from({ length: 5 }, (_, i) => i * (Math.PI * 2 / 5));
   return (
     <group position={position} scale={[scale * profiles[form][0], scale * profiles[form][1], scale * profiles[form][2]]} rotation-y={form * 0.9} name="Cây cảnh khuôn viên">
       <mesh position={[0, 1.25, 0]} castShadow><cylinderGeometry args={[0.28, 0.46, 2.5, 9]} /><meshStandardMaterial color="#68412d" roughness={1} /></mesh>
+      {branchAngles.map((a, i) => (
+        <mesh key={`branch-${i}`} position={[Math.cos(a) * 0.32, 1.7 + i * 0.2, Math.sin(a) * 0.32]} rotation={[0.35, a, 0.18]} castShadow>
+          <cylinderGeometry args={[0.06, 0.1, 1.2, 6]} />
+          <meshStandardMaterial color="#5a3828" roughness={1} />
+        </mesh>
+      ))}
       {canopies.map(([x, y, z, sx, sy, sz], i) => (
         <mesh key={i} position={[x, y, z]} scale={[sx, sy, sz]} castShadow>
           <sphereGeometry args={[1.55, 14, 10]} />
           <meshStandardMaterial color={blossom && i % 2 === 0 ? "#8aa864" : greenShades[(form + i) % greenShades.length]} roughness={0.96} />
         </mesh>
       ))}
-      {blossom && Array.from({ length: 8 }, (_, i) => {
-        const a = i * Math.PI / 4;
+      {blossom && Array.from({ length: 10 }, (_, i) => {
+        const a = i * Math.PI / 5;
         return (
           <mesh key={i} position={[Math.cos(a) * 0.95, 3.2 + (i % 3) * 0.22, Math.sin(a) * 0.8]} scale={0.2}>
             <sphereGeometry args={[1, 12, 10]} />
@@ -107,10 +114,16 @@ function SakuraTree({ position, scale = 1 }: { position: [number, number, number
   const crownX = 0.84 + variation * 0.42;
   const crownY = 0.88 + ((variation * 3) % 1) * 0.32;
   const crownZ = 1.18 - variation * 0.34;
+  const branchAngles = Array.from({ length: 5 }, (_, i) => i * (Math.PI * 2 / 5) + 0.7);
   return (
     <group position={position} scale={[scale * crownX, scale * crownY, scale * crownZ]} rotation-y={variation * Math.PI * 2} name="Cây hoa anh đào">
       <mesh position={[0, 1.5, 0]} castShadow><cylinderGeometry args={[0.26, 0.44, 3, 9]} /><meshStandardMaterial color="#5d3d2c" roughness={1} /></mesh>
-      <mesh position={[0.35, 2.9, 0.15]} rotation-z={-0.5} castShadow><cylinderGeometry args={[0.12, 0.18, 1.6, 7]} /><meshStandardMaterial color="#5d3d2c" roughness={1} /></mesh>
+      {branchAngles.map((a, i) => (
+        <mesh key={`s-${i}`} position={[Math.cos(a) * 0.34, 2.5 + i * 0.2, Math.sin(a) * 0.28]} rotation={[0.42, a, -0.3]} castShadow>
+          <cylinderGeometry args={[0.06, 0.08, 1.4, 7]} />
+          <meshStandardMaterial color="#5d3d2c" roughness={1} />
+        </mesh>
+      ))}
       {[[0, 3.7 + variation * 0.42, 0, 1.2 + variation * 0.24, 0.82, 1.1], [-0.95, 3.35, 0.25, 0.8, 0.62, 0.8], [1, 3.4, -0.25, 0.85, 0.66, 0.85], [0.15, 3.35, 0.95, 0.75, 0.58, 0.75]].map(([x, y, z, sx, sy, sz], i) => (
         <mesh key={i} position={[x, y, z]} scale={[sx, sy, sz]} castShadow>
           <sphereGeometry args={[1.5, 14, 10]} />
@@ -140,7 +153,6 @@ function LotusPond({ x, z, w, d, count = 120 }: { x: number; z: number; w: numbe
 
 // ---------- Cầu đá cong bắc qua hồ sen (theo bản đồ) ----------
 function LotusBridge({ x, z }: { x: number; z: number }) {
-  // Span the full 40m pond, with stone landing pads at both banks.
   const length = 40;
   const rail = useMemo(() => {
     const points = Array.from({ length: 121 }, (_, i) => new THREE.Vector3(
@@ -200,19 +212,16 @@ function BodhiGarden() {
         <torusGeometry args={[14.55, 0.26, 10, 96]} />
         <meshStandardMaterial color="#8e8879" roughness={0.92} />
       </mesh>
-      {/* đường cái rối dẫn vào tâm vườn */}
       {Array.from({ length: 8 }, (_, i) => (
         <mesh key={i} position={[Math.sin(i * 0.5) * 2, 0.2, 13 - i * 2]} rotation-y={i * 0.5} castShadow receiveShadow>
           <cylinderGeometry args={[0.72 + (i % 3) * 0.1, 0.82 + (i % 3) * 0.1, 0.26, 7]} />
           <meshStandardMaterial color={i % 2 ? "#aaa18f" : "#c2b9a6"} roughness={0.96} />
         </mesh>
       ))}
-      {/* vòng đèn đá */}
       {Array.from({ length: 6 }, (_, i) => {
         const a = i * Math.PI / 3 + 0.4;
         return <StoneLantern key={i} position={[Math.cos(a) * 12.2, 0, Math.sin(a) * 12.2]} />;
       })}
-      {/* Cây Bồ Đề lớn ở tâm */}
       <group position={[0, 0, -2]} name="Cây Bồ Đề">
         <mesh position={[0, 2.6, 0]} castShadow receiveShadow>
           <cylinderGeometry args={[0.5, 0.85, 5.2, 14]} />
@@ -265,14 +274,14 @@ function SideHall({ building }: { building: TempleBuilding }) {
           {[-1, 1].map((zSide) => (
             <group key={zSide} position={[side * (width / 2 + 0.34), height * 0.58 + 0.3, zSide * depth * 0.23]}>
               <mesh castShadow><boxGeometry args={[0.08, 1.9, 2.25]} /><meshStandardMaterial color="#39251e" roughness={0.58} /></mesh>
-              {[-1, 1].map((edge) => <mesh key={edge} position={[side * 0.06, edge * 0.99, 0]}><boxGeometry args={[0.12, 0.12, 2.48]} /><meshStandardMaterial color={C.gold} metalness={0.28} roughness={0.65} /></mesh>)}
-              {[-1, 1].map((edge) => <mesh key={edge} position={[side * 0.06, 0, edge * 1.15]}><boxGeometry args={[0.12, 2.1, 0.12]} /><meshStandardMaterial color={C.gold} metalness={0.28} roughness={0.65} /></mesh>)}
+              {[-1, 1].map((edge) => <mesh key={edge} position={[side * 0.06, edge * 0.99, 0]}><boxGeometry args={[0.12, 0.12, 2.48]} /><meshStandardMaterial color={C.gold} metalness={0.28} roughness={0.5} /></mesh>)}
+              {[-1, 1].map((edge) => <mesh key={edge} position={[side * 0.06, 0, edge * 1.15]}><boxGeometry args={[0.12, 2.1, 0.12]} /><meshStandardMaterial color={C.gold} metalness={0.28} roughness={0.5} /></mesh>)}
             </group>
           ))}
         </group>
       ))}
       <mesh position={[0, height / 2 + 0.3, -depth / 2]} castShadow receiveShadow><boxGeometry args={[width, height, 0.65]} /><meshStandardMaterial color="#743c2b" roughness={0.9} /></mesh>
-      {[-1, 1].map((side) => <mesh key={side} position={[side * width / 3, height / 2 + 0.3, depth / 2]} castShadow receiveShadow><boxGeometry args={[width / 3 + 0.3, height, 0.65]} /><meshStandardMaterial color="#743c2b" roughness={0.9} /></mesh>)}
+      {[-1, 1].map((side) => <mesh key={side} position={[side * width / 3, height / 2 + 0.3, depth / 2]} castShadow receiveShadow><boxGeometry args={[width / 3 + 0.3, height, 0.65]} /><meshStandardMaterial color="#773d2d" roughness={0.9} /></mesh>)}
       <mesh position={[0, height - 0.15, depth / 2]} castShadow><boxGeometry args={[width / 3 + 1.2, 0.85, 0.75]} /><Surface kind="wood" /></mesh>
       {[-1, 1].map((side) => (
         <group key={side} position={[side * (width / 6 + 0.15), 0, depth / 2 + 0.35]}>
@@ -287,7 +296,7 @@ function SideHall({ building }: { building: TempleBuilding }) {
           <mesh position={[0, 0.55, -4.3]} castShadow><boxGeometry args={[10, 0.7, 4.5]} /><Surface kind="wood" /></mesh>
           <mesh position={[0, 1.08, -4.3]} castShadow><boxGeometry args={[8.7, 0.36, 3.4]} /><meshStandardMaterial color={C.lacquer} roughness={0.68} /></mesh>
           <Buddha position={[0, 1.3, -4.4]} scale={0.42} />
-          {[-3.2, 3.2].map((side) => <mesh key={side} position={[side, 1.46, -4.25]}><cylinderGeometry args={[0.28, 0.34, 0.6, 12]} /><meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.44} /></mesh>)}
+          {[-3.2, 3.2].map((side) => <mesh key={side} position={[side, 1.46, -4.25]}><cylinderGeometry args={[0.28, 0.34, 0.6, 12]} /><meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.4} /></mesh>)}
           <Inscription text="TỔ ĐƯỜNG" width={6.5} height={0.72} position={[0, height + 0.25, -depth / 2 + 0.36]} />
         </>
       )}
@@ -338,7 +347,6 @@ function PerimeterWall() {
             <boxGeometry args={[run.length, 2.5, 1.15]} />
             <Surface kind="stone" repeat={Math.max(2, Math.round(run.length / 8))} />
           </mesh>
-          {/* mái ngói cam đặc trưng trên đỉnh tường */}
           <mesh position={[0, 2.62, 0]} castShadow>
             <boxGeometry args={[run.length + 0.3, 0.22, 1.7]} />
             <meshStandardMaterial color={C.roof} roughness={0.85} />
@@ -396,7 +404,6 @@ function CampusPlantings() {
       {axisTrees.map(([x, z, s, b], i) => <MiniTree key={i} position={[x, 0, z]} scale={s} blossom={b} />)}
       {sakuras.map(([x, z, s], i) => <SakuraTree key={i} position={[x, 0, z]} scale={s} />)}
       {greens.map(([x, z, s], i) => <MiniTree key={i} position={[x, 0, z]} scale={s} />)}
-      {/* viền hoa hồng dọc trục chính */}
       {Array.from({ length: 22 }, (_, i) => {
         const side = i % 2 ? 1 : -1;
         const z = 100 - Math.floor(i / 2) * 9;
@@ -407,7 +414,6 @@ function CampusPlantings() {
           </mesh>
         );
       })}
-      {/* chậu hoa hai bên cổng và bậc thềm */}
       {[[-7, 106], [7, 106], [-10, -42], [10, -42], [-30, -44], [30, -44]].map(([x, z], i) => (
         <group key={i} position={[x, 0, z]}>
           <mesh position={[0, 0.35, 0]} castShadow><cylinderGeometry args={[0.7, 0.5, 0.7, 12]} /><meshStandardMaterial color="#a8552f" roughness={0.9} /></mesh>
@@ -423,47 +429,32 @@ export function OverviewCampus() {
   return (
     <group name="Chùa Tâm An - bản đồ tổng thể">
       <PerimeterWall />
-
-      {/* 2 · Sân Chùa: nền gạch lát rộng sau Tam Quan */}
       <BrickPaving w={148} d={26} x={0} z={96} />
-      {/* Trục chính Tam Quan -> Chính Điện + đường ngang trước sân */}
       <BrickPaving w={7} d={150} x={0} z={36} />
       <BrickPaving w={120} d={6} x={0} z={8} />
-      {/* 3 · Quảng trường nền gạch trước Chính Điện */}
       <BrickPaving w={78} d={48} x={0} z={-22} />
-
-      {/* 8 · Hồ Sen hai bên trục — lá sen và hoa sen phủ kín mặt nước */}
       <LotusPond x={-27} z={52} w={30} d={40} count={110} />
       <LotusPond x={28} z={52} w={32} d={40} count={120} />
       <LotusBridge x={28} z={52} />
       <Pavilion position={[52, 0, 52]} />
-
-      {/* 9 · Vườn Thiền Cây Bồ Đề */}
       <BodhiGarden />
-
-      {/* Công trình chính — đặt trên nền gạch riêng */}
       {BUILDINGS.map((b) => <BrickPaving key={b.id} w={b.w + 10} d={b.d + 10} x={b.x} z={b.z} />)}
       {BUILDINGS.map((b) => <SideHall key={b.id} building={b} />)}
       <MainHall />
       <Gate z={112} />
-
-      {/* 6 · Bảo Tháp (trái sau) */}
       <Tower position={[-58, 0, -118]} tiers={5} label="Bảo tháp" />
-
-      {/* 7 · Tượng Phật Lớn + Núi Thiên + thác nước (phía sau cùng) */}
       <group position={[0, 0, -155]} name="Tượng Phật Lớn và Núi Thiên">
         <mesh position={[0, 0.25, 0]} receiveShadow><cylinderGeometry args={[42, 42, 1.6, 64]} /><meshStandardMaterial color="#cfc3ac" roughness={0.96} /></mesh>
         <mesh position={[0, 1.15, 0]} receiveShadow><cylinderGeometry args={[34, 34, 0.32, 64]} /><meshStandardMaterial color="#d7b56e" metalness={0.45} roughness={0.42} /></mesh>
-        <mesh position={[0, 39, 0]} rotation-x={Math.PI / 2} castShadow><torusGeometry args={[15, 0.75, 16, 64]} /><meshStandardMaterial color="#e4bd62" emissive="#b8812f" emissiveIntensity={0.22} metalness={0.5} roughness={0.38} /></mesh>
+        <mesh position={[0, 39, 0]} rotation-x={Math.PI / 2} castShadow><torusGeometry args={[15, 0.75, 16, 64]} /><meshStandardMaterial color="#e4bd62" emissive="#b8812f" emissiveIntensity={0.22} roughness={0.6} /></mesh>
         <Buddha position={[0, 1.45, 0]} scale={10} />
         <Inscription text="TƯỢNG PHẬT LỚN VÀ NÚI THIÊN" width={22} height={1.9} position={[0, 2.1, 34.2]} stone />
       </group>
       <Waterfall position={[0, 0, -181]} />
-
-      {/* Cây cối, cây hoa và hiệu ứng thiên nhiên */}
       <CampusPlantings />
       <PetalFall />
       <Fireflies />
     </group>
   );
 }
+
