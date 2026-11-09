@@ -1,469 +1,416 @@
-import { useMemo } from "react";
+// ============================================================================
+// NATURE UPGRADE — nâng cấp thiên nhiên Chùa Tâm An
+//   • Forest:        rừng cây sinh động (instanced, 6 dáng cây và bảng màu đa dạng)
+//   • LotusField:    hoa sen nhiều lớp cánh + lá sen khuyết + lắc lư theo nước
+//   • PetalFall:     cánh hoa anh đào rơi
+//   • Fireflies:     đom đóm bay đêm (theo giờ Việt Nam)
+//   • Effects:       Bloom + Vignette — cảm giác game 3D
+// Thay thế drop-in cho Forest/LotusField cũ. Xem HUONG_DAN_SUA.md.
+// ============================================================================
+import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { Sparkles } from "@react-three/drei";
-import { Buddha, Gate, MainHall, Pavilion, Pond, Roof, Tower, Waterfall } from "./Architecture";
-import { LotusField, PetalFall, Fireflies } from "./NatureUpgrade";
-import { Surface } from "./Materials";
-import { Inscription } from "./TempleDetails";
-import { BUILDINGS, SCENE_COLORS as C, type TempleBuilding } from "./templeData";
+import { useFrame } from "@react-three/fiber";
+import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 
-/* ============================================================================
-   CHÙA TÂM AN — dựng lại theo "Bản đồ tổng thể Chùa Tâm An":
-     1  Tam Quan (cổng tam quan phía trước, z = 112)
-     2  Sân Chùa (nền gạch lát rộng sau Tam Quan)
-     3  Chính Điện (trung tâm, trên nền gạch lớn)
-     4  Nhà Giảng Pháp (bên phải / đông)
-     5  Nhà Thờ Tổ (bên trái / tây)
-     6  Bảo Tháp (trái sau, gần núi)
-     7  Tượng Phật Lớn + Núi Thiên + thác nước (phía sau)
-     8  Hồ Sen + Cầu Đá (hai hồ sen hai bên trục, cầu đá bắc qua hồ phải)
-     9  Vườn Thiền Cây Bồ Đề (trước bên trái)
-   Mọi công trình đặt trên nền gạch lát, hồ sen phủ kín lá sen và hoa sen.
-============================================================================ */
+type ForestPoint = [x: number, z: number, scale: number];
 
-// ---------- Nền gạch lát (theo ô gạch trong bản đồ) ----------
-function useBrickTexture() {
-  return useMemo(() => {
-    const c = document.createElement("canvas");
-    c.width = c.height = 512;
-    const ctx = c.getContext("2d");
-    if (ctx) {
-      ctx.fillStyle = "#c9bda6";
-      ctx.fillRect(0, 0, 512, 512);
-      const bw = 64;
-      const bh = 32;
-      for (let row = 0; row < 512 / bh; row++) {
-        for (let col = -1; col < 512 / bw + 1; col++) {
-          const off = row % 2 ? bw / 2 : 0;
-          ctx.fillStyle = (row + col) % 2 ? "#c2b69e" : "#d0c5ae";
-          ctx.fillRect(col * bw + off + 2, row * bh + 2, bw - 4, bh - 4);
+// ---------- tiện ích ----------
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Giờ Việt Nam → hệ số sáng/tối (dùng chung cho đom đóm)
+function vietnamDaylight() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date());
+  const part = (type: string) => Number(parts.find((item) => item.type === type)?.value ?? 0);
+  const hour = part("hour") + part("minute") / 60 + part("second") / 3600;
+  const daylight = THREE.MathUtils.clamp((hour - 5.5) / 1.1, 0, 1) *
+    (1 - THREE.MathUtils.clamp((hour - 17.2) / 1.1, 0, 1));
+  return { hour, daylight, night: 1 - daylight };
+}
+
+const _dummy = new THREE.Object3D();
+const _color = new THREE.Color();
+
+// ============================================================================
+// 1 · RỪNG CÂY SINH ĐỘNG — thay thế Forest từ Architecture.tsx
+//    Drop-in: giữ nguyên prop `points`. Dùng instanced mesh nên vẫn mượt
+//    với hàng trăm cây.
+// ============================================================================
+const LEAFY = 0, PINE = 1, SAKURA = 2, WILLOW = 3, CYPRESS = 4, GOLDEN = 5;
+const FOREST_TYPES = [LEAFY, PINE, SAKURA, WILLOW, CYPRESS, GOLDEN];
+
+export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; seed?: number }) {
+  const count = points.length;
+  const trunkRef = useRef<THREE.InstancedMesh>(null!);
+  const blobRef = useRef<THREE.InstancedMesh>(null!);
+  const pineRef = useRef<THREE.InstancedMesh>(null!);
+  const forestRef = useRef<THREE.Group>(null!);
+
+  const layout = useMemo(() => {
+    const rand = mulberry32(seed);
+    return points.map(([x, z, s], i) => {
+      const type = FOREST_TYPES[(i + seed) % FOREST_TYPES.length];
+      const rot = rand() * Math.PI * 2;
+      const tall = 0.78 + rand() * 0.64;
+      return {
+        x,
+        z,
+        s: s * (0.78 + rand() * 0.5),
+        type,
+        rot,
+        tall,
+        jitter: rand(),
+        sway: 0.08 + rand() * 0.15,
+        phase: rand() * Math.PI * 2,
+      };
+    });
+  }, [points, seed]);
+
+  useLayoutEffect(() => {
+    const trunks = trunkRef.current, blobs = blobRef.current, pines = pineRef.current;
+    if (!trunks || !blobs || !pines) return;
+    let blobIndex = 0, pineIndex = 0;
+    layout.forEach((t, i) => {
+      _dummy.position.set(t.x, 1.3 * t.tall * t.s, t.z);
+      _dummy.rotation.set(0, t.rot, (t.jitter - 0.5) * 0.12);
+      const trunkW = t.type === PINE ? 0.78 : t.type === CYPRESS ? 0.6 : t.type === WILLOW ? 1.24 : t.type === SAKURA ? 1.08 : 1.0;
+      _dummy.scale.set(t.s * trunkW, t.tall * t.s, t.s * trunkW);
+      _dummy.updateMatrix();
+      trunks.setMatrixAt(i, _dummy.matrix);
+      _color.setHSL(0.055 + t.jitter * 0.04, 0.28 + t.jitter * 0.08, 0.19 + t.jitter * 0.13);
+      trunks.setColorAt(i, _color);
+
+      if (t.type === PINE || t.type === CYPRESS) {
+        const tiers = t.type === CYPRESS ? [0.7, 0.52, 0.35] : [1, 0.72, 0.49];
+        const heights = t.type === CYPRESS ? [2.8, 4.25, 5.55] : [2.5, 3.85, 5.0];
+        for (let tier = 0; tier < tiers.length; tier++) {
+          const k = tiers[tier];
+          _dummy.position.set(t.x, (heights[tier] + (t.jitter - 0.5) * 0.45) * t.tall * t.s, t.z);
+          _dummy.rotation.set(0, t.rot + tier, 0);
+          _dummy.scale.set(t.s * k, t.s * (0.92 - tier * 0.13) * t.tall, t.s * k);
+          _dummy.updateMatrix();
+          pines.setMatrixAt(pineIndex, _dummy.matrix);
+          _color.setHSL(t.type === CYPRESS ? 0.37 : 0.32, 0.42 + t.jitter * 0.1, 0.17 + t.jitter * 0.11);
+          pines.setColorAt(pineIndex, _color);
+          pineIndex++;
+        }
+      } else {
+        const clusters: [number, number, number, number][] = t.type === WILLOW
+          ? [[0, 3.25, 0, 1.5], [-1.05, 2.65, 0.42, 1.0], [1.05, 2.58, -0.38, 1.02]]
+          : t.type === GOLDEN
+            ? [[0, 3.7, 0, 1.28], [-0.95, 3.0, 0.35, 0.96], [0.9, 3.05, -0.42, 1.02]]
+            : [[0, 3.5, 0, 1.35], [-0.85, 3.05, 0.3, 0.85], [0.8, 3.1, -0.35, 0.9]];
+        for (const [cx, cy, cz, cs] of clusters) {
+          const cos = Math.cos(t.rot), sin = Math.sin(t.rot);
+          _dummy.position.set(
+            t.x + (cx * cos - cz * sin) * t.s,
+            cy * t.tall * t.s,
+            t.z + (cx * sin + cz * cos) * t.s,
+          );
+          _dummy.rotation.set(t.jitter * 0.6, t.rot, t.jitter * 0.5);
+          const flat = t.type === WILLOW ? 0.58 : 0.72 + t.jitter * 0.3;
+          _dummy.scale.set(t.s * cs * (1 + t.jitter * 0.28), t.s * cs * flat, t.s * cs * (1 + (0.5 - t.jitter) * 0.18));
+          _dummy.updateMatrix();
+          blobs.setMatrixAt(blobIndex, _dummy.matrix);
+          if (t.type === SAKURA) {
+            _color.setHSL(0.93 + t.jitter * 0.03, 0.5, 0.72 + t.jitter * 0.12);
+          } else if (t.type === GOLDEN) {
+            _color.setHSL(0.105 + t.jitter * 0.035, 0.58 + t.jitter * 0.12, 0.42 + t.jitter * 0.18);
+          } else if (t.type === WILLOW) {
+            _color.setHSL(0.27 + t.jitter * 0.035, 0.36 + t.jitter * 0.1, 0.25 + t.jitter * 0.14);
+          } else {
+            _color.setHSL(0.27 + t.jitter * 0.1, 0.38 + t.jitter * 0.12, 0.23 + t.jitter * 0.19);
+          }
+          blobs.setColorAt(blobIndex, _color);
+          blobIndex++;
         }
       }
-      ctx.globalAlpha = 0.1;
-      for (let i = 0; i < 700; i++) {
-        const x = (i * 73) % 512;
-        const y = (i * 137) % 512;
-        ctx.fillStyle = i % 2 ? "#efe6d2" : "#6b6350";
-        ctx.fillRect(x, y, 2, 2);
-      }
+    });
+
+    _dummy.scale.set(0, 0, 0); _dummy.position.set(0, -50, 0); _dummy.rotation.set(0, 0, 0);
+    _dummy.updateMatrix();
+    for (let i = blobIndex; i < count * 3; i++) blobs.setMatrixAt(i, _dummy.matrix);
+    for (let i = pineIndex; i < count * 3; i++) pines.setMatrixAt(i, _dummy.matrix);
+    trunks.instanceMatrix.needsUpdate = true;
+    blobs.instanceMatrix.needsUpdate = true;
+    pines.instanceMatrix.needsUpdate = true;
+    if (trunks.instanceColor) trunks.instanceColor.needsUpdate = true;
+    if (blobs.instanceColor) blobs.instanceColor.needsUpdate = true;
+    if (pines.instanceColor) pines.instanceColor.needsUpdate = true;
+  }, [layout, count]);
+
+  useFrame(({ clock }) => {
+    if (!forestRef.current) return;
+    forestRef.current.rotation.z = Math.sin(clock.elapsedTime * 0.45) * 0.04;
+  });
+
+  return (
+    <group ref={forestRef} name="Rừng cây nâng cấp">
+      <instancedMesh ref={trunkRef} args={[undefined as any, undefined as any, count]} castShadow receiveShadow frustumCulled={false}>
+        <cylinderGeometry args={[0.14, 0.3, 2.8, 7]} />
+        <meshStandardMaterial roughness={1} />
+      </instancedMesh>
+      <instancedMesh ref={blobRef} args={[undefined as any, undefined as any, count * 3]} castShadow receiveShadow frustumCulled={false}>
+        <icosahedronGeometry args={[1.4, 1]} />
+        <meshStandardMaterial roughness={0.92} flatShading={false} />
+      </instancedMesh>
+      <instancedMesh ref={pineRef} args={[undefined as any, undefined as any, count * 3]} castShadow receiveShadow frustumCulled={false}>
+        <coneGeometry args={[1.35, 2.9, 8]} />
+        <meshStandardMaterial roughness={0.95} flatShading />
+      </instancedMesh>
+    </group>
+  );
+}
+
+// ============================================================================
+// 2 · HOA SEN NÂNG CẤP — nhiều lớp cánh, nhị vàng, nụ sen, lá sen khuyết
+// ============================================================================
+const PETAL_INNER = ["#f9d3de", "#f4bccd"];
+const PETAL_OUTER = ["#f2a9bf", "#ec8fae"];
+
+function LotusFlower({ scale = 1, bud = false }: { scale?: number; bud?: boolean }) {
+  if (bud) {
+    return (
+      <group scale={scale}>
+        <mesh position={[0, 0.3, 0]} scale={[0.55, 1.15, 0.55]} castShadow>
+          <sphereGeometry args={[0.16, 12, 10]} />
+          <meshStandardMaterial color="#e78aa6" roughness={0.6} emissive="#c94f74" emissiveIntensity={0.18} />
+        </mesh>
+        <mesh position={[0, 0.14, 0]} scale={[0.8, 0.55, 0.8]}>
+          <sphereGeometry args={[0.14, 10, 8]} />
+          <meshStandardMaterial color="#5c8a4c" roughness={0.9} />
+        </mesh>
+      </group>
+    );
+  }
+  return (
+    <group scale={scale}>
+      <mesh position={[0, 0.06, 0]} scale={[1, 0.4, 1]}>
+        <sphereGeometry args={[0.14, 12, 8]} />
+        <meshStandardMaterial color="#7fa653" roughness={0.85} />
+      </mesh>
+      {Array.from({ length: 10 }, (_, i) => {
+        const a = i * Math.PI * 2 / 10;
+        return (
+          <mesh key={i} position={[Math.cos(a) * 0.09, 0.14, Math.sin(a) * 0.09]}>
+            <sphereGeometry args={[0.028, 6, 5]} />
+            <meshStandardMaterial color="#ffd45e" emissive="#ffb300" emissiveIntensity={0.55} roughness={0.5} />
+          </mesh>
+        );
+      })}
+      {[...Array(9)].map((_, p) => {
+        const a = p * Math.PI * 2 / 9;
+        return (
+          <mesh key={`o${p}`} position={[Math.cos(a) * 0.2, 0.1, Math.sin(a) * 0.2]}
+            rotation={[Math.sin(a) * 1.05, -a, Math.cos(a) * 1.05]} scale={[0.5, 0.16, 1.35]} castShadow>
+            <sphereGeometry args={[0.14, 10, 8]} />
+            <meshStandardMaterial color={PETAL_OUTER[p % 2]} roughness={0.55} emissive="#c94f74" emissiveIntensity={0.1} />
+          </mesh>
+        );
+      })}
+      {[...Array(6)].map((_, p) => {
+        const a = p * Math.PI * 2 / 6 + 0.3;
+        return (
+          <mesh key={`i${p}`} position={[Math.cos(a) * 0.11, 0.16, Math.sin(a) * 0.11]}
+            rotation={[Math.sin(a) * 0.5, -a, Math.cos(a) * 0.5]} scale={[0.42, 0.16, 1.1]}>
+            <sphereGeometry args={[0.13, 10, 8]} />
+            <meshStandardMaterial color={PETAL_INNER[p % 2]} roughness={0.5} emissive="#d96a8d" emissiveIntensity={0.12} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+// Drop-in thay LotusField cũ: cùng signature { w, d, count }
+export function LotusField({ w, d, count = 120 }: { w: number; d: number; count?: number }) {
+  const items = useMemo(() => {
+    const rand = mulberry32(9917 + count + Math.round(w));
+    return Array.from({ length: count }, (_, i) => {
+      const a = i * 2.399963;
+      const rx = w / 2 - 2, rz = d / 2 - 2;
+      const px = Math.cos(a) * rx * (0.3 + rand() * 0.7);
+      const pz = Math.sin(a) * rz * (0.3 + rand() * 0.7);
+      const roll = rand();
+      return {
+        x: px, z: pz, rot: rand() * Math.PI * 2,
+        leaf: 0.5 + rand() * 0.42,
+        flower: roll < 0.22, bud: !(roll < 0.22) && roll < 0.38,
+        fscale: 0.85 + rand() * 0.5,
+        phase: rand() * Math.PI * 2,
+        tiltX: (rand() - 0.5) * 0.14, tiltZ: (rand() - 0.5) * 0.14,
+        leafColor: rand() < 0.33 ? "#3f7040" : rand() < 0.5 ? "#4d7f45" : "#5c8a4c",
+      };
+    });
+  }, [w, d, count]);
+
+  const groupRefs = useRef<(THREE.Group | null)[]>([]);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    for (let i = 0; i < items.length; i++) {
+      const g = groupRefs.current[i];
+      if (!g) continue;
+      g.position.y = 0.16 + Math.sin(t * 0.7 + items[i].phase) * 0.028;
+      g.rotation.z = items[i].tiltZ + Math.sin(t * 0.5 + items[i].phase) * 0.02;
+      g.rotation.x = Math.sin(t * 0.65 + items[i].phase) * 0.08;
     }
-    const t = new THREE.CanvasTexture(c);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.colorSpace = THREE.SRGBColorSpace;
-    return t;
-  }, []);
-}
+  });
 
-function BrickPaving({ w, d, x = 0, z = 0 }: { w: number; d: number; x?: number; z?: number }) {
-  const tex = useBrickTexture();
-  const map = useMemo(() => {
-    const t = tex.clone();
-    t.needsUpdate = true;
-    t.repeat.set(w / 6, d / 6);
-    return t;
-  }, [tex, w, d]);
   return (
-    <mesh position={[x, 0.055, z]} receiveShadow>
-      <boxGeometry args={[w, 0.11, d]} />
-      <meshStandardMaterial map={map} roughness={0.94} />
-    </mesh>
-  );
-}
-
-// ---------- Cây cảnh khuôn viên (xanh) & cây hoa anh đào (theo bản đồ) ----------
-function MiniTree({ position, scale = 1, blossom = false }: { position: [number, number, number]; scale?: number; blossom?: boolean }) {
-  const form = Math.floor(Math.abs(Math.sin(position[0] * 12.9898 + position[2] * 78.233)) * 3);
-  const profiles: [number, number, number][] = [[0.92, 1.12, 0.92], [1.18, 0.86, 1.08], [0.82, 1.04, 1.2]];
-  const greenShades = ["#3d7042", "#477b48", "#35684c"];
-  const canopies: [number, number, number, number, number, number][] = [
-    [0, 2.95, 0, 1.22, 0.82, 1.08], [-0.9, 2.65, 0.15, 0.74, 0.66, 0.78],
-    [0.88, 2.7, -0.18, 0.78, 0.68, 0.8], [0.08, 2.72, 0.86, 0.7, 0.62, 0.72],
-  ];
-  return (
-    <group position={position} scale={[scale * profiles[form][0], scale * profiles[form][1], scale * profiles[form][2]]} rotation-y={form * 0.9} name="Cây cảnh khuôn viên">
-      <mesh position={[0, 1.25, 0]} castShadow><cylinderGeometry args={[0.28, 0.46, 2.5, 9]} /><meshStandardMaterial color="#68412d" roughness={1} /></mesh>
-      {canopies.map(([x, y, z, sx, sy, sz], i) => (
-        <mesh key={i} position={[x, y, z]} scale={[sx, sy, sz]} castShadow>
-          <sphereGeometry args={[1.55, 14, 10]} />
-          <meshStandardMaterial color={blossom && i % 2 === 0 ? "#8aa864" : greenShades[(form + i) % greenShades.length]} roughness={0.96} />
-        </mesh>
-      ))}
-      {blossom && Array.from({ length: 8 }, (_, i) => {
-        const a = i * Math.PI / 4;
-        return (
-          <mesh key={i} position={[Math.cos(a) * 0.95, 3.2 + (i % 3) * 0.22, Math.sin(a) * 0.8]} scale={0.2}>
-            <sphereGeometry args={[1, 12, 10]} />
-            <meshStandardMaterial color={i % 2 ? "#e795a8" : "#f4c2cd"} roughness={0.86} />
+    <group name="Lá sen và hoa sen nâng cấp">
+      {items.map((it, i) => (
+        <group key={i} position={[it.x, 0.16, it.z]} rotation-y={it.rot}
+          ref={(el) => { groupRefs.current[i] = el; }}>
+          <mesh rotation-x={-Math.PI / 2 + it.tiltX} scale={[1, 0.86, 1]} receiveShadow castShadow>
+            <circleGeometry args={[it.leaf, 22, 0.35, Math.PI * 2 - 0.7]} />
+            <meshStandardMaterial color={it.leafColor} roughness={0.85} side={THREE.DoubleSide} />
           </mesh>
-        );
-      })}
-    </group>
-  );
-}
-
-// Cây hoa (sakura) như trong bản đồ: tán hoa hồng phủ kín.
-function SakuraTree({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
-  const variation = Math.abs(Math.sin(position[0] * 7.13 + position[2] * 3.71));
-  const crownX = 0.84 + variation * 0.42;
-  const crownY = 0.88 + ((variation * 3) % 1) * 0.32;
-  const crownZ = 1.18 - variation * 0.34;
-  return (
-    <group position={position} scale={[scale * crownX, scale * crownY, scale * crownZ]} rotation-y={variation * Math.PI * 2} name="Cây hoa anh đào">
-      <mesh position={[0, 1.5, 0]} castShadow><cylinderGeometry args={[0.26, 0.44, 3, 9]} /><meshStandardMaterial color="#5d3d2c" roughness={1} /></mesh>
-      <mesh position={[0.35, 2.9, 0.15]} rotation-z={-0.5} castShadow><cylinderGeometry args={[0.12, 0.18, 1.6, 7]} /><meshStandardMaterial color="#5d3d2c" roughness={1} /></mesh>
-      {[[0, 3.7 + variation * 0.42, 0, 1.2 + variation * 0.24, 0.82, 1.1], [-0.95, 3.35, 0.25, 0.8, 0.62, 0.8], [1, 3.4, -0.25, 0.85, 0.66, 0.85], [0.15, 3.35, 0.95, 0.75, 0.58, 0.75]].map(([x, y, z, sx, sy, sz], i) => (
-        <mesh key={i} position={[x, y, z]} scale={[sx, sy, sz]} castShadow>
-          <sphereGeometry args={[1.5, 14, 10]} />
-          <meshStandardMaterial color={i % 2 ? "#e8a7b8" : "#f2c4d0"} roughness={0.9} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-// ---------- Hoa sen (lá + bông sen hồng) ----------
-function LotusPond({ x, z, w, d, count = 120 }: { x: number; z: number; w: number; d: number; count?: number }) {
-  return (
-    <group position={[x, 0, z]} name="Hồ sen">
-      <Pond position={[0, 0, 0]} w={w} d={d} />
-      <Sparkles position={[0, 0.58, 0]} count={28} scale={[w * 0.86, 0.24, d * 0.84]} size={2.4} speed={0.18} opacity={0.55} color="#ffe6a8" noise={0.6} />
-      <LotusField w={w} d={d} count={count} />
-      {[-1, 1].map((s) => (
-        <group key={s}>
-          <mesh position={[0, 0.22, s * d / 2]} castShadow receiveShadow><boxGeometry args={[w + 1.4, 0.44, 1]} /><Surface kind="stone" repeat={4} /></mesh>
-          <mesh position={[s * w / 2, 0.22, 0]} castShadow receiveShadow><boxGeometry args={[1, 0.44, d + 1.4]} /><Surface kind="stone" repeat={4} /></mesh>
-        </group>
-      ))}
-    </group>
-  );
-}
-
-// ---------- Cầu đá cong bắc qua hồ sen (theo bản đồ) ----------
-function LotusBridge({ x, z }: { x: number; z: number }) {
-  // Span the full 40m pond, with stone landing pads at both banks.
-  const length = 40;
-  const rail = useMemo(() => {
-    const points = Array.from({ length: 121 }, (_, i) => new THREE.Vector3(
-      0,
-      0.45 + Math.sin((i / 120) * Math.PI) * 1.1,
-      -length / 2 + (i / 120) * length,
-    ));
-    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 120, 0.08, 6, false);
-  }, []);
-  return (
-    <group position={[x, 0, z]} name="Cầu đá cong hồ sen">
-      {Array.from({ length }, (_, i) => (
-        <mesh key={i} position={[0, 0.27 + Math.sin(((i + 0.5) / length) * Math.PI) * 1.1, -length / 2 + 0.5 + i]} receiveShadow castShadow>
-          <boxGeometry args={[3.2, 0.36, 1.06]} /><Surface kind="stone" />
-        </mesh>
-      ))}
-      {[-1, 1].map((side) => (
-        <group key={side} position={[side * 1.5, 0, 0]}>
-          <mesh geometry={rail} position={[0, 1, 0]} castShadow><meshStandardMaterial color={C.stone} roughness={0.86} /></mesh>
-          {Array.from({ length: 9 }, (_, i) => (
-            <mesh key={i} position={[0, 0.95 + Math.sin((i / 8) * Math.PI) * 1.1, -length / 2 + i * (length / 8)]} castShadow>
-              <boxGeometry args={[0.2, 1.15, 0.2]} /><Surface kind="stone" />
-            </mesh>
-          ))}
-        </group>
-      ))}
-      {[-1, 1].map((end) => (
-        <mesh key={end} position={[0, 0.08, end * (length / 2 + 1.1)]} receiveShadow>
-          <boxGeometry args={[4.8, 0.16, 2.2]} /><Surface kind="stone" />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-// ---------- Đèn đá ----------
-function StoneLantern({ position }: { position: [number, number, number] }) {
-  return (
-    <group position={position} name="Đèn đá">
-      <mesh position={[0, 0.5, 0]} castShadow><cylinderGeometry args={[0.2, 0.3, 1, 8]} /><meshStandardMaterial color="#8d8a7e" roughness={1} /></mesh>
-      <mesh position={[0, 1.06, 0]}><boxGeometry args={[0.78, 0.14, 0.78]} /><meshStandardMaterial color="#77776d" roughness={1} /></mesh>
-      <mesh position={[0, 1.34, 0]}><boxGeometry args={[0.48, 0.42, 0.48]} /><meshStandardMaterial color="#d9b779" emissive="#d39a4e" emissiveIntensity={0.3} /></mesh>
-      <mesh position={[0, 1.62, 0]}><coneGeometry args={[0.54, 0.26, 4]} /><meshStandardMaterial color="#77776d" roughness={1} /></mesh>
-    </group>
-  );
-}
-
-// ---------- Vườn Thiền Cây Bồ Đề (trước bên trái, theo bản đồ) ----------
-function BodhiGarden() {
-  return (
-    <group position={[-70, 0, 80]} name="Vườn Thiền Cây Bồ Đề">
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0.06, 0]} receiveShadow>
-        <circleGeometry args={[15, 72]} />
-        <meshStandardMaterial color="#b9ae97" roughness={1} />
-      </mesh>
-      <mesh rotation-x={Math.PI / 2} position={[0, 0.14, 0]}>
-        <torusGeometry args={[14.55, 0.26, 10, 96]} />
-        <meshStandardMaterial color="#8e8879" roughness={0.92} />
-      </mesh>
-      {/* đường cái rối dẫn vào tâm vườn */}
-      {Array.from({ length: 8 }, (_, i) => (
-        <mesh key={i} position={[Math.sin(i * 0.5) * 2, 0.2, 13 - i * 2]} rotation-y={i * 0.5} castShadow receiveShadow>
-          <cylinderGeometry args={[0.72 + (i % 3) * 0.1, 0.82 + (i % 3) * 0.1, 0.26, 7]} />
-          <meshStandardMaterial color={i % 2 ? "#aaa18f" : "#c2b9a6"} roughness={0.96} />
-        </mesh>
-      ))}
-      {/* vòng đèn đá */}
-      {Array.from({ length: 6 }, (_, i) => {
-        const a = i * Math.PI / 3 + 0.4;
-        return <StoneLantern key={i} position={[Math.cos(a) * 12.2, 0, Math.sin(a) * 12.2]} />;
-      })}
-      {/* Cây Bồ Đề lớn ở tâm */}
-      <group position={[0, 0, -2]} name="Cây Bồ Đề">
-        <mesh position={[0, 2.6, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.5, 0.85, 5.2, 14]} />
-          <meshStandardMaterial color="#6f4b32" roughness={0.96} />
-        </mesh>
-        {Array.from({ length: 7 }, (_, i) => {
-          const a = i * Math.PI * 2 / 7;
-          return (
-            <group key={i} rotation-y={a}>
-              <mesh position={[0.36, 0.34, 0]} rotation-z={-0.42} castShadow>
-                <coneGeometry args={[0.22, 1.5, 8]} />
-                <meshStandardMaterial color="#76543a" roughness={0.96} />
+          <mesh rotation-x={-Math.PI / 2 + it.tiltX} position={[0, 0.008, 0]}>
+            <circleGeometry args={[it.leaf * 0.35, 12]} />
+            <meshStandardMaterial color="#6fa057" roughness={0.9} side={THREE.DoubleSide} />
+          </mesh>
+          {(it.flower || it.bud) && (
+            <group position={[it.leaf * 0.45, 0, it.leaf * 0.2]}>
+              <mesh position={[0, 0.14, 0]}>
+                <cylinderGeometry args={[0.022, 0.03, 0.3, 6]} />
+                <meshStandardMaterial color="#5f8f4e" roughness={0.9} />
               </mesh>
-            </group>
-          );
-        })}
-        {Array.from({ length: 14 }, (_, i) => {
-          const a = i * 2.399;
-          const ring = i % 3;
-          const x = Math.cos(a) * (2 + ring * 0.7);
-          const z = Math.sin(a) * (1.75 + ring * 0.5);
-          const y = 5 + (i % 4) * 0.66;
-          const size = 1.5 + (i % 3) * 0.24;
-          return (
-            <mesh key={i} position={[x, y, z]} scale={[size * 1.18, size * 0.78, size]} castShadow receiveShadow>
-              <sphereGeometry args={[1, 16, 12]} />
-              <meshStandardMaterial color={i % 3 === 0 ? "#4f7d45" : "#649054"} roughness={0.94} />
-            </mesh>
-          );
-        })}
-        <mesh position={[0, 0.1, 0]} rotation-x={-Math.PI / 2}>
-          <torusGeometry args={[2.2, 0.12, 8, 48]} />
-          <meshStandardMaterial color="#a99b7e" roughness={0.95} />
-        </mesh>
-      </group>
-      <Inscription text="VƯỜN THIỀN CÂY BỒ ĐỀ" width={7} height={1} position={[0, 1.5, 14.4]} stone />
-    </group>
-  );
-}
-
-// ---------- Nhà bên (Thờ Tổ / Giảng Pháp / Thiền đường / Nhà khách) ----------
-function SideHall({ building }: { building: TempleBuilding }) {
-  const { x, z, w: width, d: depth, h: height, label, kind } = building;
-  return (
-    <group position={[x, 0, z]} name={label}>
-      <mesh position={[0, 0.15, 0]} receiveShadow><boxGeometry args={[width + 2.6, 0.3, depth + 2.6]} /><Surface kind="stone" repeat={3} /></mesh>
-      {[-1, 1].map((side) => (
-        <group key={side}>
-          <mesh position={[side * width / 2, height / 2 + 0.3, 0]} castShadow receiveShadow><boxGeometry args={[0.65, height, depth]} /><meshStandardMaterial color="#743c2b" roughness={0.9} /></mesh>
-          {[-1, 1].map((zSide) => (
-            <group key={zSide} position={[side * (width / 2 + 0.34), height * 0.58 + 0.3, zSide * depth * 0.23]}>
-              <mesh castShadow><boxGeometry args={[0.08, 1.9, 2.25]} /><meshStandardMaterial color="#39251e" roughness={0.58} /></mesh>
-              {[-1, 1].map((edge) => <mesh key={edge} position={[side * 0.06, edge * 0.99, 0]}><boxGeometry args={[0.12, 0.12, 2.48]} /><meshStandardMaterial color={C.gold} metalness={0.28} roughness={0.65} /></mesh>)}
-              {[-1, 1].map((edge) => <mesh key={edge} position={[side * 0.06, 0, edge * 1.15]}><boxGeometry args={[0.12, 2.1, 0.12]} /><meshStandardMaterial color={C.gold} metalness={0.28} roughness={0.65} /></mesh>)}
-            </group>
-          ))}
-        </group>
-      ))}
-      <mesh position={[0, height / 2 + 0.3, -depth / 2]} castShadow receiveShadow><boxGeometry args={[width, height, 0.65]} /><meshStandardMaterial color="#743c2b" roughness={0.9} /></mesh>
-      {[-1, 1].map((side) => <mesh key={side} position={[side * width / 3, height / 2 + 0.3, depth / 2]} castShadow receiveShadow><boxGeometry args={[width / 3 + 0.3, height, 0.65]} /><meshStandardMaterial color="#743c2b" roughness={0.9} /></mesh>)}
-      <mesh position={[0, height - 0.15, depth / 2]} castShadow><boxGeometry args={[width / 3 + 1.2, 0.85, 0.75]} /><Surface kind="wood" /></mesh>
-      {[-1, 1].map((side) => (
-        <group key={side} position={[side * (width / 6 + 0.15), 0, depth / 2 + 0.35]}>
-          <mesh position={[0, height * 0.48, 0]} castShadow><cylinderGeometry args={[0.25, 0.32, height * 0.9, 10]} /><meshStandardMaterial color={C.woodDark} roughness={0.9} /></mesh>
-          <mesh position={[0, height * 0.94, 0]}><boxGeometry args={[0.7, 0.18, 0.7]} /><meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.4} /></mesh>
-        </group>
-      ))}
-      <Roof w={width + 3.2} d={depth + 3.2} h={3.9} y={height + 0.35} />
-      <Roof w={width * 0.7} d={depth * 0.42} h={1.55} y={height + 2.25} />
-      {kind === "ancestral" && (
-        <>
-          <mesh position={[0, 0.55, -4.3]} castShadow><boxGeometry args={[10, 0.7, 4.5]} /><Surface kind="wood" /></mesh>
-          <mesh position={[0, 1.08, -4.3]} castShadow><boxGeometry args={[8.7, 0.36, 3.4]} /><meshStandardMaterial color={C.lacquer} roughness={0.68} /></mesh>
-          <Buddha position={[0, 1.3, -4.4]} scale={0.42} />
-          {[-3.2, 3.2].map((side) => <mesh key={side} position={[side, 1.46, -4.25]}><cylinderGeometry args={[0.28, 0.34, 0.6, 12]} /><meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.44} /></mesh>)}
-          <Inscription text="TỔ ĐƯỜNG" width={6.5} height={0.72} position={[0, height + 0.25, -depth / 2 + 0.36]} />
-        </>
-      )}
-      {kind === "lecture" && (
-        <>
-          <mesh position={[0, 0.72, -5.1]} castShadow><boxGeometry args={[5.4, 1.08, 2.2]} /><Surface kind="wood" /></mesh>
-          <mesh position={[0, 1.3, -5.1]}><boxGeometry args={[5.7, 0.12, 2.5]} /><meshStandardMaterial color={C.gold} metalness={0.38} roughness={0.5} /></mesh>
-          {[-1, 1].flatMap((side) => [0, 1, 2].map((row) => (
-            <group key={`${side}-${row}`} position={[side * 7, 0.38, -1 + row * 3.1]}>
-              <mesh position={[0, 0.18, 0]} castShadow><boxGeometry args={[5.2, 0.38, 1.3]} /><Surface kind="wood" /></mesh>
-              {[-1.9, 1.9].map((seat) => <mesh key={seat} position={[seat, -0.02, 0]}><boxGeometry args={[0.22, 0.42, 0.9]} /><Surface kind="wood" /></mesh>)}
-            </group>
-          )))}
-        </>
-      )}
-      {kind === "meditation" && Array.from({ length: 12 }, (_, i) => (
-        <group key={i} position={[-7.5 + (i % 4) * 5, 0.4, -3 + Math.floor(i / 4) * 3]}>
-          <mesh><cylinderGeometry args={[0.68, 0.72, 0.18, 24]} /><meshStandardMaterial color={C.mat} roughness={0.94} /></mesh>
-          <mesh position={[0, 0.105, 0]}><cylinderGeometry args={[0.56, 0.56, 0.04, 24]} /><meshStandardMaterial color={C.matBorder} roughness={0.86} /></mesh>
-        </group>
-      ))}
-      {kind === "guest" && [-1, 1].map((side) => (
-        <group key={side} position={[side * 7, 0, -3]}>
-          <mesh position={[0, 0.58, 0]} castShadow><boxGeometry args={[4.2, 0.52, 6.2]} /><Surface kind="wood" /></mesh>
-          <mesh position={[0, 0.9, 0.25]} castShadow><boxGeometry args={[3.95, 0.18, 5.85]} /><meshStandardMaterial color="#e8dfce" roughness={0.94} /></mesh>
-          <mesh position={[0, 1.05, -2.1]}><boxGeometry args={[2.1, 0.28, 1.1]} /><meshStandardMaterial color="#cebca0" roughness={0.92} /></mesh>
-        </group>
-      ))}
-      <Inscription text={label} width={width * 0.5} height={1.05} position={[0, height - 0.45, depth / 2 + 0.22]} />
-    </group>
-  );
-}
-
-// ---------- Tường bao mái ngói cam (theo bản đồ) ----------
-function PerimeterWall() {
-  const runs = [
-    { x: 0, z: -185, length: 240, rotation: 0 },
-    { x: -120, z: -36.5, length: 297, rotation: Math.PI / 2 },
-    { x: 120, z: -36.5, length: 297, rotation: Math.PI / 2 },
-    { x: -65, z: 112, length: 110, rotation: 0 },
-    { x: 65, z: 112, length: 110, rotation: 0 },
-  ];
-  return (
-    <group name="Tường bao khuôn viên">
-      {runs.map((run, index) => (
-        <group key={index} position={[run.x, 0, run.z]} rotation-y={run.rotation}>
-          <mesh position={[0, 1.25, 0]} castShadow receiveShadow>
-            <boxGeometry args={[run.length, 2.5, 1.15]} />
-            <Surface kind="stone" repeat={Math.max(2, Math.round(run.length / 8))} />
-          </mesh>
-          {/* mái ngói cam đặc trưng trên đỉnh tường */}
-          <mesh position={[0, 2.62, 0]} castShadow>
-            <boxGeometry args={[run.length + 0.3, 0.22, 1.7]} />
-            <meshStandardMaterial color={C.roof} roughness={0.85} />
-          </mesh>
-          <mesh position={[0, 2.78, 0]}>
-            <boxGeometry args={[run.length + 0.34, 0.08, 0.5]} />
-            <meshStandardMaterial color={C.gold} metalness={0.4} roughness={0.5} />
-          </mesh>
-          {Array.from({ length: Math.floor(run.length / 12) + 1 }, (_, i) => {
-            const offset = -run.length / 2 + i * 12;
-            return (
-              <group key={i} position={[offset, 0, 0]}>
-                <mesh position={[0, 1.45, 0]} castShadow receiveShadow>
-                  <boxGeometry args={[0.9, 2.9, 1.45]} />
-                  <Surface kind="stone" />
-                </mesh>
-                <mesh position={[0, 3.05, 0]} castShadow>
-                  <boxGeometry args={[1.3, 0.3, 1.8]} />
-                  <meshStandardMaterial color={C.roof} roughness={0.85} />
-                </mesh>
+              <group position={[0, 0.22, 0]}>
+                <LotusFlower scale={it.fscale} bud={it.bud} />
               </group>
-            );
-          })}
-        </group>
-      ))}
-      {[-1, 1].map((side) => (
-        <group key={side} position={[side * 12.5, 0, 112]}>
-          <mesh position={[0, 0.55, 0]} castShadow><boxGeometry args={[1.5, 1.1, 2]} /><Surface kind="stone" /></mesh>
-          <mesh position={[0, 1.18, 0]}><boxGeometry args={[1.9, 0.18, 2.3]} /><meshStandardMaterial color={C.gold} /></mesh>
-          <Inscription text={side < 0 ? "TỪ BI" : "AN LẠC"} width={1.1} height={0.65} position={[0, 0.62, 1.02]} stone small />
+            </group>
+          )}
         </group>
       ))}
     </group>
   );
 }
 
-// ---------- Cây cối, hoa trồng dọc lối đi (theo bản đồ) ----------
-function CampusPlantings() {
-  const axisTrees: [number, number, number, boolean][] = [
-    [-8.5, 88, 1.1, false], [8.5, 88, 1.1, false],
-    [-8.5, 76, 1.05, true], [8.5, 76, 1.05, true],
-    [-8.5, 28, 1.0, false], [8.5, 28, 1.0, false],
-    [-8.5, 16, 1.05, true], [8.5, 16, 1.05, true],
-  ];
-  const sakuras: [number, number, number][] = [
-    [-46, 74, 1.2], [-44, 34, 1.05], [46, 76, 1.25], [44, 32, 1.1],
-    [-80, 40, 1.3], [82, 44, 1.35], [-58, -20, 1.2], [58, -20, 1.2],
-  ];
-  const greens: [number, number, number][] = [
-    [-86, 84, 1.4], [-88, 10, 1.3], [88, 86, 1.45], [88, 8, 1.3],
-    [-70, -60, 1.35], [72, -62, 1.3], [-40, -92, 1.4], [42, -94, 1.35],
-  ];
+// ============================================================================
+// 3 · CÁNH HOA ANH ĐÀO RƠI — particles instanced quanh các gốc cây
+// ============================================================================
+export function PetalFall({ centers }: { centers?: [number, number][] }) {
+  const spots = useMemo<[number, number][]>(() => centers ?? [
+    [-46, 74], [-44, 34], [46, 76], [44, 32], [-80, 40], [82, 44], [-58, -20], [58, -20],
+  ], [centers]);
+  const COUNT = 240;
+  const ref = useRef<THREE.InstancedMesh>(null!);
+  const petals = useMemo(() => {
+    const rand = mulberry32(4451);
+    return Array.from({ length: COUNT }, () => {
+      const [cx, cz] = spots[Math.floor(rand() * spots.length)];
+      return {
+        x: cx + (rand() - 0.5) * 7, z: cz + (rand() - 0.5) * 7,
+        y: rand() * 5, speed: 0.35 + rand() * 0.5,
+        sway: 0.4 + rand() * 0.9, phase: rand() * Math.PI * 2,
+        rot: rand() * Math.PI * 2, rotSpeed: (rand() - 0.5) * 2.4,
+        s: 0.6 + rand() * 0.7,
+      };
+    });
+  }, [spots]);
+
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    petals.forEach((p, i) => {
+      _color.setHSL(0.93 + (i % 7) * 0.004, 0.55, 0.78 + (i % 5) * 0.03);
+      mesh.setColorAt(i, _color);
+    });
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  }, [petals]);
+
+  useFrame(({ clock }, delta) => {
+    const mesh = ref.current;
+    const t = clock.elapsedTime;
+    const dt = Math.min(delta, 0.05);
+    petals.forEach((p, i) => {
+      p.y -= p.speed * dt;
+      if (p.y < 0.05) p.y = 4.2 + (i % 5) * 0.4;
+      _dummy.position.set(p.x + Math.sin(t * p.sway + p.phase) * 0.5, p.y, p.z + Math.cos(t * p.sway * 0.8 + p.phase) * 0.4);
+      _dummy.rotation.set(t * p.rotSpeed + p.phase, p.rot, Math.sin(t + p.phase) * 0.6);
+      _dummy.scale.setScalar(p.s);
+      _dummy.updateMatrix();
+      mesh.setMatrixAt(i, _dummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  });
+
   return (
-    <group name="Cây cối và hoa khuôn viên">
-      {axisTrees.map(([x, z, s, b], i) => <MiniTree key={i} position={[x, 0, z]} scale={s} blossom={b} />)}
-      {sakuras.map(([x, z, s], i) => <SakuraTree key={i} position={[x, 0, z]} scale={s} />)}
-      {greens.map(([x, z, s], i) => <MiniTree key={i} position={[x, 0, z]} scale={s} />)}
-      {/* viền hoa hồng dọc trục chính */}
-      {Array.from({ length: 22 }, (_, i) => {
-        const side = i % 2 ? 1 : -1;
-        const z = 100 - Math.floor(i / 2) * 9;
-        return (
-          <mesh key={i} position={[side * 5.6, 0.42, z]} castShadow>
-            <sphereGeometry args={[0.55 + (i % 3) * 0.09, 10, 8]} />
-            <meshStandardMaterial color={i % 4 === 0 ? "#d97f95" : "#7aa052"} roughness={0.92} />
-          </mesh>
-        );
-      })}
-      {/* chậu hoa hai bên cổng và bậc thềm */}
-      {[[-7, 106], [7, 106], [-10, -42], [10, -42], [-30, -44], [30, -44]].map(([x, z], i) => (
-        <group key={i} position={[x, 0, z]}>
-          <mesh position={[0, 0.35, 0]} castShadow><cylinderGeometry args={[0.7, 0.5, 0.7, 12]} /><meshStandardMaterial color="#a8552f" roughness={0.9} /></mesh>
-          <mesh position={[0, 0.95, 0]} castShadow><sphereGeometry args={[0.62, 12, 9]} /><meshStandardMaterial color={i % 2 ? "#e58aa0" : "#d9758c"} roughness={0.9} /></mesh>
-        </group>
-      ))}
-    </group>
+    <instancedMesh ref={ref} args={[undefined as any, undefined as any, COUNT]} frustumCulled={false}>
+      <sphereGeometry args={[0.05, 6, 4]} />
+      <meshStandardMaterial roughness={0.8} />
+    </instancedMesh>
   );
 }
 
-// ---------- Sơ đồ tổng thể ----------
-export function OverviewCampus() {
+// ============================================================================
+// 4 · ĐOM ĐÓM BAN ĐÊM — sáng dần khi trờI tối theo giờ Việt Nam
+// ============================================================================
+export function Fireflies({ centers }: { centers?: [number, number][] }) {
+  const spots = useMemo<[number, number][]>(() => centers ?? [[-27, 52], [28, 52], [-70, 80]], [centers]);
+  const COUNT = 90;
+  const matRef = useRef<THREE.PointsMaterial>(null!);
+  const { positions, seeds } = useMemo(() => {
+    const rand = mulberry32(7717);
+    const arr = new Float32Array(COUNT * 3);
+    const sd = new Float32Array(COUNT * 2);
+    for (let i = 0; i < COUNT; i++) {
+      const [cx, cz] = spots[Math.floor(rand() * spots.length)];
+      arr[i * 3] = cx + (rand() - 0.5) * 26;
+      arr[i * 3 + 1] = 0.5 + rand() * 2.4;
+      arr[i * 3 + 2] = cz + (rand() - 0.5) * 26;
+      sd[i * 2] = rand() * Math.PI * 2;
+      sd[i * 2 + 1] = 0.3 + rand() * 0.8;
+    }
+    return { positions: arr, seeds: sd };
+  }, [spots]);
+  const geoRef = useRef<THREE.BufferGeometry>(null!);
+  const basePositions = useMemo(() => positions.slice(), [positions]);
+
+  useFrame(({ clock }) => {
+    const { night } = vietnamDaylight();
+    if (matRef.current) matRef.current.opacity = THREE.MathUtils.clamp(night - 0.25, 0, 1) * 0.9;
+    const geo = geoRef.current;
+    if (!geo) return;
+    const t = clock.elapsedTime;
+    const pos = geo.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < COUNT; i++) {
+      const ph = seeds[i * 2], sp = seeds[i * 2 + 1];
+      pos.setX(i, basePositions[i * 3] + Math.sin(t * sp + ph) * 0.7);
+      pos.setY(i, basePositions[i * 3 + 1] + Math.cos(t * sp * 1.3 + ph) * 0.22);
+      pos.setZ(i, basePositions[i * 3 + 2] + Math.cos(t * sp * 0.7 + ph) * 0.7);
+    }
+    pos.needsUpdate = true;
+  });
+
   return (
-    <group name="Chùa Tâm An - bản đồ tổng thể">
-      <PerimeterWall />
-
-      {/* 2 · Sân Chùa: nền gạch lát rộng sau Tam Quan */}
-      <BrickPaving w={148} d={26} x={0} z={96} />
-      {/* Trục chính Tam Quan -> Chính Điện + đường ngang trước sân */}
-      <BrickPaving w={7} d={150} x={0} z={36} />
-      <BrickPaving w={120} d={6} x={0} z={8} />
-      {/* 3 · Quảng trường nền gạch trước Chính Điện */}
-      <BrickPaving w={78} d={48} x={0} z={-22} />
-
-      {/* 8 · Hồ Sen hai bên trục — lá sen và hoa sen phủ kín mặt nước */}
-      <LotusPond x={-27} z={52} w={30} d={40} count={110} />
-      <LotusPond x={28} z={52} w={32} d={40} count={120} />
-      <LotusBridge x={28} z={52} />
-      <Pavilion position={[52, 0, 52]} />
-
-      {/* 9 · Vườn Thiền Cây Bồ Đề */}
-      <BodhiGarden />
-
-      {/* Công trình chính — đặt trên nền gạch riêng */}
-      {BUILDINGS.map((b) => <BrickPaving key={b.id} w={b.w + 10} d={b.d + 10} x={b.x} z={b.z} />)}
-      {BUILDINGS.map((b) => <SideHall key={b.id} building={b} />)}
-      <MainHall />
-      <Gate z={112} />
-
-      {/* 6 · Bảo Tháp (trái sau) */}
-      <Tower position={[-58, 0, -118]} tiers={5} label="Bảo tháp" />
-
-      {/* 7 · Tượng Phật Lớn + Núi Thiên + thác nước (phía sau cùng) */}
-      <group position={[0, 0, -155]} name="Tượng Phật Lớn và Núi Thiên">
-        <mesh position={[0, 0.25, 0]} receiveShadow><cylinderGeometry args={[42, 42, 1.6, 64]} /><meshStandardMaterial color="#cfc3ac" roughness={0.96} /></mesh>
-        <mesh position={[0, 1.15, 0]} receiveShadow><cylinderGeometry args={[34, 34, 0.32, 64]} /><meshStandardMaterial color="#d7b56e" metalness={0.45} roughness={0.42} /></mesh>
-        <mesh position={[0, 39, 0]} rotation-x={Math.PI / 2} castShadow><torusGeometry args={[15, 0.75, 16, 64]} /><meshStandardMaterial color="#e4bd62" emissive="#b8812f" emissiveIntensity={0.22} metalness={0.5} roughness={0.38} /></mesh>
-        <Buddha position={[0, 1.45, 0]} scale={10} />
-        <Inscription text="TƯỢNG PHẬT LỚN VÀ NÚI THIÊN" width={22} height={1.9} position={[0, 2.1, 34.2]} stone />
-      </group>
-      <Waterfall position={[0, 0, -181]} />
-
-      {/* Cây cối, cây hoa và hiệu ứng thiên nhiên */}
-      <CampusPlantings />
-      <PetalFall />
-      <Fireflies />
-    </group>
+    <points frustumCulled={false}>
+      <bufferGeometry ref={geoRef}>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial ref={matRef} color="#ffe9a3" size={0.32} sizeAttenuation transparent
+        opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
+    </points>
   );
 }
+
+// ============================================================================
+// 5 · HIỆU ỨNG GAME — Bloom + Vignette (đặt trong <Canvas>)
+// ============================================================================
+export function Effects() {
+  return (
+    <EffectComposer multisampling={0}>
+      <Bloom mipmapBlur intensity={0.46} luminanceThreshold={0.72} luminanceSmoothing={0.18} />
+      <Vignette eskil={false} offset={0.22} darkness={0.28} />
+    </EffectComposer>
+  );
+}
+
