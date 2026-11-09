@@ -45,10 +45,10 @@ const FOREST_TYPES = [LEAFY, PINE, SAKURA, WILLOW, CYPRESS, GOLDEN];
 
 export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; seed?: number }) {
   const count = points.length;
-  const trunkRef = useRef<THREE.InstancedMesh>(null!);
-  const blobRef = useRef<THREE.InstancedMesh>(null!);
-  const pineRef = useRef<THREE.InstancedMesh>(null!);
-  const forestRef = useRef<THREE.Group>(null!);
+  const trunkRef = useRef<THREE.InstancedMesh>(null);
+  const blobRef = useRef<THREE.InstancedMesh>(null);
+  const pineRef = useRef<THREE.InstancedMesh>(null);
+  const forestRef = useRef<THREE.Group>(null);
 
   const layout = useMemo(() => {
     const rand = mulberry32(seed);
@@ -89,7 +89,9 @@ export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; see
         const heights = t.type === CYPRESS ? [2.8, 4.25, 5.55] : [2.5, 3.85, 5.0];
         for (let tier = 0; tier < tiers.length; tier++) {
           const k = tiers[tier];
-          _dummy.position.set(t.x, (heights[tier] + (t.jitter - 0.5) * 0.45) * t.tall * t.s, t.z);
+          const height = heights[tier];
+          if (k === undefined || height === undefined) continue;
+          _dummy.position.set(t.x, (height + (t.jitter - 0.5) * 0.45) * t.tall * t.s, t.z);
           _dummy.rotation.set(0, t.rot + tier, 0);
           _dummy.scale.set(t.s * k, t.s * (0.92 - tier * 0.13) * t.tall, t.s * k);
           _dummy.updateMatrix();
@@ -166,8 +168,8 @@ export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; see
   );
 }
 
-const PETAL_INNER = ["#f9d3de", "#f4bccd"];
-const PETAL_OUTER = ["#f2a9bf", "#ec8fae"];
+const PETAL_INNER = ["#f9d3de", "#f4bccd"] as const;
+const PETAL_OUTER = ["#f2a9bf", "#ec8fae"] as const;
 
 function LotusFlower({ scale = 1, bud = false }: { scale?: number; bud?: boolean }) {
   if (bud) {
@@ -205,7 +207,7 @@ function LotusFlower({ scale = 1, bud = false }: { scale?: number; bud?: boolean
           <mesh key={`o${p}`} position={[Math.cos(a) * 0.2, 0.1, Math.sin(a) * 0.2]}
             rotation={[Math.sin(a) * 1.05, -a, Math.cos(a) * 1.05]} scale={[0.5, 0.16, 1.35]} castShadow>
             <sphereGeometry args={[0.14, 10, 8]} />
-            <meshStandardMaterial color={PETAL_OUTER[p % 2]} roughness={0.5} emissive="#c94f74" emissiveIntensity={0.12} />
+            <meshStandardMaterial color={p % 2 === 0 ? PETAL_OUTER[0] : PETAL_OUTER[1]} roughness={0.5} emissive="#c94f74" emissiveIntensity={0.12} />
           </mesh>
         );
       })}
@@ -215,7 +217,7 @@ function LotusFlower({ scale = 1, bud = false }: { scale?: number; bud?: boolean
           <mesh key={`i${p}`} position={[Math.cos(a) * 0.11, 0.16, Math.sin(a) * 0.11]}
             rotation={[Math.sin(a) * 0.5, -a, Math.cos(a) * 0.5]} scale={[0.42, 0.16, 1.1]}>
             <sphereGeometry args={[0.13, 10, 8]} />
-            <meshStandardMaterial color={PETAL_INNER[p % 2]} roughness={0.45} emissive="#d96a8d" emissiveIntensity={0.14} />
+            <meshStandardMaterial color={p % 2 === 0 ? PETAL_INNER[0] : PETAL_INNER[1]} roughness={0.45} emissive="#d96a8d" emissiveIntensity={0.14} />
           </mesh>
         );
       })}
@@ -249,10 +251,11 @@ export function LotusField({ w, d, count = 120 }: { w: number; d: number; count?
     const t = clock.elapsedTime;
     for (let i = 0; i < items.length; i++) {
       const g = groupRefs.current[i];
-      if (!g) continue;
-      g.position.y = 0.16 + Math.sin(t * 0.7 + items[i].phase) * 0.028;
-      g.rotation.z = items[i].tiltZ + Math.sin(t * 0.5 + items[i].phase) * 0.02;
-      g.rotation.x = Math.sin(t * 0.65 + items[i].phase) * 0.08;
+      const item = items[i];
+      if (!g || !item) continue;
+      g.position.y = 0.16 + Math.sin(t * 0.7 + item.phase) * 0.028;
+      g.rotation.z = item.tiltZ + Math.sin(t * 0.5 + item.phase) * 0.02;
+      g.rotation.x = Math.sin(t * 0.65 + item.phase) * 0.08;
     }
   });
 
@@ -291,11 +294,11 @@ export function PetalFall({ centers }: { centers?: [number, number][] }) {
     [-46, 74], [-44, 34], [46, 76], [44, 32], [-80, 40], [82, 44], [-58, -20], [58, -20],
   ], [centers]);
   const COUNT = 240;
-  const ref = useRef<THREE.InstancedMesh>(null!);
+  const ref = useRef<THREE.InstancedMesh>(null);
   const petals = useMemo(() => {
     const rand = mulberry32(4451);
     return Array.from({ length: COUNT }, () => {
-      const [cx, cz] = spots[Math.floor(rand() * spots.length)];
+      const [cx, cz] = spots[Math.floor(rand() * spots.length)] ?? [0, 0];
       return {
         x: cx + (rand() - 0.5) * 7, z: cz + (rand() - 0.5) * 7,
         y: rand() * 5, speed: 0.35 + rand() * 0.5,
@@ -308,6 +311,7 @@ export function PetalFall({ centers }: { centers?: [number, number][] }) {
 
   useLayoutEffect(() => {
     const mesh = ref.current;
+    if (!mesh) return;
     petals.forEach((p, i) => {
       _color.setHSL(0.93 + (i % 7) * 0.004, 0.55, 0.78 + (i % 5) * 0.03);
       mesh.setColorAt(i, _color);
@@ -317,6 +321,7 @@ export function PetalFall({ centers }: { centers?: [number, number][] }) {
 
   useFrame(({ clock }, delta) => {
     const mesh = ref.current;
+    if (!mesh) return;
     const t = clock.elapsedTime;
     const dt = Math.min(delta, 0.05);
     petals.forEach((p, i) => {
@@ -342,13 +347,13 @@ export function PetalFall({ centers }: { centers?: [number, number][] }) {
 export function Fireflies({ centers }: { centers?: [number, number][] }) {
   const spots = useMemo<[number, number][]>(() => centers ?? [[-27, 52], [28, 52], [-70, 80]], [centers]);
   const COUNT = 90;
-  const matRef = useRef<THREE.PointsMaterial>(null!);
+  const matRef = useRef<THREE.PointsMaterial>(null);
   const { positions, seeds } = useMemo(() => {
     const rand = mulberry32(7717);
     const arr = new Float32Array(COUNT * 3);
     const sd = new Float32Array(COUNT * 2);
     for (let i = 0; i < COUNT; i++) {
-      const [cx, cz] = spots[Math.floor(rand() * spots.length)];
+      const [cx, cz] = spots[Math.floor(rand() * spots.length)] ?? [0, 0];
       arr[i * 3] = cx + (rand() - 0.5) * 26;
       arr[i * 3 + 1] = 0.5 + rand() * 2.4;
       arr[i * 3 + 2] = cz + (rand() - 0.5) * 26;
@@ -357,7 +362,7 @@ export function Fireflies({ centers }: { centers?: [number, number][] }) {
     }
     return { positions: arr, seeds: sd };
   }, [spots]);
-  const geoRef = useRef<THREE.BufferGeometry>(null!);
+  const geoRef = useRef<THREE.BufferGeometry>(null);
   const basePositions = useMemo(() => positions.slice(), [positions]);
 
   useFrame(({ clock }) => {
@@ -366,12 +371,15 @@ export function Fireflies({ centers }: { centers?: [number, number][] }) {
     const geo = geoRef.current;
     if (!geo) return;
     const t = clock.elapsedTime;
-    const pos = geo.attributes.position as THREE.BufferAttribute;
+    const pos = geo.attributes["position"];
+    if (!pos) return;
     for (let i = 0; i < COUNT; i++) {
       const ph = seeds[i * 2], sp = seeds[i * 2 + 1];
-      pos.setX(i, basePositions[i * 3] + Math.sin(t * sp + ph) * 0.7);
-      pos.setY(i, basePositions[i * 3 + 1] + Math.cos(t * sp * 1.3 + ph) * 0.22);
-      pos.setZ(i, basePositions[i * 3 + 2] + Math.cos(t * sp * 0.7 + ph) * 0.7);
+      const x = basePositions[i * 3], y = basePositions[i * 3 + 1], z = basePositions[i * 3 + 2];
+      if (ph === undefined || sp === undefined || x === undefined || y === undefined || z === undefined) continue;
+      pos.setX(i, x + Math.sin(t * sp + ph) * 0.7);
+      pos.setY(i, y + Math.cos(t * sp * 1.3 + ph) * 0.22);
+      pos.setZ(i, z + Math.cos(t * sp * 0.7 + ph) * 0.7);
     }
     pos.needsUpdate = true;
   });

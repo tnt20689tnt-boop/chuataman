@@ -13,6 +13,6 @@
 - 3D world lives in `src/game/`: rules/data in plain TS (`sim.ts`), per-frame state in mutable objects (`store.ts`), React UI state via a tiny `useUI` store — keeps 60fps without React re-renders.
 - The 1,000 demo NPCs are drawn with three InstancedMeshes and only the nearest ~14 get name tags; never render NPCs as individual meshes.
 - Demo NPCs are never counted as online users; the online count must come only from real sessions.
-- `/` route is `ssr: false` and lazy-loads the Canvas.
+- `/` server-renders factual accessible temple text and route metadata; lazy-load the complete game/HUD via `TempleExperience` behind `ClientOnly` so browser-only modules never execute during SSR.
 - Main-hall decorative furnishings live in a separate scene module; keep new furniture within existing protected altar space so entrance and movement remain unchanged.
 - Main-hall chant controls use the existing shared audio manager, never a second speech loop, to avoid overlapping voices.

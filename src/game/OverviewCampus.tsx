@@ -74,6 +74,7 @@ function BrickPaving({ w, d, x = 0, z = 0 }: { w: number; d: number; x?: number;
 function MiniTree({ position, scale = 1, blossom = false }: { position: [number, number, number]; scale?: number; blossom?: boolean }) {
   const form = Math.floor(Math.abs(Math.sin(position[0] * 12.9898 + position[2] * 78.233)) * 3);
   const profiles: [number, number, number][] = [[0.92, 1.12, 0.92], [1.18, 0.86, 1.08], [0.82, 1.04, 1.2]];
+  const [profileX, profileY, profileZ] = profiles[form] ?? [1, 1, 1];
   const greenShades = ["#3d7042", "#477b48", "#35684c"];
   const canopies: [number, number, number, number, number, number][] = [
     [0, 2.95, 0, 1.22, 0.82, 1.08], [-0.9, 2.65, 0.15, 0.74, 0.66, 0.78],
@@ -81,7 +82,7 @@ function MiniTree({ position, scale = 1, blossom = false }: { position: [number,
   ];
   const branchAngles = Array.from({ length: 5 }, (_, i) => i * (Math.PI * 2 / 5));
   return (
-    <group position={position} scale={[scale * profiles[form][0], scale * profiles[form][1], scale * profiles[form][2]]} rotation-y={form * 0.9} name="Cây cảnh khuôn viên">
+    <group position={position} scale={[scale * profileX, scale * profileY, scale * profileZ]} rotation-y={form * 0.9} name="Cây cảnh khuôn viên">
       <mesh position={[0, 1.25, 0]} castShadow><cylinderGeometry args={[0.28, 0.46, 2.5, 9]} /><meshStandardMaterial color="#68412d" roughness={1} /></mesh>
       {branchAngles.map((a, i) => (
         <mesh key={`branch-${i}`} position={[Math.cos(a) * 0.32, 1.7 + i * 0.2, Math.sin(a) * 0.32]} rotation={[0.35, a, 0.18]} castShadow>
@@ -92,7 +93,7 @@ function MiniTree({ position, scale = 1, blossom = false }: { position: [number,
       {canopies.map(([x, y, z, sx, sy, sz], i) => (
         <mesh key={i} position={[x, y, z]} scale={[sx, sy, sz]} castShadow>
           <sphereGeometry args={[1.55, 14, 10]} />
-          <meshStandardMaterial color={blossom && i % 2 === 0 ? "#8aa864" : greenShades[(form + i) % greenShades.length]} roughness={0.96} />
+          <meshStandardMaterial color={blossom && i % 2 === 0 ? "#8aa864" : greenShades[(form + i) % greenShades.length] ?? C.leaf} roughness={0.96} />
         </mesh>
       ))}
       {blossom && Array.from({ length: 10 }, (_, i) => {
@@ -115,6 +116,7 @@ function SakuraTree({ position, scale = 1 }: { position: [number, number, number
   const crownY = 0.88 + ((variation * 3) % 1) * 0.32;
   const crownZ = 1.18 - variation * 0.34;
   const branchAngles = Array.from({ length: 5 }, (_, i) => i * (Math.PI * 2 / 5) + 0.7);
+  const crowns: [number, number, number, number, number, number][] = [[0, 3.7 + variation * 0.42, 0, 1.2 + variation * 0.24, 0.82, 1.1], [-0.95, 3.35, 0.25, 0.8, 0.62, 0.8], [1, 3.4, -0.25, 0.85, 0.66, 0.85], [0.15, 3.35, 0.95, 0.75, 0.58, 0.75]];
   return (
     <group position={position} scale={[scale * crownX, scale * crownY, scale * crownZ]} rotation-y={variation * Math.PI * 2} name="Cây hoa anh đào">
       <mesh position={[0, 1.5, 0]} castShadow><cylinderGeometry args={[0.26, 0.44, 3, 9]} /><meshStandardMaterial color="#5d3d2c" roughness={1} /></mesh>
@@ -124,7 +126,7 @@ function SakuraTree({ position, scale = 1 }: { position: [number, number, number
           <meshStandardMaterial color="#5d3d2c" roughness={1} />
         </mesh>
       ))}
-      {[[0, 3.7 + variation * 0.42, 0, 1.2 + variation * 0.24, 0.82, 1.1], [-0.95, 3.35, 0.25, 0.8, 0.62, 0.8], [1, 3.4, -0.25, 0.85, 0.66, 0.85], [0.15, 3.35, 0.95, 0.75, 0.58, 0.75]].map(([x, y, z, sx, sy, sz], i) => (
+      {crowns.map(([x, y, z, sx, sy, sz], i) => (
         <mesh key={i} position={[x, y, z]} scale={[sx, sy, sz]} castShadow>
           <sphereGeometry args={[1.5, 14, 10]} />
           <meshStandardMaterial color={i % 2 ? "#e8a7b8" : "#f2c4d0"} roughness={0.9} />
@@ -399,6 +401,7 @@ function CampusPlantings() {
     [-86, 84, 1.4], [-88, 10, 1.3], [88, 86, 1.45], [88, 8, 1.3],
     [-70, -60, 1.35], [72, -62, 1.3], [-40, -92, 1.4], [42, -94, 1.35],
   ];
+  const pots: [number, number][] = [[-7, 106], [7, 106], [-10, -42], [10, -42], [-30, -44], [30, -44]];
   return (
     <group name="Cây cối và hoa khuôn viên">
       {axisTrees.map(([x, z, s, b], i) => <MiniTree key={i} position={[x, 0, z]} scale={s} blossom={b} />)}
@@ -414,7 +417,7 @@ function CampusPlantings() {
           </mesh>
         );
       })}
-      {[[-7, 106], [7, 106], [-10, -42], [10, -42], [-30, -44], [30, -44]].map(([x, z], i) => (
+      {pots.map(([x, z], i) => (
         <group key={i} position={[x, 0, z]}>
           <mesh position={[0, 0.35, 0]} castShadow><cylinderGeometry args={[0.7, 0.5, 0.7, 12]} /><meshStandardMaterial color="#a8552f" roughness={0.9} /></mesh>
           <mesh position={[0, 0.95, 0]} castShadow><sphereGeometry args={[0.62, 12, 9]} /><meshStandardMaterial color={i % 2 ? "#e58aa0" : "#d9758c"} roughness={0.9} /></mesh>

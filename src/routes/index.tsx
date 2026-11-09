@@ -1,24 +1,39 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
-import { Hud } from "@/game/Hud";
 
-const World = lazy(() => import("@/game/World"));
+const TempleExperience = lazy(() => import("@/game/TempleExperience"));
+const title = "Chùa Tâm An – Không gian Phật giáo 3D";
+const description = "Chùa Tâm An là không gian chùa ảo 3D để tham quan chính điện, hồ sen, vườn thiền, lễ Phật, ngồi thiền và nghe kinh trực tuyến.";
+const url = "https://chuataman.lovable.app/";
 
 export const Route = createFileRoute("/")({
-  ssr: false,
+  ssr: true,
   head: () => ({
     meta: [
-      { title: "Chùa Tâm An – Thế giới tâm linh 3D" },
-      { name: "description", content: "Bước vào ngôi chùa ảo 3D: lễ Phật, ngồi thiền, nghe kinh cùng hàng ngàn Phật tử. An yên trong tâm – Hạnh phúc trong đời." },
-      { property: "og:title", content: "Chùa Tâm An – Thế giới tâm linh 3D" },
-      { property: "og:description", content: "Ngôi chùa ảo 3D để lễ Phật, thiền định và nghe pháp trực tuyến." },
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://chuataman.lovable.app/" },
+      { property: "og:url", content: url },
+      { property: "og:locale", content: "vi_VN" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
     ],
     links: [
-      { rel: "canonical", href: "https://chuataman.lovable.app/" },
+      { rel: "canonical", href: url },
     ],
+    scripts: [{
+      type: "application/ld+json",
+      children: JSON.stringify({
+        "@context": "https://schema.org",
+        "@graph": [
+          { "@type": "WebSite", "@id": `${url}#website`, url, name: "Chùa Tâm An", description, inLanguage: "vi" },
+          { "@type": "WebPage", "@id": `${url}#webpage`, url, name: title, description, inLanguage: "vi", isPartOf: { "@id": `${url}#website` } },
+        ],
+      }),
+    }],
   }),
   component: Index,
 });
@@ -26,11 +41,16 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <main className="fixed inset-0 overflow-hidden bg-background">
-      <h1 className="sr-only">Chùa Tâm An – Thế giới tâm linh 3D</h1>
-      <Suspense fallback={<div className="loading-screen">Đang mở cổng chùa…</div>}>
-        <World />
-      </Suspense>
-      <Hud />
+      <section className="sr-only" aria-label="Chùa Tâm An">
+        <h1>{title}</h1>
+        <p>{description}</p>
+        <p>Không gian tham quan gồm chính điện, nhà thờ tổ, thiền đường, nhà giảng pháp, thư viện Phật giáo, vườn thiền và hồ sen.</p>
+      </section>
+      <ClientOnly fallback={<div className="loading-screen">Đang mở cổng chùa…</div>}>
+        <Suspense fallback={<div className="loading-screen">Đang mở cổng chùa…</div>}>
+          <TempleExperience />
+        </Suspense>
+      </ClientOnly>
     </main>
   );
 }
