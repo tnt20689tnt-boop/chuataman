@@ -246,7 +246,7 @@ function CampusMapPanel() {
       <div className="mb-3 overflow-hidden rounded-xl border border-[#c8a95b] bg-[#173c2a] shadow-lg">
         <div className="relative mx-auto max-w-full" style={{ width: "min(94vw, 110vh)" }}>
           <img
-            src="/temple-campus-map.jpg"
+            src="/temple-campus-map.webp"
             alt="Toàn cảnh sơ đồ Chùa Tâm An: Tam Quan, sân chùa, Chính Điện, nhà giảng pháp, nhà thờ Tổ, bảo tháp, tượng Phật lớn và núi thiêng, hồ sen cầu đá, vườn thiền cây bồ đề."
             className="block w-full select-none"
             draggable={false}
