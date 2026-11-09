@@ -1,4 +1,7 @@
 # PR9 – Chùa Tâm An
+- [ ] SEO request: audit public responses, robots, sitemap, metadata and Search Console access.
+- [ ] SEO request: provide server-readable homepage content without changing the interactive experience; add factual structured data.
+- [ ] SEO request: repair blocking compilation errors, verify tests and desktop/mobile, report publication and indexing limits.
 - [x] Current request: upgrade main-hall ceiling and altar offerings, lighting, single-voice chanting; preserve dimensions, doors and controls.
 - [x] Current request: verify main-hall access and sitting on desktop/mobile; 12 tests pass and build is clean.
 - [ ] Current request blocker: realistic central Buddha and distinct Bodhisattvas need suitable licensed intact 3D assets; existing statues are preserved, not claimed realistic.
