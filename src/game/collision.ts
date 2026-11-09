@@ -3,6 +3,8 @@ import { BUILDINGS, HALL } from './templeData';
 
 export const PLAYER_RADIUS = 0.5; // Avatar collision envelope includes robe/shoulder width.
 type Solid = { id: string; x: number; z: number; w: number; d: number };
+const PAVILION = { x: 52, z: 52 } as const;
+const BODHI_GARDEN = { x: -70, z: 80 } as const;
 const solids: Solid[] = [
   { id: 'hall-left', x: -20, z: -62, w: 1.05, d: 24.5 },
   { id: 'hall-right', x: 20, z: -62, w: 1.05, d: 24.5 },
@@ -24,8 +26,6 @@ const solids: Solid[] = [
   // Keep visitors on the stone deck: the two low bridge rails are real boundaries.
   { id: 'lotus-bridge-rail-west', x: 26.5, z: 52, w: 0.2, d: 40 },
   { id: 'lotus-bridge-rail-east', x: 29.5, z: 52, w: 0.2, d: 40 },
-  // The rendered bridge rails are decorative and must not trap a visitor who
-  // drifts slightly sideways on a mobile joystick. Pond water remains solid.
   // Perimeter walls: leave the central Tam Quan opening (x = -10..10) clear.
   { id: 'perimeter-back', x: 0, z: -185, w: 240, d: 1.8 },
   { id: 'perimeter-left', x: -120, z: -36.5, w: 1.8, d: 297 },
@@ -47,36 +47,23 @@ for (const b of BUILDINGS) {
   // Guest-room beds are solid furniture; visitors must approach from the aisle.
   if (b.kind === 'guest') {
     for (const side of [-1, 1]) {
-      solids.push({
-        id: 'guest-bed-' + side,
-        x: b.x + side * 7,
-        z: b.z - 3,
-        w: 4.2,
-        d: 6.2,
-      });
+      solids.push({ id: 'guest-bed-' + side, x: b.x + side * 7, z: b.z - 3, w: 4.2, d: 6.2 });
     }
   }
   // Library bookcases are solid furniture, not decorative walk-through meshes.
   if (b.kind === 'library') {
     for (const side of [-1, 1]) {
-      solids.push({
-        id: 'library-bookcase-' + side,
-        x: b.x + side * 9,
-        z: b.z - 2,
-        w: 1.9,
-        d: 8.3,
-      });
+      solids.push({ id: 'library-bookcase-' + side, x: b.x + side * 9, z: b.z - 2, w: 1.9, d: 8.3 });
     }
   }
 }
 for (const z of [112]) for (const x of [-8, -3.6, 3.6, 8]) {
   solids.push({ id: 'gate-column', x, z, w: 1.25, d: 1.65 });
 }
-// Solid collision around the actual pavilion columns at world position (45, 12).
-// The previous coordinates incorrectly placed invisible posts across the central
-// north-south walkway, blocking access between the courtyard and rear garden.
-for (const x of [-7, -2.333, 2.333, 7]) for (const z of [-5, 5]) {
-  solids.push({ id: 'pavilion-post', x: 45 + x, z: 12 + z, w: 0.9, d: 0.9 });
+// Pavilion columns must use the rendered pavilion origin (52, 52); stale
+// coordinates at (45, 12) caused invisible posts across the courtyard route.
+for (const localX of [-7, -7 / 3, 7 / 3, 7]) for (const localZ of [-5, 5]) {
+  solids.push({ id: 'pavilion-post', x: PAVILION.x + localX, z: PAVILION.z + localZ, w: 0.9, d: 0.9 });
 }
 for (let i = 0; i < 8; i++) for (const z of [-50, -74]) {
   solids.push({ id: 'hall-column', x: -19 + i * 38 / 7, z, w: 1.05, d: 1.05 });
@@ -95,7 +82,8 @@ const visitor = new SAT.Circle(new SAT.Vector(), PLAYER_RADIUS);
 // Populated from the exact rendered forest positions by World before movement starts.
 let treeTrunks: SAT.Circle[] = [];
 export function setTreeCollisionPoints(points: [number, number, number][]) {
-  treeTrunks = points.map(([x, z, scale]) => new SAT.Circle(new SAT.Vector(x, z), 0.28 * scale));
+  // The rendered forest trunk uses a bottom radius of 0.38 scene units.
+  treeTrunks = points.map(([x, z, scale]) => new SAT.Circle(new SAT.Vector(x, z), 0.38 * scale));
 }
 export function isBlocked(x: number, z: number) {
   visitor.pos.x = x; visitor.pos.y = z;
@@ -111,13 +99,11 @@ export function surfaceHeight(x: number, z: number) {
     if (Math.abs(x - mx) <= 1.06 && Math.abs(z - mz) <= 0.76) return HALL.floor + 0.35;
     if (Math.abs(x - mx) <= 1.175 && Math.abs(z - mz) <= 0.875) return HALL.floor + 0.29;
   }
-  // The eight raised stepping stones in the meditation garden are real walkable
-  // surfaces, matching Garden() in TempleCampus.tsx (garden origin -34, 24).
+  // Walkable stepping stones follow the rendered Bodhi garden at (-70, 80).
   for (let i = 0; i < 8; i++) {
-    const sx = -34 + Math.sin(i * 0.42) * 2.1;
-    const sz = 36 - i * 2.15;
-    const radius = 0.72 + (i % 3) * 0.12;
-    if (Math.hypot(x - sx, z - sz) <= radius * 0.82) return 0.34;
+    const stoneX = BODHI_GARDEN.x + Math.sin(i * 0.5) * 2;
+    const stoneZ = BODHI_GARDEN.z + 13 - i * 2;
+    if (Math.abs(x - stoneX) <= 0.66 && Math.abs(z - stoneZ) <= 0.66) return 0.33;
   }
   // Three visible tower steps ascend toward the 1m-high plinth.
   for (let step = 0; step < 3; step++) {
@@ -142,29 +128,23 @@ export function surfaceHeight(x: number, z: number) {
     }
   }
   for (const b of BUILDINGS) if (Math.abs(x - b.x) < b.w / 2 && Math.abs(z - b.z) < b.d / 2) return 0.3;
-  // Pavilion deck and steps now sit beside the right-hand lotus pond.
-  const pavilionX = x - 45;
-  const pavilionZ = z - 12;
-  if (Math.abs(pavilionX) <= 8 && Math.abs(pavilionZ) <= 6) return 0.6;
-  if (Math.abs(pavilionX) <= 2.6) {
-    if (pavilionZ > 8 && pavilionZ <= 9) return 0.15;
-    if (pavilionZ > 7 && pavilionZ <= 8) return 0.30;
-    if (pavilionZ > 6 && pavilionZ <= 7) return 0.45;
-    if (pavilionZ > 5 && pavilionZ <= 6) return 0.60;
-    if (pavilionZ >= -10 && pavilionZ < -9) return 0.15;
-    if (pavilionZ >= -9 && pavilionZ < -8) return 0.30;
-    if (pavilionZ >= -8 && pavilionZ < -7) return 0.45;
-    if (pavilionZ >= -7 && pavilionZ < -6) return 0.60;
+  // Pavilion deck and step elevations use the same world origin as Pavilion().
+  if (Math.abs(x - PAVILION.x) <= 8 && Math.abs(z - PAVILION.z) <= 6) return 0.6;
+  if (Math.abs(x - PAVILION.x) <= 2.6) {
+    for (let step = 0; step < 4; step++) {
+      const frontZ = PAVILION.z + 9.5 - step;
+      const backZ = PAVILION.z - 9.5 + step;
+      const top = (step + 1) * 0.15;
+      if (Math.abs(z - frontZ) <= 0.5 || Math.abs(z - backZ) <= 0.5) return top;
+    }
   }
-  if (Math.abs(pavilionZ) <= 2.6) {
-    if (pavilionX >= -12 && pavilionX < -11) return 0.15;
-    if (pavilionX >= -11 && pavilionX < -10) return 0.30;
-    if (pavilionX >= -10 && pavilionX < -9) return 0.45;
-    if (pavilionX >= -9 && pavilionX < -8) return 0.60;
-    if (pavilionX > 11 && pavilionX <= 12) return 0.15;
-    if (pavilionX > 10 && pavilionX <= 11) return 0.30;
-    if (pavilionX > 9 && pavilionX <= 10) return 0.45;
-    if (pavilionX > 8 && pavilionX <= 9) return 0.60;
+  if (Math.abs(z - PAVILION.z) <= 2.6) {
+    for (let step = 0; step < 4; step++) {
+      const leftX = PAVILION.x - 8.5 - step;
+      const rightX = PAVILION.x + 8.5 + step;
+      const top = (4 - step) * 0.15;
+      if (Math.abs(x - leftX) <= 0.5 || Math.abs(x - rightX) <= 0.5) return top;
+    }
   }
   return 0;
 }
