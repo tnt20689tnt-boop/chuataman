@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Forest } from "./Architecture";
+import { WaterfallAmbience, WaterfallBirds, WaterfallKoi } from "./WaterfallNature";
 
 type ForestPoint = [x: number, z: number, scale: number];
 
@@ -77,5 +78,8 @@ export function SacredLandscape({ existingTrees }: { existingTrees: ForestPoint[
       </mesh>
     </group>
     <Forest points={trees} />
+    <WaterfallBirds />
+    <WaterfallKoi />
+    <WaterfallAmbience />
   </group>;
 }
