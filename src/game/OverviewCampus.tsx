@@ -93,7 +93,7 @@ function MiniTree({ position, scale = 1, blossom = false }: { position: [number,
       {canopies.map(([x, y, z, sx, sy, sz], i) => (
         <mesh key={i} position={[x, y, z]} scale={[sx, sy, sz]} castShadow>
           <sphereGeometry args={[1.55, 14, 10]} />
-          <meshStandardMaterial color={blossom && i % 2 === 0 ? "#8aa864" : greenShades[(form + i) % greenShades.length] ?? C.leaf} roughness={0.96} />
+          <meshStandardMaterial color={blossom && i % 2 === 0 ? "#8aa864" : greenShades[(form + i) % greenShades.length] ?? C.foliage} roughness={0.96} />
         </mesh>
       ))}
       {blossom && Array.from({ length: 10 }, (_, i) => {
