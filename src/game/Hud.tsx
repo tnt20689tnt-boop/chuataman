@@ -161,9 +161,12 @@ function ActBtn({ icon, label, active, onClick }: { icon: string; label: string;
   );
 }
 
-function Panel({ title, children, onClose, wide }: { title: string; children: React.ReactNode; onClose?: () => void; wide?: boolean }) {
+function Panel({ title, children, onClose, wide, extraWide }: { title: string; children: React.ReactNode; onClose?: () => void; wide?: boolean; extraWide?: boolean }) {
+  const size = extraWide
+    ? "max-h-[92vh] w-[96vw] max-w-7xl"
+    : "max-h-[78vh] w-[92vw] " + (wide ? "max-w-xl" : "max-w-md");
   return (
-    <section className={`hud-panel pointer-events-auto absolute left-1/2 top-1/2 max-h-[78vh] w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-y-auto p-5 ${wide ? "max-w-xl" : "max-w-md"}`}>
+    <section className={"hud-panel pointer-events-auto absolute left-1/2 top-1/2 " + size + " -translate-x-1/2 -translate-y-1/2 overflow-y-auto p-5"}>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-2xl text-foreground">{title}</h2>
         {onClose && (
@@ -224,39 +227,52 @@ function TourPanel() {
 
 function CampusMapPanel() {
   const places = [
-    { name: "Quan Thế Âm Bồ Tát · Núi thiêng", x: 0, z: -155, cx: 50, cy: 10, w: 42, h: 17, fill: "#d9c79c" },
-    { name: "Bảo tháp", x: -55, z: -112, cx: 22, cy: 38, w: 17, h: 17, fill: "#c87945" },
-    { name: "Chính điện", x: 0, z: -62, cx: 50, cy: 46, w: 30, h: 19, fill: "#b94d32" },
-    { name: "Nhà thờ Tổ", x: -42, z: -62, cx: 17, cy: 58, w: 22, h: 14, fill: "#a65b3d" },
-    { name: "Nhà giảng pháp", x: 42, z: -62, cx: 83, cy: 58, w: 22, h: 14, fill: "#a65b3d" },
-    { name: "Vườn thiền · Cây bồ đề", x: -34, z: 24, cx: 17, cy: 83, w: 27, h: 17, fill: "#72945b" },
-    { name: "Hồ sen · Cầu đá", x: 30, z: 12, cx: 78, cy: 82, w: 25, h: 18, fill: "#4f9290" },
-    { name: "Tam Quan", x: 0, z: 112, cx: 50, cy: 97, w: 26, h: 9, fill: "#b94d32" },
+    { name: "Tam Quan", x: 0, z: 112, cx: 49.8, cy: 91 },
+    { name: "Sân Chùa", x: 0, z: 12, cx: 51, cy: 57 },
+    { name: "Chính Điện", x: 0, z: -62, cx: 50, cy: 39 },
+    { name: "Nhà Giảng Pháp", x: 42, z: -54, cx: 70, cy: 35 },
+    { name: "Nhà Thờ Tổ", x: -42, z: -54, cx: 24, cy: 40 },
+    { name: "Bảo Tháp", x: -58, z: -118, cx: 31, cy: 25 },
+    { name: "Tượng Phật Lớn và Núi Thiêng", x: 0, z: -155, cx: 50, cy: 10 },
+    { name: "Hồ Sen, Cầu Đá", x: 28, z: 52, cx: 68, cy: 67 },
+    { name: "Vườn Thiền Cây Bồ Đề", x: -70, z: 80, cx: 18, cy: 75 },
   ];
+  const visit = (place: (typeof places)[number]) => {
+    teleport(place.x, place.z, Math.PI);
+    setUI({ panel: null, pose: "stand", action: "none" });
+  };
   return (
-    <Panel title="Sơ đồ tổng thể Chùa Tâm An" onClose={() => setUI({ panel: null })} wide>
-      <div className="mb-3 rounded-xl border border-border bg-card p-2">
-        <svg viewBox="0 0 100 108" role="img" aria-label="Sơ đồ từ Tam Quan phía Nam đến Quan Thế Âm Bồ Tát và núi thiêng phía Bắc" className="w-full" style={{ maxHeight: 440 }}>
-          <defs><linearGradient id="campus-ground" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#e8dfc9" /><stop offset="100%" stopColor="#c8d4b0" /></linearGradient></defs>
-          <rect x="2" y="2" width="96" height="104" rx="5" fill="url(#campus-ground)" stroke="#92784e" strokeWidth="1.2" />
-          <path d="M50 7 V101 M5 70 H95 M5 48 H95" stroke="#b6a88e" strokeWidth="2.2" fill="none" />
-          <path d="M50 10 V98" stroke="#e8e0ce" strokeWidth="5" fill="none" />
-          <path d="M50 77 L50 89" stroke="#e8e0ce" strokeWidth="7" />
-          <ellipse cx="78" cy="82" rx="12" ry="8" fill="#6da6a0" stroke="#e7d8b6" strokeWidth="1.3" />
-          <ellipse cx="17" cy="83" rx="13" ry="9" fill="#8ba66c" stroke="#e7d8b6" strokeWidth="1.3" />
-          <g fill="#d4b878" opacity=".8"><circle cx="14" cy="81" r="1.2"/><circle cx="20" cy="85" r="1.2"/><circle cx="76" cy="80" r="1.2"/><circle cx="82" cy="84" r="1.2"/></g>
-          {places.map((p) => <g key={p.name} onClick={() => { teleport(p.x, p.z, Math.PI); setUI({ panel: null, pose: "stand", action: "none" }); }} style={{ cursor: "pointer" }}>
-            <rect x={p.cx-p.w/2} y={p.cy-p.h/2} width={p.w} height={p.h} rx="2" fill={p.fill} stroke="#6b4b32" strokeWidth=".8" />
-            <rect x={p.cx-p.w/2+1.2} y={p.cy-p.h/2+1.2} width={p.w-2.4} height={p.h-2.4} rx="1" fill="none" stroke="#f4dfaa" strokeWidth=".55" />
-            <text x={p.cx} y={p.cy+.8} textAnchor="middle" fontSize="3.2" fill="#fff8e8" fontWeight="bold">{p.name.split(" · ")[0]}</text>
-          </g>)}
-          <text x="50" y="5.5" textAnchor="middle" fontSize="3.2" fill="#43523b" fontWeight="bold">BẮC ↑</text>
-          <text x="50" y="104" textAnchor="middle" fontSize="3.2" fill="#43523b" fontWeight="bold">NAM · CỔNG CHÍNH</text>
-        </svg>
+    <Panel title="Sơ đồ tổng thể Chùa Tâm An" onClose={() => setUI({ panel: null })} wide extraWide>
+      <div className="mb-3 overflow-hidden rounded-xl border border-[#c8a95b] bg-[#173c2a] shadow-lg">
+        <div className="relative mx-auto max-w-full" style={{ width: "min(94vw, 110vh)" }}>
+          <img
+            src="/temple-campus-map.webp"
+            alt="Toàn cảnh sơ đồ Chùa Tâm An: Tam Quan, sân chùa, Chính Điện, nhà giảng pháp, nhà thờ Tổ, bảo tháp, tượng Phật lớn và núi thiêng, hồ sen cầu đá, vườn thiền cây bồ đề."
+            className="block w-full select-none"
+            draggable={false}
+          />
+          {places.map((place, index) => (
+            <button
+              key={place.name}
+              type="button"
+              aria-label={"Đến " + place.name}
+              title={place.name}
+              onClick={() => visit(place)}
+              style={{ left: place.cx + "%", top: place.cy + "%" }}
+              className="absolute grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-[#ffe071] bg-[#352818]/90 text-sm font-bold text-[#ffdc64] shadow-[0_2px_8px_rgba(0,0,0,.55)] transition hover:scale-125 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/90 md:h-9 md:w-9"
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
       </div>
-      <p className="mb-3 text-xs text-muted-foreground">Chạm vào từng công trình trên sơ đồ để di chuyển đến khu vực đó. Bố cục: Tam Quan phía Nam, Quan Thế Âm Bồ Tát và núi thiêng phía Bắc.</p>
-      <div className="grid grid-cols-2 gap-2">
-        {places.map((p) => <button key={p.name} className="hud-tile text-left" onClick={() => { teleport(p.x, p.z, Math.PI); setUI({ panel: null, pose: "stand", action: "none" }); }}>{p.name}</button>)}
+      <p className="mb-3 text-xs text-muted-foreground">Chạm vào một số trên sơ đồ hoặc chọn địa điểm bên dưới để đến khu vực đó.</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {places.map((place, index) => (
+          <button key={place.name} className="hud-tile text-left text-xs sm:text-sm" onClick={() => visit(place)}>
+            <span className="mr-1 font-semibold text-primary">{index + 1}.</span>{place.name}
+          </button>
+        ))}
       </div>
     </Panel>
   );
