@@ -40,11 +40,6 @@ function vietnamDaylight() {
 const _dummy = new THREE.Object3D();
 const _color = new THREE.Color();
 
-// ============================================================================
-// 1 · RỪNG CÂY SINH ĐỘNG — thay thế Forest từ Architecture.tsx
-//    Drop-in: giữ nguyên prop `points`. Dùng instanced mesh nên vẫn mượt
-//    với hàng trăm cây.
-// ============================================================================
 const LEAFY = 0, PINE = 1, SAKURA = 2, WILLOW = 3, CYPRESS = 4, GOLDEN = 5;
 const FOREST_TYPES = [LEAFY, PINE, SAKURA, WILLOW, CYPRESS, GOLDEN];
 
@@ -122,13 +117,13 @@ export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; see
           _dummy.updateMatrix();
           blobs.setMatrixAt(blobIndex, _dummy.matrix);
           if (t.type === SAKURA) {
-            _color.setHSL(0.93 + t.jitter * 0.03, 0.5, 0.72 + t.jitter * 0.12);
+            _color.setHSL(0.93 + t.jitter * 0.03, 0.56, 0.74 + t.jitter * 0.12);
           } else if (t.type === GOLDEN) {
-            _color.setHSL(0.105 + t.jitter * 0.035, 0.58 + t.jitter * 0.12, 0.42 + t.jitter * 0.18);
+            _color.setHSL(0.12 + t.jitter * 0.035, 0.64 + t.jitter * 0.12, 0.46 + t.jitter * 0.18);
           } else if (t.type === WILLOW) {
-            _color.setHSL(0.27 + t.jitter * 0.035, 0.36 + t.jitter * 0.1, 0.25 + t.jitter * 0.14);
+            _color.setHSL(0.26 + t.jitter * 0.035, 0.38 + t.jitter * 0.1, 0.29 + t.jitter * 0.14);
           } else {
-            _color.setHSL(0.27 + t.jitter * 0.1, 0.38 + t.jitter * 0.12, 0.23 + t.jitter * 0.19);
+            _color.setHSL(0.29 + t.jitter * 0.1, 0.44 + t.jitter * 0.12, 0.25 + t.jitter * 0.19);
           }
           blobs.setColorAt(blobIndex, _color);
           blobIndex++;
@@ -171,9 +166,6 @@ export function Forest({ points, seed = 20261108 }: { points: ForestPoint[]; see
   );
 }
 
-// ============================================================================
-// 2 · HOA SEN NÂNG CẤP — nhiều lớp cánh, nhị vàng, nụ sen, lá sen khuyết
-// ============================================================================
 const PETAL_INNER = ["#f9d3de", "#f4bccd"];
 const PETAL_OUTER = ["#f2a9bf", "#ec8fae"];
 
@@ -203,7 +195,7 @@ function LotusFlower({ scale = 1, bud = false }: { scale?: number; bud?: boolean
         return (
           <mesh key={i} position={[Math.cos(a) * 0.09, 0.14, Math.sin(a) * 0.09]}>
             <sphereGeometry args={[0.028, 6, 5]} />
-            <meshStandardMaterial color="#ffd45e" emissive="#ffb300" emissiveIntensity={0.55} roughness={0.5} />
+            <meshStandardMaterial color="#ffd45e" emissive="#ffb300" emissiveIntensity={0.75} roughness={0.4} />
           </mesh>
         );
       })}
@@ -213,7 +205,7 @@ function LotusFlower({ scale = 1, bud = false }: { scale?: number; bud?: boolean
           <mesh key={`o${p}`} position={[Math.cos(a) * 0.2, 0.1, Math.sin(a) * 0.2]}
             rotation={[Math.sin(a) * 1.05, -a, Math.cos(a) * 1.05]} scale={[0.5, 0.16, 1.35]} castShadow>
             <sphereGeometry args={[0.14, 10, 8]} />
-            <meshStandardMaterial color={PETAL_OUTER[p % 2]} roughness={0.55} emissive="#c94f74" emissiveIntensity={0.1} />
+            <meshStandardMaterial color={PETAL_OUTER[p % 2]} roughness={0.5} emissive="#c94f74" emissiveIntensity={0.12} />
           </mesh>
         );
       })}
@@ -223,7 +215,7 @@ function LotusFlower({ scale = 1, bud = false }: { scale?: number; bud?: boolean
           <mesh key={`i${p}`} position={[Math.cos(a) * 0.11, 0.16, Math.sin(a) * 0.11]}
             rotation={[Math.sin(a) * 0.5, -a, Math.cos(a) * 0.5]} scale={[0.42, 0.16, 1.1]}>
             <sphereGeometry args={[0.13, 10, 8]} />
-            <meshStandardMaterial color={PETAL_INNER[p % 2]} roughness={0.5} emissive="#d96a8d" emissiveIntensity={0.12} />
+            <meshStandardMaterial color={PETAL_INNER[p % 2]} roughness={0.45} emissive="#d96a8d" emissiveIntensity={0.14} />
           </mesh>
         );
       })}
@@ -231,7 +223,6 @@ function LotusFlower({ scale = 1, bud = false }: { scale?: number; bud?: boolean
   );
 }
 
-// Drop-in thay LotusField cũ: cùng signature { w, d, count }
 export function LotusField({ w, d, count = 120 }: { w: number; d: number; count?: number }) {
   const items = useMemo(() => {
     const rand = mulberry32(9917 + count + Math.round(w));
@@ -245,7 +236,7 @@ export function LotusField({ w, d, count = 120 }: { w: number; d: number; count?
         x: px, z: pz, rot: rand() * Math.PI * 2,
         leaf: 0.5 + rand() * 0.42,
         flower: roll < 0.22, bud: !(roll < 0.22) && roll < 0.38,
-        fscale: 0.85 + rand() * 0.5,
+        fscale: 0.9 + rand() * 0.55,
         phase: rand() * Math.PI * 2,
         tiltX: (rand() - 0.5) * 0.14, tiltZ: (rand() - 0.5) * 0.14,
         leafColor: rand() < 0.33 ? "#3f7040" : rand() < 0.5 ? "#4d7f45" : "#5c8a4c",
@@ -295,9 +286,6 @@ export function LotusField({ w, d, count = 120 }: { w: number; d: number; count?
   );
 }
 
-// ============================================================================
-// 3 · CÁNH HOA ANH ĐÀO RƠI — particles instanced quanh các gốc cây
-// ============================================================================
 export function PetalFall({ centers }: { centers?: [number, number][] }) {
   const spots = useMemo<[number, number][]>(() => centers ?? [
     [-46, 74], [-44, 34], [46, 76], [44, 32], [-80, 40], [82, 44], [-58, -20], [58, -20],
@@ -351,9 +339,6 @@ export function PetalFall({ centers }: { centers?: [number, number][] }) {
   );
 }
 
-// ============================================================================
-// 4 · ĐOM ĐÓM BAN ĐÊM — sáng dần khi trờI tối theo giờ Việt Nam
-// ============================================================================
 export function Fireflies({ centers }: { centers?: [number, number][] }) {
   const spots = useMemo<[number, number][]>(() => centers ?? [[-27, 52], [28, 52], [-70, 80]], [centers]);
   const COUNT = 90;
@@ -402,14 +387,11 @@ export function Fireflies({ centers }: { centers?: [number, number][] }) {
   );
 }
 
-// ============================================================================
-// 5 · HIỆU ỨNG GAME — Bloom + Vignette (đặt trong <Canvas>)
-// ============================================================================
 export function Effects() {
   return (
     <EffectComposer multisampling={0}>
-      <Bloom mipmapBlur intensity={0.46} luminanceThreshold={0.72} luminanceSmoothing={0.18} />
-      <Vignette eskil={false} offset={0.22} darkness={0.28} />
+      <Bloom mipmapBlur intensity={0.6} luminanceThreshold={0.68} luminanceSmoothing={0.16} />
+      <Vignette eskil={false} offset={0.18} darkness={0.22} />
     </EffectComposer>
   );
 }
