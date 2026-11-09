@@ -46,8 +46,32 @@ function Index() {
         <p>{description}</p>
         <p>Không gian tham quan gồm chính điện, nhà thờ tổ, thiền đường, nhà giảng pháp, thư viện Phật giáo, vườn thiền và hồ sen.</p>
       </section>
-      <ClientOnly fallback={<div className="loading-screen">Đang mở cổng chùa…</div>}>
-        <Suspense fallback={<div className="loading-screen">Đang mở cổng chùa…</div>}>
+      <ClientOnly
+        fallback={
+          <div className="loading-screen">
+            <div className="max-w-2xl px-6 text-center">
+              <h1 className="mb-4 text-3xl font-bold">Chùa Tâm An – Không gian Phật giáo 3D</h1>
+              <p className="mb-3 text-base leading-relaxed">{description}</p>
+              <p className="text-sm leading-relaxed">
+                Khám phá chính điện, nhà thờ tổ, thiền đường, nhà giảng pháp,
+                thư viện Phật giáo, vườn thiền và hồ sen trong không gian thanh tịnh.
+              </p>
+              <p className="mt-5 text-sm">Đang mở không gian tham quan 3D…</p>
+            </div>
+          </div>
+        }
+      >
+        <Suspense
+          fallback={
+            <div className="loading-screen">
+              <div className="max-w-2xl px-6 text-center">
+                <h1 className="mb-4 text-3xl font-bold">Chùa Tâm An</h1>
+                <p className="text-base leading-relaxed">{description}</p>
+                <p className="mt-5 text-sm">Đang mở không gian tham quan 3D…</p>
+              </div>
+            </div>
+          }
+        >
           <TempleExperience />
         </Suspense>
       </ClientOnly>
